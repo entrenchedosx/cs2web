@@ -2396,6 +2396,50 @@ window.__cs2UiScale = function () {
     letter-spacing: 2.4px; font-size: 12.5px; color: #8bc53f;
     text-shadow: 0 0 12px rgba(139,197,63,0.4);
   }
+  /* tactical overview: the selected map's radar, framed like sight glass.
+     Built by the menu director; hidden below the rail breakpoint. */
+  #mappreview { display: none; }
+  @media (min-width: 1100px) {
+    #menu:not(.pausemode):not(.compact) #mappreview { display: block; position: relative;
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 3px; overflow: hidden;
+      margin-bottom: 12px; background: #10131a;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 8px 26px rgba(0,0,0,0.5); }
+    #mappreview img { display: block; width: 100%; height: 148px; object-fit: cover; object-position: center;
+      filter: saturate(0.82) contrast(1.06) brightness(0.94);
+      opacity: 1; transition: opacity 0.25s ease-out; }
+    #mappreview.swap img { opacity: 0; }
+    #mappreview::before, #mappreview::after { content: ''; position: absolute; width: 14px; height: 14px;
+      z-index: 2; pointer-events: none; }
+    #mappreview::before { left: 6px; top: 6px; border-left: 2px solid var(--accent); border-top: 2px solid var(--accent); }
+    #mappreview::after { right: 6px; top: 6px; border-right: 2px solid var(--accent); border-top: 2px solid var(--accent); }
+    #maplabel { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+      display: flex; justify-content: space-between; align-items: center; padding: 5px 10px;
+      font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; font-size: 11px; letter-spacing: 2.4px;
+      color: #e8eef2; background: linear-gradient(180deg, transparent, rgba(5,7,10,0.88)); }
+    #maplabel .ml-dim { color: #8b969e; letter-spacing: 1.6px; }
+  }
+  /* mode intel: one contextual line under the deployment block */
+  #modeintel { display: none; }
+  @media (min-width: 1100px) {
+    #menu:not(.pausemode):not(.compact) #modeintel { display: block;
+      font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; font-size: 11.5px; letter-spacing: 1.8px;
+      color: #8b969e; margin: 8px 2px 0; text-transform: uppercase;
+      border-left: 2px solid var(--accent); padding-left: 8px; min-height: 15px; }
+    #modeintel b { color: #dfe5ea; font-weight: 400; }
+  }
+  /* command shell: slimmer bar, left-docked brand, tighter tabs */
+  @media (min-width: 1100px) {
+    #menu:not(.pausemode):not(.compact) #topnav { height: 52px; padding: 7px 22px 0; }
+    #menu:not(.pausemode):not(.compact) #navcenter #logo, #menu:not(.pausemode):not(.compact) #logo { font-size: 22px; }
+    #menu:not(.pausemode):not(.compact) #logo span { font-size: 15px; }
+    #menu:not(.pausemode):not(.compact) #navcenter { text-align: left; margin-left: 8px; }
+    #menu:not(.pausemode):not(.compact) #tabs { margin-top: 1px; justify-content: flex-start; }
+    #menu:not(.pausemode):not(.compact) #navcenter #tabs button,
+    #menu:not(.pausemode):not(.compact) #tabs button { font-size: 12px; padding: 6px 11px 7px; letter-spacing: 1.8px; }
+    #menu:not(.pausemode):not(.compact) .tabpage { inset: 64px 0 0 0; }
+  }
+  /* footer links all but vanish on the play tab; the game owns the screen */
+  #menu[data-tab="play"]:not(.pausemode) #menufoot { opacity: 0.22; }
   /* challenges card */
   #challenges {
     background: rgba(24,27,32,0.88); border: 1px solid rgba(255,255,255,0.1);
@@ -2449,6 +2493,7 @@ window.__cs2UiScale = function () {
   #menu:not(.pausemode) #charname { animation: mFadeLeft 0.5s cubic-bezier(0.22,0.9,0.24,1) 0.3s both; }
   #menu:not(.pausemode) #challenges { animation: mFadeLeft 0.5s cubic-bezier(0.22,0.9,0.24,1) 0.42s both; }
   #menu:not(.pausemode) #quickopts { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 0.55s both; }
+  #menu:not(.pausemode) #mappreview { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 0.58s both; }
   #menu:not(.pausemode) #opt-outfit { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 0.63s both; }
   #menu:not(.pausemode) #btn-play { animation: mSettle 0.5s cubic-bezier(0.22,0.9,0.24,1) 0.72s both; }
   #menu:not(.pausemode) #playsub { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 0.82s both; }
@@ -2509,7 +2554,8 @@ window.__cs2UiScale = function () {
   #menu.play-commit #discordcard, #menu.play-commit #menufoot,
   #menu.play-commit #charname { opacity: 0.25; transition: opacity 0.4s ease-out; }
   #menu.play-commit #quickopts, #menu.play-commit #opt-outfit,
-  #menu.play-commit #playsub, #menu.play-commit #online { opacity: 0; transform: translateY(10px);
+  #menu.play-commit #playsub, #menu.play-commit #online,
+  #menu.play-commit #mappreview, #menu.play-commit #modeintel { opacity: 0; transform: translateY(10px);
     transition: opacity 0.3s ease-out, transform 0.35s cubic-bezier(0.22,0.9,0.24,1); }
   #menu.play-commit #playbottom { box-shadow: inset 0 1px 0 rgba(255,255,255,0.07),
       0 18px 70px rgba(0,0,0,0.7), 0 0 46px rgba(139,197,63,0.22);
@@ -2962,6 +3008,30 @@ window.__cs2UiScale = function () {
       } catch (e) {}
     }
     window.__menuSfx = sfx;
+    /* tactical overview data: hoisted to director scope so every menu
+       listener (boot, clicks, tabs) shares one definition */
+    var RADAR = { oasis: 'ui/radar_de_mirage.png', dusker: 'ui/radar_de_dust2.png', dune: 'ui/radar_de_dust2.png' };
+    var INTEL = {
+      defusal: '<b>BOMB DEFUSE</b> // 5V5 · BREACH, PLANT, DEFEND THE SITES',
+      dm: '<b>TEAM DEATHMATCH</b> // RESPAWNS ACTIVE · MOST ELIMINATIONS WINS',
+      '': '<b>RANKED</b> // COMING SOON'
+    };
+    function mapKey(btn) {
+      var v = ((btn.dataset && btn.dataset.v) || '').toLowerCase();
+      if (RADAR[v]) return v;
+      var t = (btn.textContent || '').toLowerCase();
+      if (t.indexOf('oasis') >= 0) return 'oasis';
+      if (t.indexOf('dune') >= 0 || t.indexOf('dusk') >= 0) return 'dusker';
+      return 'oasis';
+    }
+    function modeKey(btn) {
+      var v = ((btn.dataset && btn.dataset.v) || '').toLowerCase();
+      if (v === 'defusal' || v === 'dm') return v;
+      var t = (btn.textContent || '').toLowerCase();
+      if (t.indexOf('deathmatch') >= 0) return 'dm';
+      if (t.indexOf('defuse') >= 0) return 'defusal';
+      return '';
+    }
     /* --- atmosphere: drifting dust, transform-only, paused when hidden --- */
     function startDust(menu) {
       if (reduceMotion) return;
@@ -3027,7 +3097,31 @@ window.__cs2UiScale = function () {
       // menu-live gates atmosphere fade-in after first paint
       requestAnimationFrame(function () { requestAnimationFrame(function () {
         menu.classList.add('menu-live');
-      }); });
+      });
+      // tactical overview + mode intel (play column game-world feedback)
+      // (RADAR/INTEL/mapKey/modeKey live in director scope above)
+      try {
+        var pb = menu.querySelector('#playbottom');
+        if (pb && !menu.querySelector('#mappreview')) {
+          var pv = document.createElement('div');
+          pv.id = 'mappreview';
+          var startBtn = menu.querySelector('#opt-map .sel') || menu.querySelector('#opt-map button');
+          var sk = startBtn ? mapKey(startBtn) : 'oasis';
+          var nm = startBtn ? (startBtn.textContent || '').trim().toUpperCase() : 'OASIS';
+          pv.innerHTML = '<img alt=""><div id="maplabel"><span>' + nm +
+            '</span><span class="ml-dim">TAC-OVERVIEW</span></div>';
+          var img = pv.querySelector('img');
+          img.src = RADAR[sk];
+          pb.insertBefore(pv, pb.firstChild);
+          var intel = document.createElement('div');
+          intel.id = 'modeintel';
+          var modeBtn = menu.querySelector('#opt-mode .sel') || menu.querySelector('#opt-mode button');
+          intel.innerHTML = INTEL[modeBtn ? modeKey(modeBtn) : 'defusal'];
+          var qo = menu.querySelector('#quickopts');
+          if (qo && qo.parentNode === pb) pb.insertBefore(intel, qo.nextSibling);
+          else pb.appendChild(intel);
+        }
+      } catch (e) {} });
       var lastHover = 0;
       menu.addEventListener('mouseover', function (e) {
         var b = e.target && e.target.closest ? e.target.closest('button:not(:disabled)') : null;
@@ -3052,6 +3146,35 @@ window.__cs2UiScale = function () {
           void b.offsetWidth; // restart nudge animation
           b.classList.add('nudged');
           sfx('denied');
+          var mi = menu.querySelector('#modeintel');
+          if (mi && b.closest('#opt-mode')) mi.innerHTML = INTEL[''];
+          return;
+        }
+        var mapBtn = t.closest('#opt-map button');
+        if (mapBtn) {
+          try {
+            var pv2 = menu.querySelector('#mappreview');
+            if (pv2) {
+              var k = mapKey(mapBtn);
+              var im = pv2.querySelector('img');
+              var lb = pv2.querySelector('#maplabel span');
+              pv2.classList.add('swap');
+              setTimeout(function () {
+                im.src = RADAR[k];
+                if (lb) lb.textContent = (mapBtn.textContent || '').trim().toUpperCase();
+                im.onload = function () { pv2.classList.remove('swap'); };
+                setTimeout(function () { pv2.classList.remove('swap'); }, 600);
+              }, 200);
+            }
+          } catch (e) {}
+          return;
+        }
+        var modeBtn = t.closest('#opt-mode button');
+        if (modeBtn && !modeBtn.classList.contains('soon')) {
+          try {
+            var mi2 = menu.querySelector('#modeintel');
+            if (mi2) mi2.innerHTML = INTEL[modeKey(modeBtn)];
+          } catch (e) {}
           return;
         }
       }, true);
