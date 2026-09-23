@@ -2560,6 +2560,12 @@ window.__cs2UiScale = function () {
     background: rgba(139,197,63,0.14); border: 1px solid rgba(139,197,63,0.5); color: #fff; }
   #pmadapt.off { background: #262b31; border-color: rgba(255,255,255,0.14); color: #9aa7b4; }
   #pmadapt:hover { filter: brightness(1.15); }
+  #pmlow, #pmlite { width: 100%; margin-top: 6px; cursor: pointer; border-radius: 3px; padding: 7px;
+    font-family: inherit; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+    background: #262b31; border: 1px solid rgba(255,255,255,0.14); color: #9aa7b4; }
+  #pmlow.on { background: rgba(224,90,76,0.14); border-color: rgba(224,90,76,0.55); color: #fff; }
+  #pmlite.on { background: rgba(125,184,240,0.14); border-color: rgba(125,184,240,0.55); color: #fff; }
+  #pmlow:hover, #pmlite:hover { filter: brightness(1.2); }
   @media (max-width: 900px) { #perfmon { width: 220px; right: 8px; top: 104px; } }
 </style>
 </head>
@@ -2591,7 +2597,7 @@ window.__cs2UiScale = function () {
   /* PERFMON: diagnostics overlay + adaptive quality director.
      - Sampler: rAF deltas into a fixed ring (zero per-frame allocation).
      - Overlay: 4Hz text updates. F8 or chip click toggles the panel.
-     - Director: every 5s while playing, steps aniso -> renderScale ->
+     - Director: every 2.5s while playing, steps aniso -> renderScale ->
        quality (quality only in engine AUTO mode, never overriding a manual
        pick) with hold/cooldown hysteresis. Drives the game's OWN setters,
        the same functions its settings UI calls. No bundle edits. */
@@ -2649,7 +2655,9 @@ window.__cs2UiScale = function () {
       '<div class="pmsec"></div>' +
       '<div class="pmrow"><span>ADAPTIVE</span><span id="pmad">--</span></div>' +
       '<ul id="pmevents"></ul>' +
-      '<button id="pmadapt">ADAPTIVE: ON</button>';
+      '<button id="pmadapt">ADAPTIVE: ON</button>' +
+      '<button id="pmlow">LOW-SPEC: OFF</button>' +
+      '<button id="pmlite">LITE MAPS: OFF</button>';
     document.body.appendChild(mon);
     var el = {};
     ['pmfps','pmms','pmq','pmrs','pman','pmpr','pmbl','pmdc','pmmm','pmheap','pmsf','pmad'].forEach(function (id) {
@@ -2657,6 +2665,8 @@ window.__cs2UiScale = function () {
     });
     var evUl = mon.querySelector('#pmevents');
     var adaptBtn = mon.querySelector('#pmadapt');
+    var lowBtn = mon.querySelector('#pmlow');
+    var liteBtn = mon.querySelector('#pmlite');
     function toggle(open) {
       mon.classList.toggle('open', open === undefined ? !mon.classList.contains('open') : !!open);
     }
@@ -2689,8 +2699,40 @@ window.__cs2UiScale = function () {
     var ADAPT_KEY = 'clutcher_adaptive';
     var adaptive = true;
     try { adaptive = localStorage.getItem(ADAPT_KEY) !== '0'; } catch (e) {}
-    var manual = { aniso: false, rscale: false, quality: false };
+    var manual = { aniso: false, rscale: false, quality: false, bots: false };
+    var suppressBotFlag = false;
     var badStreak = 0, goodStreak = 0, cooldownUntil = 0, actedAt = 0;
+    var playingSince = 0, lastState = '';
+    var LOW_KEY = 'clutcher_lowspec';
+    var lowSpec = false;
+    try { lowSpec = localStorage.getItem(LOW_KEY) === '1'; } catch (e) {}
+    function paintLowBtn() {
+      lowBtn.textContent = 'LOW-SPEC: ' + (lowSpec ? 'ON' : 'OFF');
+      lowBtn.classList.toggle('on', lowSpec);
+    }
+    paintLowBtn();
+    lowBtn.addEventListener('click', function () {
+      lowSpec = !lowSpec;
+      try { localStorage.setItem(LOW_KEY, lowSpec ? '1' : '0'); } catch (e) {}
+      paintLowBtn();
+      logEvent(lowSpec ? 'low-spec <b>on</b> (bots may drop to 5)' : 'low-spec <b>off</b>');
+      try { window.__menuSfx && window.__menuSfx('uiclick'); } catch (e) {}
+    });
+    function paintLiteBtn() {
+      var lite = false;
+      try { lite = new URLSearchParams(location.search).get('mapfile') === 'lite'; } catch (e) {}
+      liteBtn.textContent = 'LITE MAPS: ' + (lite ? 'ON' : 'OFF');
+      liteBtn.classList.toggle('on', lite);
+    }
+    paintLiteBtn();
+    liteBtn.addEventListener('click', function () {
+      try {
+        var u = new URL(location.href);
+        if (u.searchParams.get('mapfile') === 'lite') u.searchParams.delete('mapfile');
+        else u.searchParams.set('mapfile', 'lite');
+        location.href = u.toString();
+      } catch (e) {}
+    });
     var actionStack = [];
     var lastSnap = null, lastSlow = 0;
     var ANISO_ORDER = [1, 4, 8, 16];
@@ -2714,7 +2756,8 @@ window.__cs2UiScale = function () {
       if (t.closest('#opt-aniso')) manual.aniso = true;
       else if (t.closest('#opt-rscale')) manual.rscale = true;
       else if (t.closest('#opt-quality')) manual.quality = true;
-      else if (t.closest('#settings-reset')) { manual.aniso = manual.rscale = manual.quality = false; logEvent('manual flags cleared'); }
+      else if (t.closest('#opt-bots')) { if (!suppressBotFlag) manual.bots = true; }
+      else if (t.closest('#settings-reset')) { manual.aniso = manual.rscale = manual.quality = manual.bots = false; logEvent('manual flags cleared'); }
     }, true);
     function syncRows() {
       try { var g = window.game; if (g && g.hud && g.hud._syncSettingsRows) g.hud._syncSettingsRows(); } catch (e) {}
@@ -2771,6 +2814,23 @@ window.__cs2UiScale = function () {
         actionStack.push('quality'); logEvent('quality → <b>' + qv + '</b> (' + reasons + ')');
         announce('AUTO-TUNE: QUALITY ' + qv.toUpperCase()); return true;
       }
+      // last resort, LOW-SPEC opt-in only: fewer bots via the game's own
+      // settings button (same pipeline as a manual click). One-way: never
+      // raised back automatically, gameplay stays the player's call.
+      if (lowSpec && !manual.bots) {
+        try {
+          var row = document.querySelector('#opt-bots');
+          var b5 = row && [...row.children].find(function (x) { return x.dataset.v === '5'; });
+          var cur = row && row.querySelector('.sel');
+          if (b5 && (!cur || cur.dataset.v !== '5')) {
+            suppressBotFlag = true;
+            b5.click();
+            suppressBotFlag = false;
+            logEvent('bots → <b>5</b> (' + reasons + ', low-spec, stays until you change it)');
+            announce('AUTO-TUNE: BOTS 5 (LOW-SPEC)'); return true;
+          }
+        } catch (e) { return false; }
+      }
       return false;
     }
     function stepUp() {
@@ -2818,27 +2878,32 @@ window.__cs2UiScale = function () {
           }
         }
         lastSnap = s;
-        if (!playing || !s) { badStreak = 0; return; }
+        var now = performance.now();
+        if (!playing || !s) { badStreak = 0; goodStreak = 0; lastState = ''; return; }
+        if (lastState !== 'playing') playingSince = now;
+        lastState = 'playing';
         var p95 = percentile(0.95);
         var slowAdv = s.slow > lastSlow; lastSlow = s.slow;
-        var now = performance.now();
+        // fast-start: first 75s of play, a single sustained-bad eval acts
+        // immediately so old hardware reaches its floor in seconds, not minutes
+        var need = (now - playingSince < 75000) ? 1 : 2;
         if (p95 > 26 && slowAdv) {
           badStreak++; goodStreak = 0;
-          if (badStreak >= 2 && now >= cooldownUntil) {
+          if (badStreak >= need && now >= cooldownUntil) {
             if (stepDown(s, 'p95 ' + p95.toFixed(1) + 'ms')) {
               badStreak = 0; goodStreak = 0; cooldownUntil = now + 25000; actedAt = now;
             } else { badStreak = 0; cooldownUntil = now + 60000; logEvent('floor reached, holding'); }
           }
         } else if (p95 < 13) {
           goodStreak++; badStreak = 0;
-          if (goodStreak >= 18 && now >= cooldownUntil) {
+          if (goodStreak >= 36 && now >= cooldownUntil) {
             if (stepUp()) { goodStreak = 0; cooldownUntil = now + 25000; actedAt = now; }
             else goodStreak = 0;
           }
         } else { badStreak = 0; goodStreak = 0; }
       } catch (e) {}
     }
-    setInterval(directorTick, 5000);
+    setInterval(directorTick, 2500);
     /* --- 4Hz overlay refresh (cached nodes, tabular numbers) --- */
     setInterval(function () {
       try {
