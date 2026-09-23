@@ -2420,6 +2420,110 @@ window.__cs2UiScale = function () {
     text-transform: uppercase; letter-spacing: 1.8px; }
   #menufoot { font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif;
     text-transform: uppercase; letter-spacing: 1.6px; opacity: 0.45; }
+
+  /* ============ CINEMATIC MENU REDESIGN (home menu only) ============
+     Composition: left command rail (operator → config → PLAY) + right intel
+     rail, environment owns center-right. Motion: staged boot entrance,
+     directional commit transition, transform/opacity-only micro-interactions.
+     Scoped to :not(.pausemode):not(.compact) where layout changes, so the
+     in-match pause menu and small-window layouts keep working systems. */
+  #menu:not(.pausemode) .tabpage { inset: 76px 0 0 0; }
+  /* ---- atmosphere layers (below UI, above 3D) ---- */
+  #dustfx { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0;
+    transition: opacity 2.4s ease 0.15s; }
+  #menu.menu-live #dustfx { opacity: 0.85; }
+  #menu::after { /* ultra-subtle film grain, static tile stepped slowly */
+    content: ''; position: absolute; inset: -40px; z-index: 1; pointer-events: none; opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    animation: grain 1.1s steps(3) infinite; }
+  @keyframes grain { 0% { transform: translate(0,0); } 33% { transform: translate(-12px,8px); }
+    66% { transform: translate(10px,-10px); } 100% { transform: translate(0,0); } }
+  #menu.menu-live::after { opacity: 0.05; }
+  /* ---- boot entrance: frame first, then rail top→bottom, PLAY lands last ---- */
+  @keyframes mFadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+  @keyframes mFadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes mFadeLeft { from { opacity: 0; transform: translateX(-22px); } to { opacity: 1; transform: none; } }
+  @keyframes mFadeRight { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+  @keyframes mSettle { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: none; } }
+  #menu:not(.pausemode) #topnav { animation: mFadeDown 0.55s cubic-bezier(0.22,0.9,0.24,1) 0.05s both; }
+  #menu:not(.pausemode) #charname { animation: mFadeLeft 0.5s cubic-bezier(0.22,0.9,0.24,1) 0.3s both; }
+  #menu:not(.pausemode) #challenges { animation: mFadeLeft 0.5s cubic-bezier(0.22,0.9,0.24,1) 0.42s both; }
+  #menu:not(.pausemode) #quickopts { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 0.55s both; }
+  #menu:not(.pausemode) #opt-outfit { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 0.63s both; }
+  #menu:not(.pausemode) #btn-play { animation: mSettle 0.5s cubic-bezier(0.22,0.9,0.24,1) 0.72s both; }
+  #menu:not(.pausemode) #playsub { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 0.82s both; }
+  #menu:not(.pausemode) #online { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 0.9s both; }
+  #menu:not(.pausemode) #discordcard { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 1s both; }
+  #menu:not(.pausemode) #menufoot { animation: mFadeUp 0.45s cubic-bezier(0.22,0.9,0.24,1) 1.05s both; }
+  /* tab arrivals: short rise, no stagger (communicates arrival, not boot) */
+  #menu:not(.pausemode) .tabpage.sel > * { animation: mFadeUp 0.28s cubic-bezier(0.22,0.9,0.24,1) both; }
+  #menu:not(.pausemode) #tab-play.sel > *:nth-child(2) { animation-delay: 0.05s; }
+  #menu:not(.pausemode) #tab-play.sel > *:nth-child(3) { animation-delay: 0.1s; }
+  /* ---- asymmetric rail composition (wide screens only) ---- */
+  @media (min-width: 1100px) {
+    #menu:not(.pausemode):not(.compact) #charname { left: 56px; transform: none; text-align: left; top: 104px; }
+    #menu:not(.pausemode):not(.compact) #charname::before { content: 'OPERATOR // READY'; display: block;
+      font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; font-size: 11px; letter-spacing: 3px;
+      color: var(--accent); opacity: 0.85; margin-bottom: 4px; font-weight: 400; }
+    #menu:not(.pausemode):not(.compact) #playbottom { left: 56px; transform: none; width: 400px;
+      text-align: left; bottom: 40px; }
+    #menu:not(.pausemode):not(.compact) #challenges { left: auto; right: 56px; top: 110px; width: 292px;
+      border-left: none; border-radius: 6px 0 0 6px; }
+    #menu:not(.pausemode):not(.compact) #discordcard { left: auto; right: 20px; bottom: 46px; }
+    #menu:not(.pausemode):not(.compact) #quickopts::before { content: 'DEPLOYMENT'; display: block;
+      font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; font-size: 11px; letter-spacing: 3px;
+      color: #8b969e; margin-bottom: 6px; }
+  }
+  /* ---- PLAY: physical primary ---- */
+  #btn-play .pl-label { display: inline-block; transition: letter-spacing 0.18s ease-out, transform 0.18s ease-out; }
+  #btn-play::after { /* idle sheen: one faint pass every 9s */
+    content: ''; position: absolute; top: 0; bottom: 0; width: 34%; left: -40%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.14), transparent);
+    animation: playsheen 9s ease-in-out infinite; pointer-events: none; }
+  @keyframes playsheen { 0%, 88% { left: -40%; } 96%, 100% { left: 108%; } }
+  #playbottom:has(#btn-play:hover) { border-color: rgba(139,197,63,0.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 18px 60px rgba(0,0,0,0.6), 0 0 30px rgba(139,197,63,0.12); }
+  #btn-play:hover { transform: translateY(-1px); }
+  #btn-play:hover .pl-label { letter-spacing: 8px; transform: translateX(1px); }
+  #btn-play:hover::after { animation: playhover 0.85s ease-out; }
+  @keyframes playhover { from { left: -40%; } to { left: 108%; } }
+  #btn-play:active { transform: translateY(1px) scale(0.985); }
+  #btn-play:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  /* ---- option micro-interactions: selected tick + sweep ---- */
+  .qrow button { transition: background 0.15s ease-out, color 0.15s, border-color 0.15s, transform 0.15s ease-out; overflow: hidden; }
+  .qrow button:hover { transform: translateY(-1px); }
+  .qrow button:active { transform: translateY(0px) scale(0.98); }
+  .qrow button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #tabs button { transition: color 0.15s, background 0.15s; }
+  #tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .ghostbtn, .mbtn, .case-open { transition: background 0.15s, transform 0.15s ease-out, border-color 0.15s; }
+  .ghostbtn:hover, .mbtn:hover, .case-open:hover { transform: translateY(-1px); }
+  .ghostbtn:active, .mbtn:active, .case-open:active { transform: scale(0.98); }
+  /* locked option nudge (communicates denial with motion, paired with denied sfx) */
+  @keyframes mnudge { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); }
+    55% { transform: translateX(3px); } 80% { transform: translateX(-1px); } }
+  .qrow button.nudged { animation: mnudge 0.3s ease-out; }
+  /* ---- PLAY commit: UI recedes, background pushes, focus narrows ---- */
+  #menu { transition: none; }
+  #menu.play-commit #topnav, #menu.play-commit #challenges,
+  #menu.play-commit #discordcard, #menu.play-commit #menufoot,
+  #menu.play-commit #charname { opacity: 0.25; transition: opacity 0.4s ease-out; }
+  #menu.play-commit #quickopts, #menu.play-commit #opt-outfit,
+  #menu.play-commit #playsub, #menu.play-commit #online { opacity: 0; transform: translateY(10px);
+    transition: opacity 0.3s ease-out, transform 0.35s cubic-bezier(0.22,0.9,0.24,1); }
+  #menu.play-commit #playbottom { box-shadow: inset 0 1px 0 rgba(255,255,255,0.07),
+      0 18px 70px rgba(0,0,0,0.7), 0 0 46px rgba(139,197,63,0.22);
+    transition: box-shadow 0.4s ease-out; }
+  #menu.play-commit #dustfx { opacity: 0.25; transition: opacity 0.5s ease-out; }
+  @media (prefers-reduced-motion: reduce) {
+    #menu::after, #btn-play::after { animation: none !important; }
+    #menu:not(.pausemode) #topnav, #menu:not(.pausemode) #charname,
+    #menu:not(.pausemode) #challenges, #menu:not(.pausemode) #quickopts,
+    #menu:not(.pausemode) #opt-outfit, #menu:not(.pausemode) #btn-play,
+    #menu:not(.pausemode) #playsub, #menu:not(.pausemode) #online,
+    #menu:not(.pausemode) #discordcard, #menu:not(.pausemode) #menufoot,
+    #menu:not(.pausemode) .tabpage.sel > * { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+  }
 </style>
 </head>
 <body>
@@ -2444,6 +2548,142 @@ window.__cs2UiScale = function () {
         });
       };
     } catch (e) {}
+  })();
+  </script>
+  <script>
+  /* MENU DIRECTOR: atmosphere + transitions + sfx hooks. No game logic;
+     all state changes stay in main.js. Hooks: window.__menuSfx(name) and
+     document 'menu-sfx' CustomEvents (detail=name). Sounds: uihover (hover),
+     uiclick (PLAY commit), denied (locked options). */
+  (function () {
+    'use strict';
+    var reduceMotion = false;
+    try { reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    function sfx(name) {
+      try { document.dispatchEvent(new CustomEvent('menu-sfx', { detail: name })); } catch (e) {}
+      try {
+        var g = window.game;
+        if (g && g.audio && typeof g.audio.play === 'function') g.audio.play(name);
+      } catch (e) {}
+    }
+    window.__menuSfx = sfx;
+    /* --- atmosphere: drifting dust, transform-only, paused when hidden --- */
+    function startDust(menu) {
+      if (reduceMotion) return;
+      try {
+        var c = document.createElement('canvas');
+        c.id = 'dustfx';
+        menu.insertBefore(c, menu.firstChild);
+        var ctx = c.getContext('2d');
+        var W = 0, H = 0, parts = [], raf = 0, last = 0;
+        function size() {
+          var r = menu.getBoundingClientRect();
+          W = c.width = Math.max(2, Math.floor(r.width / 2));
+          H = c.height = Math.max(2, Math.floor(r.height / 2));
+          c.style.width = '100%'; c.style.height = '100%';
+        }
+        function spawn(n) {
+          parts.push({ x: Math.random() * W, y: H * 0.15 + Math.random() * H * 0.85,
+            r: 0.5 + Math.random() * 1.4, vx: -(0.02 + Math.random() * 0.08),
+            vy: -(0.015 + Math.random() * 0.05), a: 0.05 + Math.random() * 0.22,
+            tw: Math.random() * 6.28, ts: 0.2 + Math.random() * 0.7 });
+          if (parts.length > 40) parts.shift();
+        }
+        var i;
+        size();
+        for (i = 0; i < 34; i++) { spawn(); parts[i].x = Math.random() * W; parts[i].y = Math.random() * H; }
+        addEventListener('resize', size);
+        function frame(t) {
+          raf = 0;
+          var menuVisible = menu.style.display !== 'none' && getComputedStyle(menu).display !== 'none';
+          if (!document.hidden && menuVisible) {
+            var dt = Math.min(0.05, (t - last) / 1000 || 0.016);
+            last = t;
+            if (c.width !== Math.floor(menu.clientWidth / 2)) size();
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = '#cfd8de';
+            for (var k = 0; k < parts.length; k++) {
+              var p = parts[k];
+              p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.tw += p.ts * dt;
+              if (p.x < -4) { p.x = W + 3; p.y = Math.random() * H; }
+              if (p.y < -4) { p.y = H + 3; p.x = Math.random() * W; }
+              var a = p.a * (0.6 + 0.4 * Math.sin(p.tw));
+              ctx.globalAlpha = a < 0 ? 0 : (a > 0.5 ? 0.5 : a);
+              ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+          }
+          raf = requestAnimationFrame(frame);
+        }
+        raf = requestAnimationFrame(frame);
+      } catch (e) {}
+    }
+    /* --- wire once #menu exists (built dynamically by main.js) --- */
+    var wired = false;
+    function wire() {
+      if (wired) return;
+      var menu = document.querySelector('#menu');
+      if (!menu) return;
+      wired = true;
+      startDust(menu);
+      // menu-live gates atmosphere fade-in after first paint
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        menu.classList.add('menu-live');
+      }); });
+      var lastHover = 0;
+      menu.addEventListener('mouseover', function (e) {
+        var b = e.target && e.target.closest ? e.target.closest('button:not(:disabled)') : null;
+        if (!b || !menu.contains(b)) return;
+        var now = performance.now();
+        if (now - lastHover < 70) return;
+        lastHover = now;
+        sfx('uihover');
+      });
+      menu.addEventListener('click', function (e) {
+        var t = e.target;
+        if (!t || !t.closest) return;
+        if (t.closest('#btn-play')) {
+          // immediate commit confirmation: recede UI, narrow focus
+          menu.classList.add('play-commit');
+          sfx('uiclick');
+          return;
+        }
+        if (t.closest('.qrow button.soon')) {
+          var b = t.closest('.qrow button.soon');
+          b.classList.remove('nudged');
+          void b.offsetWidth; // restart nudge animation
+          b.classList.add('nudged');
+          sfx('denied');
+          return;
+        }
+      }, true);
+      // leaving commit state when team select closes back to menu
+      // (observe #hud only: cheap, avoids per-frame HUD class churn)
+      function watchHud() {
+        var hud = document.querySelector('#hud');
+        if (!hud) { setTimeout(watchHud, 500); return; }
+        var obs = new MutationObserver(function () {
+          try {
+            if (hud.classList.contains('inmenu') && menu.classList.contains('play-commit') &&
+                !document.querySelector('#teamsel')) {
+              menu.classList.remove('play-commit');
+            }
+          } catch (e) {}
+        });
+        try { obs.observe(hud, { childList: true, attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+      }
+      watchHud();
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        var iv = setInterval(function () {
+          if (document.querySelector('#menu')) { clearInterval(iv); wire(); }
+        }, 200);
+      });
+    }
+    var iv0 = setInterval(function () {
+      if (document.querySelector('#menu')) { clearInterval(iv0); wire(); }
+    }, 200);
   })();
   </script>
   <script type="module" src="./src/main.js"></script>
