@@ -1,0 +1,2451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!-- iOS "Add to Home Screen": launch as a full-screen app (no Safari chrome) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clutcher">
+<link rel="manifest" href="manifest.json">
+<!-- CS2's own team-counter stylesheet, converted from Panorama by
+     tools/cs2_panorama_css.py. Generated -- do not hand-edit. -->
+<link rel="stylesheet" href="ui/cs2_teamcounter.css">
+<link rel="stylesheet" href="ui/cs2_scoreboard.css">
+<link rel="stylesheet" href="ui/cs2_bottom.css">
+<link rel="stylesheet" href="ui/cs2_weapons.css">
+<!-- the radar map picture is the one big piece of HUD art; start it with the
+     page so the dial is populated the moment the first round goes live -->
+<link rel="preload" as="image" href="ui/radar_de_dust2.png">
+<!-- the bottom bar is the first thing on screen in a round; start its art
+     with the page so it does not fill in icon by icon -->
+<link rel="preload" as="image" href="ui/bt_armor.svg">
+<link rel="preload" as="image" href="ui/bt_helmet.svg">
+<link rel="preload" as="image" href="ui/bt_logo_ct.svg">
+<link rel="preload" as="image" href="ui/bt_logo_t.svg">
+<link rel="preload" as="image" href="ui/bt_mag.svg">
+<script>
+/* SET THE PANORAMA UI SCALE BEFORE FIRST PAINT.
+   ui/cs2_teamcounter.css sizes the whole top row in Valve's 1080p-reference
+   px and scales it with `zoom: var(--cs2-ui-scale)`. That variable used to be
+   written by the HUD's first updateAvatars(), which does not run until a match
+   starts -- so every frame before that used the fallback of 1 and drew the row
+   at full 1920px scale before snapping down. Setting it here, inline and ahead
+   of the stylesheet's first use, means the row is never once drawn at the
+   wrong size. Kept in sync on resize for the same reason. */
+/* A FLOOR ON A DESKTOP. A game portal shows the game in a box as short as
+   450px, where height/1080 is 0.42 and the scoreboard's 18px rows come out at
+   7.5px. Below a 648px-tall window the scale stops at 0.6 instead (hud.js
+   _syncUiScale uses the same function, so the two never disagree). Not on a
+   handheld: a phone's HUD is laid out around this number by touch rules of
+   its own, and none of this has been seen on one. */
+window.__cs2UiScale = function () {
+  var s = window.innerHeight / 1080;
+  var handheld = typeof matchMedia === 'function'
+    && matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches;
+  return handheld ? s : Math.max(s, 0.6);
+};
+(function () {
+  var set = function () {
+    document.documentElement.style.setProperty('--cs2-ui-scale', window.__cs2UiScale());
+  };
+  set();
+  addEventListener('resize', set);
+})();
+</script>
+<!-- THE TOP HUD MUST BE COMPLETE ON ITS FIRST FRAME. Without these the row
+     assembles in stages: the timer paints in a fallback face and reflows when
+     Stratum arrives, and each avatar / mask / bomb icon pops in as its first
+     use triggers the fetch. Preloading the handful the row actually needs on
+     frame one costs ~90KB and removes the whole staggered load-in. -->
+<link rel="preload" as="font" type="font/otf" crossorigin href="ui/fonts/stratum2_tf_bold.otf">
+<link rel="preload" as="font" type="font/otf" crossorigin href="ui/fonts/stratum2condensed-regular.otf">
+<link rel="preload" as="image" href="ui/avatar_ct.png">
+<link rel="preload" as="image" href="ui/avatar_t.png">
+<link rel="preload" as="image" href="ui/score-time-mask.svg">
+<link rel="preload" as="image" href="ui/c4.svg">
+<title>Clutcher.io — tactical FPS</title>
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<style>
+  :root {
+    --accent: #8bc53f;          /* CS2 play-button green */
+    --accent-dim: rgba(139,197,63,0.16);
+    --money: #a7c46a;
+    --ct: #7db8f0;
+    --t: #eabe54;
+    --panel: rgba(13,16,20,0.72);
+    --panel-solid: rgba(15,18,22,0.94);
+    --danger: #e64b3c;
+    --hud-font: 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+    --num-font: 'Arial Narrow', 'Segoe UI', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0c0f13;
+    font-family: var(--hud-font);
+    /* inside a game portal's frame, a wheel turned past the end of one of the
+       menu's scrolling pages is otherwise handed on to THEIR page (input.js
+       claims the keys and the in-match wheel; this covers the menus) */
+    overscroll-behavior: none; }
+  #game canvas { display: block; }
+  #hud { position: fixed; inset: 0; pointer-events: none; color: #e8eef2; z-index: 10; }
+  #hud > * { pointer-events: none; }
+
+  /* crosshair */
+  #crosshair { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+  #hud.inmenu #crosshair, #hud.inmenu #fps, #hud.inmenu #sitebadge, #hud.inmenu #tcrow,
+  #hud.inmenu #statl, #hud.inmenu #statr, #hud.inmenu #money { display: none; }
+  #hud.inmenu #crosshair { display: none !important; }
+  /* TEAM SELECT HIDES WHAT THE MENU HIDES. There are two non-playing states and
+     each rule had to name both; several named only `.inmenu`, so the loading and
+     team-select screens kept a live HUD behind the cards -- the BUY prompt, the
+     money, the stat panels, the fps counter. Anything the menu hides, the cards
+     hide. (crosshair / tcrow / radar / cs2bottom / cs2weapons / casebtn already
+     list both, further down.) */
+  #hud.teamselect #fps, #hud.teamselect #sitebadge, #hud.teamselect #statl,
+  #hud.teamselect #statr, #hud.teamselect #money { display: none; }
+  .case-odds { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; margin: 4px 0 2px;
+    font-size: 9.5px; letter-spacing: 0.2px; opacity: 0.9; }
+  .case-odds .odd { color: var(--oc); }
+  .co-odds { font-size: 11px; letter-spacing: 0.4px; margin-top: 5px; font-weight: 500; opacity: 0.85; }
+  .setsub { font-size: 12px; letter-spacing: 2px; opacity: 0.6; margin: 18px 0 8px; text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 5px; }
+  .bindrow { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 13px; }
+  .bindrow span { opacity: 0.8; }
+  .bindkey { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); color: #e8edf2;
+    min-width: 92px; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
+    letter-spacing: 1px; font-family: var(--num-font); }
+  .bindkey:hover { background: rgba(255,255,255,0.16); }
+  .bindkey.waiting { border-color: var(--accent); color: var(--accent); }
+  /* crouch's two keys side by side (hud.js renderBinds) */
+  .bindpair { display: flex; align-items: center; gap: 8px; }
+  .bindpair .bindor { opacity: 0.6; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+  #menu.pausemode #tab-play, #menu.pausemode #tabs [data-tab="play"],
+  #menu.pausemode #tab-loadout, #menu.pausemode #tabs [data-tab="loadout"],   /* no re-kitting mid-match (user's call) */
+  #menu.pausemode #tab-trading, #menu.pausemode #tabs [data-tab="trading"],
+  #menu.pausemode #tab-market, #menu.pausemode #tabs [data-tab="market"] { display: none !important; }
+  /* TRADING and MARKETPLACE (home menu only, see above): placeholder pages until the
+     features exist. Seven tabs is tight, so the nav steps down with the window.
+     Measured: the player name's rank chip wraps once a side block drops below ~180 px,
+     so MARKETPLACE (~1237 px needed) reads MARKET below 1260, tab side padding drops
+     to 7 px below 1200, and to 5 px with 12 px text at 1079 and below -- which is also
+     what fits a phone (844 wide). The padding rules carry two ids on purpose: they
+     sit ABOVE the base `#tabs button` rules, which would win a tie. */
+  #tabs [data-tab="market"]::after { content: 'MARKETPLACE'; }
+  @media (max-width: 1259px) { #tabs [data-tab="market"]::after { content: 'MARKET'; } }
+  @media (min-width: 1080px) and (max-width: 1199px) { #navcenter #tabs button { padding-left: 7px; padding-right: 7px; } }
+  @media (max-width: 1079px) { #navcenter #tabs button { padding-left: 5px; padding-right: 5px; font-size: 12px; } }
+  .soonpage { max-width: 520px; margin: 60px auto 0; padding: 40px 30px; text-align: center;
+    background: rgba(10,13,16,0.8); border-radius: 8px; border: 1px solid rgba(255,255,255,0.07); }
+  .soonpage .ms-soon { font-size: 34px; font-weight: 900; letter-spacing: 6px; color: var(--accent); }
+  .soonpage p { margin: 14px 0 0; font-size: 14px; line-height: 1.6; opacity: 0.75; }
+  .st-view { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25); background: rgba(10,13,16,0.75); color: #cfd8e0;
+    cursor: pointer; font-size: 11px; line-height: 1; padding: 0; opacity: 0; transition: opacity 0.12s;
+    z-index: 2; }
+  .skintile:hover .st-view { opacity: 1; }
+  .st-view:hover { background: rgba(255,255,255,0.18); }
+  /* No vignette, no glow: CS2's background sheet (main.js loadInspectScene,
+     the grey version) sits behind the item edge to edge, with the header
+     and the button row over it. */
+  #inspectov { position: fixed; inset: 0; z-index: 70; background: transparent; }
+  #inspectov .mbtn { width: auto; display: inline-block; }
+  /* CS2'S OWN PICTURE OF THE ITEM, as a reference to hold the 3D view against.
+     It sits in a corner panel and is LABELLED, because the last time this
+     render shared the card with the model the two read as two of the same gun
+     and every "the skin is wrong" report was really about comparing them. */
+  #inspectov .in-ref, #caseopen .in-ref { position: absolute; right: 22px; top: 20px; width: min(26vw, 300px);
+    background: rgba(10,13,17,0.72); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 6px; padding: 8px 8px 6px; backdrop-filter: blur(3px); }
+  #inspectov .in-ref img, #caseopen .in-ref img { display: block; width: 100%; height: auto; }
+  #inspectov .in-ref-cap, #caseopen .in-ref-cap { font-size: 10px; letter-spacing: 1.6px; opacity: 0.55;
+    text-align: center; margin-top: 4px; }
+  #inspectov .in-ref.hide, #caseopen .in-ref.hide { display: none; }
+  @media (max-width: 900px) { #inspectov .in-ref, #caseopen .in-ref { width: 34vw; right: 10px; top: 10px; } }
+  #pause-back { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 60;
+    background: var(--accent, #8bc53f); color: #10151a; border: 0; padding: 12px 26px; border-radius: 5px;
+    font-weight: 800; letter-spacing: 2px; font-size: 13px; cursor: pointer; display: none;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.5); }
+  #pause-back:hover { filter: brightness(1.1); }
+  #tabs button { white-space: nowrap; }
+  /* DEFAULT MARKER. Every option row marks the value the game ships with, so
+     "what was this before I touched it" is answerable without a reset. A dot,
+     not a word -- these rows are three-to-a-line on a phone. */
+  .qrow button.isdef::after { content: '\2022'; position: absolute; top: 1px; right: 3px;
+    font-size: 9px; line-height: 1; opacity: 0.45; pointer-events: none; }
+  .qrow button { position: relative; }
+  .qrow button.isdef.sel::after { opacity: 0.75; }
+  /* AUTO, beside GRAPHICS: shown while the game is choosing the preset for this
+     device (src/autoperf.js). A label, not a control -- picking an option is how
+     you take over, RESET TO DEFAULTS is how you hand it back. */
+  .autotag { display: inline-block; margin-left: 6px; padding: 1px 5px; font-size: 9px; letter-spacing: 1px;
+    vertical-align: middle; color: var(--accent); border: 1px solid var(--accent); border-radius: 2px; opacity: 0.85; }
+  /* "HARDWARE ACCELERATION IS OFF" (hud.js showHwNotice): the browser is drawing
+     the game on the CPU, which no graphics setting can rescue -- say so, and
+     say where the switch is. Over the menu, dismissible, never during a match. */
+  #hwnotice, #locknotice, #locknotice2 { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 40;
+    width: min(680px, calc(100% - 32px)); box-sizing: border-box; padding: 12px 40px 12px 14px;
+    background: rgba(24,14,10,0.94); border: 1px solid #e0a040; border-radius: 3px;
+    color: #f1e6d4; font-size: 13px; line-height: 1.45; text-align: left; }
+  #hwnotice b, #locknotice b, #locknotice2 b { display: block; margin-bottom: 4px; color: #ffc15a; font-size: 12px; letter-spacing: 1.5px; }
+  #hwnotice button, #locknotice button, #locknotice2 button { position: absolute; top: 6px; right: 8px; width: 26px; height: 26px; padding: 0; cursor: pointer;
+    background: transparent; color: #f1e6d4; border: 1px solid rgba(255,255,255,0.25); border-radius: 2px;
+    font-size: 14px; line-height: 1; }
+  #hwnotice button:hover, #locknotice button:hover, #locknotice2 button:hover { background: rgba(255,255,255,0.14); }
+  /* the menu doubles as the in-match settings, where the pause overlay's own
+     copy (#locknotice2) is the one on screen */
+  #menu.pausemode #hwnotice, #menu.pausemode #locknotice { display: none; }
+  /* CS2 classic static (esports default): thickness 2 / length 6 / gap 3,
+     hard 1px black outline, no dynamic wobble — the exact screen center is
+     the bullet ray, so the cross stays glued to it */
+  .chline { position: absolute; background: #3cff5a; outline: 1px solid rgba(0,0,0,0.85); }
+  .ch-n { left: -1px; top: -9px; width: 2px; height: 6px; }
+  .ch-s { left: -1px; top: 3px;  width: 2px; height: 6px; }
+  .ch-w { left: -9px; top: -1px; width: 6px; height: 2px; }
+  .ch-e { left: 3px;  top: -1px; width: 6px; height: 2px; }
+  /* OUTER crosshair: the cone the bullet can actually land in. Four dashes
+     that ride out from the centre with the live inaccuracy, so standing still
+     collapses them onto the inner cross and moving/jumping pushes them wide.
+     Same green, thinner, so the inner mark still reads as "where I am aiming"
+     and the outer one as "where it might go". */
+  .chout { position: absolute; background: #3cff5a; outline: 1px solid rgba(0,0,0,0.7);
+           opacity: 0.85; will-change: transform; }
+  .cho-n, .cho-s { left: -1px; top: -1px; width: 2px; height: 7px; }
+  .cho-w, .cho-e { left: -1px; top: -1px; width: 7px; height: 2px; }
+  #crosshair.nofollow .chline, #crosshair.nofollow .chout { }
+
+  /* hitmarker */
+  /* The hitmarker rides the CROSSHAIR, not the screen centre. With
+     crosshair-follows-shots on, the mark can be 200px up the screen mid-spray,
+     and a hit flash pinned to the centre would flash somewhere the player is
+     not looking. The offset goes on a WRAPPER because #hitmark's own transform
+     is owned by the hmpop scale animation. */
+  #hitmarkwrap { position: absolute; left: 50%; top: 50%; will-change: transform; }
+  #hitmark { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity 0.08s; }
+  #hitmark.pop { animation: hmpop 0.14s ease-out; }
+  @keyframes hmpop { 0% { transform: scale(1.55); } 100% { transform: scale(1); } }
+  /* death: red vignette + killer card */
+  #deathov { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.35s;
+    background: radial-gradient(circle at 50% 50%, rgba(120,10,8,0.25) 0%, rgba(90,6,5,0.55) 70%, rgba(60,3,3,0.75) 100%); }
+  #killcard { position: absolute; top: -120px; left: 50%; transform: translateX(-50%); transition: top 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+    background: linear-gradient(180deg, rgba(14,17,21,0.96), rgba(10,12,15,0.96)); border: 1px solid rgba(255,255,255,0.14);
+    border-top: 3px solid #e05a4e; border-radius: 0 0 8px 8px; padding: 12px 26px 14px; text-align: center; z-index: 30;
+    box-shadow: 0 10px 34px rgba(0,0,0,0.6); }
+  #killcard.show { top: 0; }
+  #killcard .kc-label { font-size: 10px; letter-spacing: 3px; opacity: 0.55; margin-bottom: 5px; }
+  #killcard .kc-name { font-size: 19px; font-weight: 800; letter-spacing: 1px; }
+  #killcard .kc-wep { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 7px; }
+  #killcard .kc-wep img { width: 72px; height: 27px; object-fit: contain; }
+  #killcard .kc-wname { font-size: 12.5px; opacity: 0.85; }
+  #killcard .kc-skin { font-size: 11px; color: #8bb4e8; letter-spacing: 0.4px; }
+  /* directional damage arcs (4-slot, rotated to the attacker bearing) */
+  .dmgarc { position: absolute; left: 50%; top: 50%; width: 130px; height: 130px; margin: -65px 0 0 -65px;
+    pointer-events: none; border-radius: 50%; border: 5px solid transparent; border-top-color: rgba(224, 52, 44, 0.9);
+    opacity: 0; }
+  #targetid { position: absolute; left: 50%; top: calc(50% + 28px); transform: translateX(-50%);
+    font-size: 13px; font-weight: 600; letter-spacing: 0.6px; opacity: 0; transition: opacity 0.12s;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.95); pointer-events: none; }
+  #smokeov { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.14s;
+    background: radial-gradient(circle at 50% 50%, rgba(205,208,210,0.99) 0%, rgba(185,188,190,0.97) 60%, rgba(165,168,170,0.95) 100%); }
+  .hm { position: absolute; width: 8px; height: 2px; background: #fff; box-shadow: 0 0 2px #000; }
+  #hitmark.hs .hm { background: #ff4040; }
+  .hm0 { transform: translate(-13px,-9px) rotate(45deg); }
+  .hm1 { transform: translate(5px,-9px) rotate(-45deg); }
+  .hm2 { transform: translate(-13px,7px) rotate(-45deg); }
+  .hm3 { transform: translate(5px,7px) rotate(45deg); }
+
+  /* status — CS2-style dark backing panels, condensed digits */
+  #statl { position: absolute; left: 16px; bottom: 14px; display: flex; gap: 16px; align-items: baseline;
+    background: linear-gradient(180deg, rgba(10,13,16,0.0), rgba(10,13,16,0.55)); padding: 6px 16px 8px;
+    border-radius: 4px; }
+  #hp { font-size: 38px; font-weight: 700; font-family: var(--num-font); letter-spacing: 0.5px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+  #hp.low { color: var(--danger); }
+  /* health/ammo/weapon tinted by the player's team */
+  #hud.team-ct #hp, #hud.team-ct #ammo, #hud.team-ct #wname { color: var(--ct); }
+  #hud.team-t #hp, #hud.team-t #ammo, #hud.team-t #wname { color: var(--t); }
+  #hud.team-ct #hp.low, #hud.team-t #hp.low { color: var(--danger); }
+
+  /* in-game team selection (CS2-style) */
+  #teamsel { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 28px; pointer-events: auto !important;
+    background: radial-gradient(ellipse at center, rgba(8,10,13,0.45) 0%, rgba(8,10,13,0.85) 100%); }
+  #hud.teamselect #crosshair, #hud.teamselect #tcrow, #hud.inmenu #tcrow { display: none !important; }
+  #hud.teamselect #radar, #hud.inmenu #radar { display: none !important; }
+
+  /* CS2 RADAR -- geometry straight out of panorama/styles/hud/hudradar.vcss:
+       @define Radar_PanelSize      300px    the panel the dial sits in
+       @define Radar_VisSize_Round  250px    the visible dial
+       @define Radar_Overlay_Round  248px    its border ring
+       #Radar { x: 0px; y: 40px; }           the panel's offset from the corner
+     The dial is centred in the panel, so its top-left is 25px in and 40+25px
+     down at Valve's 1080p reference. --cs2-ui-scale is the same factor the top
+     strip and scoreboard use, which is what the engine does with screen height. */
+  #radar { position: absolute; display: none; border-radius: 50%;
+    /* --rd-inset is the gap from the screen corner, at Valve's 1080p reference
+       so it scales with everything else. One value drives both axes, which is
+       what keeps it reading as tucked into the corner rather than floating. */
+    --rd-inset: 14px;
+    left: calc(var(--rd-inset) * var(--cs2-ui-scale, 1));
+    top: calc(var(--rd-inset) * var(--cs2-ui-scale, 1));
+    width: calc(250px * var(--cs2-ui-scale, 1));
+    height: calc(250px * var(--cs2-ui-scale, 1));
+    /* #Radar__Round--Inner: background-color hud-blur-bg-color (#000000a0 in
+       csgostyles) plus world-blur. The dial is painted HERE rather than in the
+       canvas so the blur can reach the world behind it, which is what
+       world-blur does and what a canvas fill cannot.
+
+       THE RING IS NOT WHITE. .Radar__Round--BorderClass reads `border-color:
+       white`, but the panel carrying it is
+           <Panel id="Radar__Round--Border" class="hud-colorize-wash ..." />
+       and hud-colorize-wash repaints it -- at CS2's default HUD colour that is
+       the team tint, so the ring never renders as the bright white the rule
+       alone suggests. Reading the border-color literally and ignoring the wash
+       is what put a hard white ring on the dial.
+
+       TOP OFFSET is ours, not Valve's: #Radar sets `y: 40px`, which with the
+       dial's 25px inset lands it at 65. Moved up to sit where the reference
+       capture has it. */
+    background: #000000a0;
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    border: 1px solid #4a4f55; }
+
+  /* 3D skin reveal: the same sheet behind it, nothing over it */
+  #caseopen.reveal3d { background: transparent !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  #caseopen.reveal3d #co-open, #caseopen.reveal3d #co-title { visibility: hidden; }
+  #menu.rv3dmode #discordcard,
+  #menu.rv3dmode #tab-cases, #menu.rv3dmode #tab-locker, #menu.rv3dmode #topnav, #menu.rv3dmode #menufoot,
+  #menu.rv3dmode #pause-back,                          /* the pause screen's BACK TO GAME sat on the reveal's button row */
+  #menu.casemode #pause-back,                          /* ...and on the wallet line through the unlock beat and the spin */
+  #menu.rv3dmode #tab-play { visibility: hidden; }   /* play tab too: its "Player" title bled through the reveal */
+  /* name + rarity crown the reveal from the TOP — weapon owns mid-screen,
+     wallet/buttons live at the bottom edge (CS2 reveal framing) */
+  #revealcard.rv3d { position: absolute; left: 0; right: 0; top: 0; bottom: auto; background: none !important;
+    border: none !important; box-shadow: none !important; padding: 0; gap: 0; }
+  .rv-hint { font-size: 11.5px; letter-spacing: 1.5px; opacity: 0.55; margin-top: 6px; }
+
+  /* CS2'S INSPECT CHROME, converted from panorama/styles/popups/
+     popup_capability_shared.vcss + popup_inventory_inspect.vcss (layouts
+     popup_inspect_header.vxml, popup_inspect_action-bar.vxml). The header:
+     the set image 128 px tall beside the name (50 px Stratum2 Medium) and
+     its line under it (fontSize-l, 24 px) -- here the CASE the item came
+     from, image and name, by the user's choice, not the collection -- then
+     the rarity bar: 6 px, white -> #b9b9b9 washed by the rarity colour, a
+     1px 1px 6px shadow, 8 px above and below, as wide as the header block.
+     The button row at the foot: 968 px wide, a 1 px rgba(145,145,145,.5)
+     rule on top, 8 px padding, icon buttons (28 px, washed white) at the
+     left and the text buttons (PopupButton: 24 px condensed uppercase,
+     10/12/8 px margins, a faint hover) at the right. Our own lines -- the
+     rarity, condition, pattern and float, the drag hint, the wallet -- ride
+     in the same block. 1080p px scaled by the screen (--u), like the reel. */
+  #inspectov { --u: calc(100vh / 1080 / var(--ms, 1)); }
+  .cs2ins-top { position: absolute; left: 0; right: 0; top: 0; padding-top: calc(48 * var(--u));
+    display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 3; }
+  .cs2ins-block { display: inline-flex; flex-direction: column; align-items: stretch; max-width: 92vw; }
+  .cs2ins-head { display: flex; align-items: center; justify-content: center; }
+  .cs2ins-set { height: calc(128 * var(--u)); width: auto; padding-right: calc(8 * var(--u)); flex: 0 0 auto; }
+  .cs2ins-text { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+  .cs2ins-name { font-family: 'Stratum2 Medium', 'Stratum2', Arial, sans-serif; font-weight: 500;
+    font-size: calc(50 * var(--u)); line-height: 1.0; color: #fff; max-width: min(calc(640 * var(--u)), 62vw);
+    text-shadow: 0 0 0 #535353; }
+  .cs2ins-sub { font-family: 'Stratum2', Arial, sans-serif; font-size: calc(24 * var(--u)); color: #fff; opacity: 0.92;
+    margin-top: calc(2 * var(--u)); }
+  .cs2ins-meta { font-size: calc(18 * var(--u)); opacity: 0.8; margin-top: calc(6 * var(--u)); letter-spacing: 0.3px; }
+  .cs2ins-bar { height: calc(6 * var(--u)); margin: calc(8 * var(--u)) 0;
+    background: linear-gradient(to right, var(--rc), color-mix(in srgb, var(--rc) 72.5%, #000));
+    box-shadow: 1px 1px 6px 0 rgba(0,0,0,0.31); }
+  .cs2ins-hint { font-size: calc(13 * var(--u)); letter-spacing: 1.5px; opacity: 0.55; text-align: center; }
+  /* CS2's own mouse glyph (icons/ui/mouse_left.vsvg) in place of the mouse emoji */
+  .cs2ins-mouse { height: calc(16 * var(--u)); width: auto; vertical-align: -3px; margin-right: 6px; }
+  .cs2ins-bottom { position: absolute; left: 50%; bottom: calc(8 * var(--u)); translate: -50% 0; z-index: 4;
+    width: min(calc(968 * var(--u)), 96vw); border-top: 1px solid rgba(145,145,145,0.5);
+    padding: calc(8 * var(--u)) 0; display: flex; flex-wrap: nowrap; align-items: center; gap: calc(8 * var(--u)); margin: 0; }
+  .cs2ins-btns { display: flex; align-items: center; margin-left: auto; }
+  .cs2ins-bottom .mbtn, .cs2ins-bottom #co-equip, .cs2ins-bottom #co-again, .cs2ins-bottom #co-close { width: auto; min-width: 0; flex: 0 0 auto; margin: calc(4 * var(--u));
+    padding: calc(10 * var(--u)) calc(12 * var(--u)) calc(8 * var(--u)); border: 0; border-radius: 3px; color: #fff;
+    background: linear-gradient(to left, rgba(0,0,0,0), rgba(0,0,0,0) 50%, rgba(0,0,0,0.06)); box-shadow: none;
+    font-family: 'Stratum2 Medium', 'Stratum2', Arial, sans-serif; font-weight: 500; font-stretch: condensed;
+    font-size: calc(24 * var(--u)); text-transform: uppercase; letter-spacing: 0; white-space: nowrap; transition: background-color 0.2s; }
+  .cs2ins-bottom .mbtn:hover, .cs2ins-bottom #co-close:hover { background-color: rgba(255,255,255,0.05); filter: none; }
+  .cs2ins-bottom #co-again:disabled { opacity: 0.4; }
+  /* OPEN AGAIN is CS2's .PopupButton.Positive: positiveColor #0F9D58, brightness 1.4 on hover
+     (after the shared rule above, which would otherwise win the background) */
+  .cs2ins-bottom #co-again { background: #0F9D58; }
+  .cs2ins-bottom #co-again:hover:not(:disabled) { background: #0F9D58; filter: brightness(1.4); }
+  .cs2ins-bottom #co-equip:disabled { opacity: 0.55; }
+  .cs2ins-bottom #co-wallet { position: static; transform: none; margin: 0 auto 0 calc(8 * var(--u)); font-size: calc(16 * var(--u));
+    white-space: nowrap; flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }   /* gives way first: the buttons never wrap */
+  .cs2ins-bottom #co-wallet b { font-size: calc(18 * var(--u)); }
+
+  /* The player strip is styled entirely by ui/cs2_teamcounter.css, which is
+     Valve's own hudteamcounter.vcss converted to browser CSS. Only the two
+     positioning rules that place the strips relative to OUR score bar live
+     here -- CS2's own sheet cannot know where that is. */
+  /* The row itself is Valve's (#TeamCounterBG > #TeamCounter > containers),
+     styled by the converted sheet. This only pins the row to the top of OUR
+     screen and lets the scaled 1920px row centre in whatever width we have. */
+  #tcrow { position: absolute; top: 10px; left: 0; right: 0; display: flex;
+    justify-content: center; pointer-events: none; }
+  #tcrow .cs2tc { flex: none; }
+  #avct, #avt { display: flex; }
+  /* THE ONE PIECE VALVE'S STYLESHEET DOES NOT CARRY. CS2 keeps the card badges
+     in a `#Invisible` panel (visibility: collapse) and hudteamcounter.vts moves
+     them onto the portrait at runtime. We have the sheet but not the script, so
+     the overlay placement is ours -- the badges' own sizes, colours and shadows
+     still come from Valve's rules, only `position` does not. */
+  #avct .AavatarVisibleContainer, #avt .AavatarVisibleContainer { position: relative; }
+  #avct .AavatarVisibleContainer > .AvatarL__C4,
+  #avt  .AavatarVisibleContainer > .AvatarL__C4,
+  #avct .AavatarVisibleContainer > .AvatarL__DefuseKit,
+  #avt  .AavatarVisibleContainer > .AvatarL__DefuseKit { position: absolute; right: 1px; bottom: 1px; }
+  #avct .AavatarVisibleContainer > .AvatarL__PlayerNumber,
+  #avt  .AavatarVisibleContainer > .AvatarL__PlayerNumber { position: absolute; top: 0; right: 2px; }
+  #avct .AavatarVisibleContainer > .AvatarL__Skull,
+  #avt  .AavatarVisibleContainer > .AvatarL__Skull,
+  #avct .AavatarVisibleContainer > .AvatarL__Bot,
+  #avt  .AavatarVisibleContainer > .AvatarL__Bot { position: absolute; inset: 0; margin: auto; }
+  /* CS2's layout sets scaling="stretch-to-fit-preserve-aspect" on every one of
+     these <Image>s. That is an ATTRIBUTE, not CSS, so the converter never sees
+     it -- without it the SVGs are squashed to whatever box they land in. */
+  #avct .AavatarVisibleContainer img, #avt .AavatarVisibleContainer img { object-fit: contain; }
+  /* THE PORTRAIT IS SQUARE, FULL STOP. CS2's image panel is 54 wide x 62 tall
+     (AvatarLImageHeight) inside a 54x54 square that clips it, and its avatar
+     fills that panel -- so Valve stretches a square Steam avatar 15% tall and
+     then crops the bottom off. Reproducing that faithfully is what put the
+     squash in ours. The panel is squared to 54 here instead: CS2's own
+     avatar-ct/avatar-terrorist are 42x42, so a square source in a square box
+     shows whole and undistorted, which is what the HUD is meant to read as. */
+  /* 100%, not 54px: the container's 2.5px outline eats into its content box,
+     so a hard 54 overflowed it and left the panel 28.4 x 30.4 -- still not
+     square. 100% tracks the content box, which IS square. */
+  #avct .pid-AvatarL__ImageBG, #avt .pid-AvatarL__ImageBG { height: 100%; }
+  #avct .AavatarVisibleContainer img.AvatarL__Internal,
+  #avt  .AavatarVisibleContainer img.AvatarL__Internal { object-fit: contain; width: 100%; height: 100%; }
+  #teamsel h1 { font-size: 30px; letter-spacing: 7px; margin: 0; color: #e8edf2;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.85); font-weight: 800; }
+  #teamsel .tsmap { font-size: 13px; letter-spacing: 3px; opacity: 0.65; margin-top: -16px; }
+  #teamsel .tscards { display: flex; gap: 24px; }
+  .tscard { width: 306px; height: 356px; border-radius: 10px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.14); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px; position: relative; overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+  .tscard:hover { transform: translateY(-6px); border-color: rgba(255,255,255,0.55); }
+  .tscard.ct { background: linear-gradient(168deg, #2c4a6e 0%, #141d26 72%); }
+  .tscard.t { background: linear-gradient(168deg, #6e5322 0%, #241c10 72%); }
+  .tscard.ct:hover { box-shadow: 0 16px 44px rgba(70,130,200,0.35); }
+  .tscard.t:hover { box-shadow: 0 16px 44px rgba(210,160,50,0.3); }
+  .tscard .mono { font-size: 104px; font-weight: 900; font-family: var(--num-font); line-height: 1; }
+  .tscard.ct .mono { color: var(--ct); text-shadow: 0 0 36px rgba(125,184,240,0.55); }
+  .tscard.t .mono { color: var(--t); text-shadow: 0 0 36px rgba(234,190,84,0.5); }
+  .tscard .tname { font-size: 16.5px; letter-spacing: 2.5px; font-weight: 700; }
+  .tscard .tdesc { font-size: 12.5px; opacity: 0.65; letter-spacing: 0.4px; text-align: center;
+    padding: 0 24px; line-height: 1.55; }
+  #teamsel .tsback { background: none; border: none; color: #9aa7b4; font-size: 12px;
+    letter-spacing: 2px; cursor: pointer; padding: 8px 14px; font-family: inherit; }
+  #teamsel .tsback:hover { color: #fff; }
+  /* shown only while the map is still loading behind the cards, or while the
+     scene warms after a pick */
+  #teamsel .tsload { display: none; width: 300px; }
+  #teamsel .tsbar { height: 2px; background: rgba(255,255,255,0.10); overflow: hidden; }
+  #teamsel .tsbar i { display: block; height: 100%; width: 0;
+    background: linear-gradient(90deg, #5b8db8, #9fc4e8);
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+  #teamsel .tsrow { display: flex; justify-content: space-between; margin-top: 9px;
+    color: #7f8b98; font-size: 10.5px; letter-spacing: 2.4px; }
+  #teamsel .tspct { font-family: var(--num-font); letter-spacing: 1px; color: #9aa7b4; }
+  /* before the map exists the canvas behind is a flat clear, so the veil is
+     opaque and matches it; when the map lands the class goes and the gradient
+     transition fades the flyover in instead of cutting to it */
+  #teamsel { transition: background 0.7s ease; }
+  #teamsel.tspreload { background: #0d1116; }
+  /* ONCE A SIDE IS PICKED THE VEIL GOES SOLID, IMMEDIATELY.
+     The build behind it finishes with `state = 'playing'` and starts round one,
+     so the live HUD (freeze clock, round banner, radar, ammo) and the
+     first-person view were drawing THROUGH the cards while the frame gate
+     still held -- two screens at once. #teamsel is z-index 40 and the whole
+     gameplay HUD is z-index auto, so an opaque background covers all of it and
+     the 3D canvas besides. `transition: none` because fading to it over 0.7s
+     would just show the mixed state for 0.7s. */
+  #teamsel.tsloading { background: #0d1116; transition: none; }
+
+  #teamsel.tsloading .tsload, #teamsel.tspreload .tsload { display: block; }
+  #teamsel.tsloading .tsback { visibility: hidden; }
+  #teamsel.tsloading .tscards { opacity: 0.4; pointer-events: none; transition: opacity 0.2s; }
+  #teamsel .tsdots::after { content: ''; animation: tsdots 1.2s steps(4, end) infinite; }
+  @keyframes tsdots { 0% { content: ''; } 25% { content: '.'; }
+    50% { content: '..'; } 75% { content: '...'; } }
+  #hp b, #armor b { font-size: 20px; opacity: 0.75; font-weight: 400; margin-right: 5px; }
+  /* ---- CS2 bottom bar placement ------------------------------------------
+     Everything inside is styled by ui/cs2_bottom.css, generated from Valve's
+     hudhealthammocenter.vcss. Only the strip's place on OUR screen lives here:
+     #HudBottomCenter is a full-width panel and .hud-HA is `vertical-align:
+     bottom; horizontal-align: center`, so this is that panel. .hud-HA itself
+     ships `opacity: 0` (a state class reveals it in CS2) -- shown here. */
+  #cs2bottom { position: absolute; left: 0; right: 0; z-index: 5;
+    bottom: calc(2px * var(--cs2-ui-scale, 1));   /* #HudBottomCenter margin-bottom */
+    display: flex; justify-content: center; align-items: flex-end;
+    pointer-events: none; }
+  .cs2bt .hud-HA { opacity: 1; }
+  /* The bar's own background is Valve's red gradient (the damage); the white
+     ProgressBarLeft on top of it is the health remaining. Valve sizes it 65x8
+     -- .hud-HA-bar,#AmmoClipBar { width:65px; height:8px }. */
+  /* NO BLACK OUTLINE. Valve rings the bar `1px solid #000000`, which at our
+     size reads as a hard box drawn around it rather than as a bar. The red
+     track already separates it from the world. */
+  .cs2bt .hud-HA-bar { display: block; position: relative; overflow: hidden;
+    border: 0; }
+  /* HEALTH REMAINING IS THE TEAM COLOUR. Valve fills it `#ffffff` -- the only
+     white thing left on a bar that is otherwise entirely team-washed. The
+     track behind it stays Valve's red, so the exposed part still reads as
+     damage taken; only the remaining half changes hue. --wash comes from the
+     `hud-colorize-wash` class on the element, CS2's own mechanism. */
+  .cs2bt .hud-HA-bar .ProgressBarLeft { position: absolute; inset: 0 auto 0 0;
+    height: 100%; transition: width 0.18s ease-out;
+    background-color: var(--wash, #fff); }
+  .cs2bt .hud-HA-bar .ProgressBarRight { display: none; }
+  /* the badge circle takes hud-blur-bg-color + world-blur through an
+     opacity-mask; in a browser that is a round box with a backdrop filter */
+  .cs2bt .hud-HA-center { border-radius: 50%;
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+  /* ICON SIZES COME FROM THE LAYOUT, NOT THE SHEET. hudhealthammocenter.vxml
+     carries them as texturewidth attributes on each Image -- armor 42px,
+     helmet 46px, heavy 26px, the team logos 48px -- and CSS never sees them,
+     so an extracted stylesheet alone leaves every one of these at 0x0. */
+  .cs2bt .hud-HA-icon--armor  { width: 42px; height: 42px; }
+  .cs2bt .hud-HA-icon--helmet { width: 46px; height: 46px; }
+  /* NO --wash here: the badge takes its colour from Valve's own
+     `.csgo-hud__color-0.HUD--team--ct .hud-colorize-wash` like everything else
+     on the bar. Pinning it white was overriding the team colour. */
+  .cs2bt .hud-HA-center-icon  { width: 40px; height: 40px; }
+  .cs2bt .hud-HA-icon, .cs2bt .hud-HA-center-icon { align-self: center;
+    justify-self: center; margin: auto; }
+  .cs2bt .hud-HA-icon-outline-container { width: 46px; }
+  /* A WASH ON TEXT IS ITS COLOUR; a wash on an image is a fill through the
+     alpha. Panorama uses one property for both, and the converter can only
+     emit `--wash`, so the text case is closed here. --wash itself is set by
+     Valve's own rule -- `.csgo-hud__color-0.HUD--team--ct .hud-colorize-wash`
+     -> ct-color / t-color -- which is why the bar takes your team's colour
+     without a single colour being written in our code. */
+  .cs2bt .Label.hud-colorize-wash { color: var(--wash, #fff); }
+  /* THE RESERVE NUMBER SIZES TO ITS DIGITS. Valve pins it at `width: 30px`
+     with `text-align: right`, which works in Panorama because the space to its
+     left is empty -- the glyphs simply spill into it. Ours has the pipe there,
+     so a three-digit reserve like 120 (~55px at 32px type) rendered straight
+     through the divider and into the clip number. min-width keeps Valve's
+     column for the common two-digit case. */
+  /* THE RESERVE IS THE QUIET NUMBER. Valve sets it 32px against the clip's 42,
+     and we matched that exactly -- but at three digits (120) a 0.76 ratio still
+     reads as two numbers of equal weight. 26px puts the clip clearly in front,
+     which is what the readout is for: the clip is what you act on, the reserve
+     is a footnote. The min-width comes down with it so a two-digit reserve does
+     not sit in a column wider than itself. */
+  .cs2bt .hud-WPN-reserve-text__label { width: auto; min-width: 22px;
+    padding-left: 2px; font-size: 26px; }
+  /* THE RESERVE MARK IS ALWAYS SHOWN. Valve collapses it by default and reveals
+     it with a class PAIR -- `.HUD--ammo-reserve--<type> .ammo-reserve--<type>`
+     -- keyed on the magazine type. Driving the glyph off the FIRE MODE instead
+     means those classes are never set, so the icon stayed collapsed and
+     vanished. Shown outright; which glyph appears is decided in _setAmmo. */
+  .cs2bt .hud-HA-icon-container .hud-WPN-ammo-reserve__icon { display: block; }
+  /* SPACE AROUND THE MARK. Valve's icon container is a flush 32px column that
+     butts straight against the reserve digits -- in CS2 the digits are pinned
+     to a 30px box with room to spare on their left, so the gap comes for free.
+     Ours sizes to its text, so the icon ended up touching the number. Given a
+     margin of its own, and centred in its column rather than sitting wherever
+     the 18px glyph lands in a full-height box. */
+  .cs2bt .hud-HA-icon-container { margin-left: 6px;
+    display: flex; align-items: center; justify-content: center; }
+  .cs2bt .hud-WPN-reserve-text { width: auto; }
+  /* the pipe takes Valve's own size and fade; it just needs to sit on the
+     baseline between the two numbers rather than in its own grid cell */
+  .cs2bt .hud-WPN-pipe { align-self: center; justify-self: center;
+    line-height: 1; font-weight: 400; margin: 0 3px; }
+  /* ADDITIVE. hudhealthammocenter.vxml marks both side containers and the badge
+     circle `additive` -- Valve's additive blend -- which is what gives the bar
+     its slightly see-through, lit look over the world rather than sitting on it
+     as flat paint. `plus-lighter` is the CSS equivalent; `screen` is the
+     fallback where it is not supported. */
+  /* THE STROKES CARRY THE TEAM COLOUR END TO END. Valve draws them as a
+     white-to-transparent gradient with a team wash multiplied over it; a
+     browser cannot multiply a wash into a background-image, so the gradient is
+     rebuilt from --wash directly -- same shape, one hue the whole way. */
+  .cs2bt .hud-HA__stroke.left { background-image:
+    linear-gradient(270deg, var(--wash, #fff) 0%, transparent 100%); }
+  .cs2bt .hud-HA__stroke.right { background-image:
+    linear-gradient(90deg, var(--wash, #fff) 0%, transparent 100%); }
+  /* the badge ring: Valve's 3px, taking the team colour */
+  /* THE BADGE DISC IS DARK GREY, as CS2 ships it. Valve fills it `#000000a0`
+     -- flat black at alpha 0.627 -- and this is that, lifted off pure black to
+     a dark grey and held a little more transparent so more of the world reads
+     through. The team colour stays where it belongs: on the ring, the emblem
+     and the two strokes. It kept `hud-colorize-wash` in the markup, which is
+     harmless -- nothing here reads --wash any more. */
+  .cs2bt .hud-HA-center { background-color: rgba(24, 28, 33, 0.55); }
+  .cs2bt .hud-HA-center__circle__border { border: 3px solid var(--wash, #fff);
+    border-radius: 50%; width: 100%; height: 100%; box-sizing: border-box;
+    align-self: center; justify-self: center; }
+  .cs2bt .additive { mix-blend-mode: screen; }
+  @supports (mix-blend-mode: plus-lighter) {
+    .cs2bt .additive { mix-blend-mode: plus-lighter; }
+  }
+  .cs2bt .hud-HA__stroke.hud-colorize-wash { background-color: var(--wash, #fff);
+    opacity: 0.45; }
+  /* the reserve icon is sized by the sheet but revealed by the class pair; a
+     knife or the bomb has no ammo at all, so the whole right half goes */
+  .cs2bt.no-ammo .hud-WPN-main { visibility: hidden; }
+  #hud.inmenu #cs2bottom, #hud.teamselect #cs2bottom { display: none; }
+  #armor { font-size: 26px; font-weight: 600; font-family: var(--num-font); color: #9fc4e8; }
+  /* CS2's money, from hudmoney.vcss: the digits are `width: 18px; font-size:
+     38px; font-weight: bold; color: defaultColor` (#ffffff) inside .money, an
+     80px panel in #HudLowerLeft -- `horizontal-align: left; vertical-align:
+     bottom` -- with .money-text sitting `y: -22px` off that bottom. So: bottom
+     left, 38px bold white, ~22px up. It is white in CS2, not green; the green
+     and red are the +/- animations (AddMoneyColor #8fff6f, RemoveMoneyColor
+     #fd3535). */
+  /* NO calc(* --cs2-ui-scale) HERE. Money used to sit outside the HUD scope and
+     had to scale itself; it now lives inside .cs2bt, which already applies that
+     factor as `zoom` -- so the multiply was happening twice and the readout
+     came out 43.7px against the health's 42. Plain px, like every other value
+     inside the scope, and matched to hud-HA-large-font-size so the two read as
+     one line. (CS2's own money is 38px against health's 42; matched at request.) */
+  #money { position: absolute; z-index: 5;
+    left: 30px;
+    bottom: 22px;
+    font-size: 42px;
+    font-weight: 700; font-family: 'Stratum2 Bold TF', 'Stratum2', var(--num-font);
+    /* the same black outline the bar had -- an offset shadow plus a dark halo,
+       which at 42px reads as an inked edge on the digits. Dropped; the figure
+       sits on the team wash like every other number on the bar. */
+    color: var(--wash, #fff); text-shadow: none; }
+  /* THE CENTRE MUST NOT MOVE WHEN THE AMMO APPEARS.
+     Both halves of the bar are `flex: 1 1 0` and so should be exactly equal --
+     but a flex item defaults to `min-width: auto`, which refuses to shrink
+     below its own content. Draw a knife and the ammo labels empty out; draw a
+     gun and they fill, the right half claims 8px more than its share, and the
+     badge and the health number slide 4px left. Measured: health at 411 with a
+     knife, 407 with any gun, constant regardless of how many digits the ammo
+     has -- it is the presence of content, not its width.
+     `min-width: 0` lets both halves hold exactly half, so the centre is fixed
+     and nothing reflows on a weapon switch. */
+  .cs2bt .hud-HA-side { min-width: 0; }
+  .cs2bt .hud-state, .cs2wp .hud-state { display: contents; }
+  /* CS2 weapon list, bottom right. #HudBottomRight is `horizontal-align:
+     right; vertical-align: bottom; flow-children: down`, and .weapon-row is
+     300px wide with a 6px right margin -- so this is that column. Rows stack
+     upward from just above the bottom bar. */
+  #cs2weapons { position: absolute; z-index: 5; pointer-events: none;
+    /* BACK INTO THE CORNER. The 22px reserve for the number that hangs off the
+       glyph pushed the whole column inward; giving it a negative right instead
+       keeps that room without moving the icons off the edge, so the column
+       sits where it did before the number moved to the corner. */
+    right: -6px;
+    bottom: calc(26px * var(--cs2-ui-scale, 1));
+    padding-right: 22px;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+  .cs2wp .weapon-row { display: flex; justify-content: flex-end;
+    position: relative; align-items: center; }
+  /* THE ROW STACKS: glyph on top, name beneath. Valve's own container is a
+     horizontal flow with the name beside the icon, so this is a deliberate
+     departure from the sheet -- asked for directly. The class name is Valve's
+     and now lies about its direction; kept so the generated rules still land. */
+  .cs2wp .weapon-row-horiz-container { display: flex; flex-direction: column;
+    align-items: flex-end; justify-content: flex-end; gap: 1px; }
+  .cs2wp .weapon-selection-item { display: flex; flex-direction: row;
+    align-items: center; gap: 8px; transform: none; position: relative; }
+  .cs2wp .weapon-selection-item-icon { display: flex; flex-direction: row;
+    align-items: center; gap: 8px; transform-origin: 100% 50%;
+    transition: transform 0.12s ease-out; }
+  /* VALVE'S 400px PHANTOM, CLEARED. `.weapon-selection-item--selected` carries
+     `padding-left: 400px; margin-left: -400px` -- headroom for a slide-in
+     transition we never run. The pair cancels for POSITION, so it looks
+     harmless, but it leaves the selected item's box 400px wider than anything
+     you can see, and anything anchored to that edge lands 400px out. That is
+     exactly where the bomb went: 420px from the dots instead of 20. */
+  .cs2wp .weapon-selection-item--selected.weapon-selection-item {
+    padding-left: 0; margin-left: 0; }
+  /* THE BOMB HANGS OFF THE LEFT OF THE DOT STRIP, on the same line. Anchored to
+     the item box with `right: 100%` so it tracks the strip's edge instead of
+     needing a magic offset, and absolute so it cannot widen the row or push
+     the dots around. */
+  .cs2wp .obj-cell { position: absolute; right: 100%; margin-right: 22px;
+    top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: row; align-items: center;
+    white-space: nowrap; }
+  .cs2wp .obj-cell .weapon-selection-item-icon-main { width: 48px; height: 40px;
+    opacity: 0.9; }
+  /* SAME CORNER AS EVERY OTHER SLOT NUMBER -- the identical top/right offsets
+     as .weapon-row-number, just anchored to the bomb's own box instead of the
+     row's, so the 5 reads as this icon's number and not as loose text beside
+     it. (.obj-cell is absolutely positioned, so it is the containing block.) */
+  .cs2wp .obj-num { position: absolute; top: -7px; right: -16px;
+    min-width: 14px; font-size: 18px; line-height: 1; opacity: 0.6;
+    display: flex; align-items: center; justify-content: flex-end; margin: 0;
+    color: var(--wash, #fff); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+  /* THE ONE IN YOUR HANDS GROWS -- per item, not per row. Slots 4 and 5 share
+     a row, so "selected" cannot mean "everything here": pressing 4 lit all four
+     cells and the bomb with them. The grenade cell and the bomb each carry
+     their own --on, and only that one scales and goes full opacity. The strip
+     itself still never scales (it would swell leftward into the bomb), so the
+     growth is contained inside the item's own cell. */
+  /* SLOT 4 AND 5 SHARE A ROW, so the row's own state must style nothing here --
+     five things live in it and only one can be in your hands. Valve's row-level
+     rules brighten and scale every glyph in a selected item, which lit all four
+     grenades and the bomb together; both are cancelled for these cells and the
+     highlight is re-applied to the one carrying --on. */
+  .cs2wp .obj-cell .weapon-selection-item-icon-main,
+  .cs2wp .nade-cell .weapon-selection-item-icon-main {
+    opacity: 0.75; filter: none; transform: none;
+    transition: transform 0.12s ease-out, opacity 0.12s, filter 0.12s; }
+  .cs2wp .weapon-row--selected .nade-cell .weapon-selection-item-icon-main,
+  .cs2wp .weapon-row--selected .obj-cell .weapon-selection-item-icon-main {
+    opacity: 0.75; filter: none; transform: none; }
+  /* four classes deep, and after the suppressor, so it wins on both counts */
+  .cs2wp .weapon-row--selected .nade-cell--on .weapon-selection-item-icon-main,
+  .cs2wp .weapon-row--selected .obj-cell--on .weapon-selection-item-icon-main,
+  .cs2wp .weapon-row .nade-cell--on .weapon-selection-item-icon-main,
+  .cs2wp .weapon-row .obj-cell--on .weapon-selection-item-icon-main {
+    opacity: 1; filter: brightness(1.5); transform: scale(1.24); }
+  .cs2wp .obj-num { opacity: 0.6; }
+  .cs2wp .weapon-row .obj-cell--on .obj-num { opacity: 1; }
+  @keyframes cs2wp-pop-cell {
+    from { transform: scale(1); }
+    to   { transform: scale(1.24); }
+  }
+  .cs2wp .weapon-row--pop .nade-cell--on .weapon-selection-item-icon-main,
+  .cs2wp .weapon-row--pop .obj-cell--on .weapon-selection-item-icon-main {
+    animation: cs2wp-pop-cell 0.11s cubic-bezier(0.16, 0.84, 0.32, 1); }
+
+  /* BIGGER. Valve authors this at a 1080p reference where the icons are ~46px
+     wide; on our screen the column read as an afterthought, so the glyphs and
+     type are stepped up together and the rows given room to breathe. */
+  .cs2wp .weapon-selection-item-icon-main { width: 74px; height: 40px;
+    transform: none; margin-right: 0; opacity: 0.75; }
+
+  /* THE ACTIVE GLYPH GROWS AND STAYS GROWN. The scale-up is the RESTING state,
+     so the weapon in your hands is permanently the biggest thing in the column;
+     the keyframe only animates the way IN to that size. It used to overshoot to
+     1.32 and settle back to 1.16, which reads as "grew, then shrank" -- the
+     shrink is the part you notice. Pure ease-out to the resting size instead:
+     the motion ends where the icon lives. The origin is the right edge so
+     growing pushes into the screen instead of off it. */
+  .cs2wp .weapon-row--selected .weapon-selection-item-icon { transform: scale(1.45); }
+  @keyframes cs2wp-pop {
+    from { transform: scale(1); }
+    to   { transform: scale(1.45); }
+  }
+  .cs2wp .weapon-row--pop .weapon-selection-item-icon {
+    animation: cs2wp-pop 0.11s cubic-bezier(0.16, 0.84, 0.32, 1); }
+  /* THE GRENADE STRIP DOES NOT GROW. The scale-up is authored for a single
+     glyph; applied to a four-cell strip it swells 99px LEFTWARD (the origin is
+     the right edge) and swallows the bomb sitting there -- measured, the 22px
+     gap became a 40px overlap. A transform never moves layout, so no anchor can
+     track it; the strip simply keeps its size. Selection still reads on this
+     row through the name and the brighter dots and number. */
+  .cs2wp .weapon-row--selected .weapon-selection-item-icon.nade-cells,
+  .cs2wp .weapon-row--selected .weapon-selection-item-icon.per-item,
+  .cs2wp .weapon-row--pop .weapon-selection-item-icon.nade-cells,
+  .cs2wp .weapon-row--pop .weapon-selection-item-icon.per-item {
+    transform: none; animation: none; }
+
+  /* SLOT 3 IS SHARED WHEN YOU OWN A ZEUS -- knife and taser side by side -- so
+     it gets the same treatment as slot 4: the row's state styles nothing, and
+     the one glyph carrying `wpn-on` takes the highlight. It keeps the weapon
+     rows' 1.45, not the 1.24 the grenades use, so a knife grows like a gun. */
+  /* ROOM FOR THE ONE THAT GROWS. The glyphs scale from their RIGHT edge
+     (transform-origin: 100% 50%, inherited from the strip), so a selected knife
+     expanded 33px straight into the Zeus parked beside it -- a transform never
+     reserves space, so nothing moved out of the way. Growing from the centre
+     halves the intrusion to ~17px, and a 22px gap absorbs it. Only ever one of
+     the two is scaled, so the gap only has to clear one side. */
+  .cs2wp .weapon-selection-item-icon.per-item { gap: 22px; }
+  .cs2wp .per-item .weapon-selection-item-icon-main {
+    opacity: 0.75; filter: none; transform: none; transform-origin: 50% 50%;
+    transition: transform 0.12s ease-out, opacity 0.12s, filter 0.12s; }
+  .cs2wp .weapon-row--selected .per-item .weapon-selection-item-icon-main {
+    opacity: 0.75; filter: none; transform: none; }
+  .cs2wp .weapon-row .per-item .weapon-selection-item-icon-main.wpn-on {
+    opacity: 1; filter: brightness(1.5); transform: scale(1.45); }
+
+  /* THE SLOT NUMBER RIDES THE GLYPH'S TOP-RIGHT CORNER. Positioned against
+     .weapon-selection-item, which wraps only the glyphs, so it lands on the
+     icon rather than on the row. Absolute placement also retires the old
+     line-box centring fight: Valve's `vertical-align: top` and
+     `margin-bottom: 5px` cannot move a box that has an explicit top/right. */
+  .cs2wp .weapon-row-number { position: absolute; top: -7px; right: -16px;
+    min-width: 14px; height: auto; opacity: 0.6;
+    font-size: 18px; line-height: 1; color: var(--wash, #fff);
+    display: flex; align-items: center; justify-content: flex-end;
+    margin: 0; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+  /* THE SELECTED COLOUR IS CS2'S OWN, and it was going unused. Valve's rule
+     for a chosen weapon is `filter: brightness(1.5); opacity: 1.0` against the
+     unselected `opacity: 0.8` -- so the highlight is a BRIGHTER wash, not just
+     a less transparent one. We had only ever copied the opacity half, which is
+     why every glyph sat at the same orange and nothing looked picked. */
+  .cs2wp .weapon-row--selected .weapon-selection-item-icon-main {
+    filter: brightness(1.5); opacity: 1; }
+  .cs2wp .weapon-row--selected .weapon-row-number { opacity: 1; }
+  .cs2wp .HUD--team--ct .weapon-row--selected .hud-colorize-wash--hsv {
+    --wash: rgb(150, 200, 250); }
+  .cs2wp .HUD--team--terrorist .weapon-row--selected .hud-colorize-wash--hsv {
+    --wash: #eabe54; }
+
+  /* THE NAME IS WHITE, not the team colour -- it is a label, and reading it
+     against the gold glyphs is the whole point. Its height is reserved on every
+     row even while hidden, so the column does not jump as the label fades in
+     and out under whichever weapon is selected. */
+  /* `width: auto` IS LOAD-BEARING. Valve's own rule is `width: 1px` with
+     `overflow: visible` -- a zero-width anchor the label hangs off to the left.
+     Pairing that 1px with our `overflow: hidden` clipped the name down to a
+     single column of pixels. The box sizes to its text instead, and the column's
+     flex-end alignment right-aligns it under the glyph. */
+  .cs2wp .weapon-selection-item-name { position: static; flex: 0 0 auto;
+    width: auto; max-width: 250px; height: 17px; display: flex;
+    align-items: center; justify-content: flex-end; margin: 0; opacity: 0;
+    overflow: visible; transition: opacity 0.12s; }
+  .cs2wp .weapon-row--selected .weapon-selection-item-name { opacity: 1; }
+  /* the grenade row's icons are taller than a single glyph once one of them is
+     expanded, so its label needs more clearance than the gun rows do */
+  .cs2wp .weapon-row.nade-row .weapon-selection-item-name { margin-top: 6px; }
+  .cs2wp .weapon-selection-item-name-text { font-size: 16px; white-space: nowrap;
+    position: static; flex: 0 0 auto; text-align: right; letter-spacing: 0.4px;
+    line-height: 17px; color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+
+  /* SLOT 4 COUNTS IN PIPS. CS2 sizes that row by how many you hold
+     (grenade-bg-pip-width-3/4/5); the count itself is dots, not a number. */
+  .cs2wp .weapon-selection-item-count { display: none; }
+  .cs2wp .weapon-selection-item-pips { display: flex; gap: 3px;
+    align-items: center; margin-top: 1px; }
+  /* THE DOT STANDS WHERE THE GLYPH WILL GO. Slot 4 is four fixed-width cells
+     -- the carry limit -- and each one holds either a grenade's icon or, while
+     that slot is empty, a dot in the icon's own position. Picking a grenade up
+     replaces the dot in place. The cells are narrower than a gun's 74px so the
+     four of them read as one group rather than a row across the screen. */
+  .cs2wp .nade-cell { width: 48px; height: 40px; display: flex;
+    align-items: center; justify-content: center; flex: 0 0 auto; }
+  .cs2wp .nade-cell .weapon-selection-item-icon-main { width: 48px; height: 40px; }
+  .cs2wp .weapon-selection-item-icon.nade-cells { gap: 0; }
+  /* THE EMPTY DOTS ARE DARK, NOT TEAM-COLOURED. A washed dot reads as a small
+     lit thing -- as if something were there -- which is the opposite of what an
+     empty carry slot should say. Near-black at 62% lets the world through and
+     reads as a hole. Same 7px as before, and the same in every state: a dot
+     means "empty" whether or not slot 4 is the one in your hands. */
+  .cs2wp .nade-dot { width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(12, 14, 17, 0.92); opacity: 1; box-shadow: none; }
+
+  /* THE OBJECTIVE ROW SITS OUT TO THE LEFT. Valve's own
+     `@define objective-container-position-4: -225px` with
+     `.weapon-row.gear-slot--4, .weapon-row.kit { transform: translateX(...) }`
+     -- gear hangs away from the weapon column. Only the defuse kit takes it
+     now; the bomb is slot 5 and belongs in the column with its number. */
+  /* -189px, not Valve's -225px: measured, the kit glyph sat 43px further left
+     than the bomb that now rides the slot-4 line, so the two objectives read as
+     two unrelated strays. This lands the kit directly under the bomb. */
+  .cs2wp .weapon-row.kit { transform: translateX(-189px); }
+  /* the grenade rows keep the weapon column's position -- only the objective
+     row hangs out to the left */
+  .cs2wp .weapon-row.nade-row { transform: none; }
+
+  #hud.inmenu #cs2weapons, #hud.teamselect #cs2weapons { display: none; }
+
+  #statr { position: absolute; right: 16px; bottom: 14px; text-align: right;
+    background: linear-gradient(180deg, rgba(10,13,16,0.0), rgba(10,13,16,0.55)); padding: 6px 16px 8px;
+    border-radius: 4px; }
+  #wname { font-size: 12px; letter-spacing: 2px; opacity: 0.8; text-transform: uppercase; }
+  #ammo { font-size: 38px; font-weight: 700; font-family: var(--num-font);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+  #ammo .res { font-size: 20px; opacity: 0.6; }
+  #slots { margin-top: 3px; }
+  #slots span { display: inline-block; width: 19px; height: 19px; line-height: 19px; text-align: center;
+    background: rgba(0,0,0,0.45); margin-left: 4px; border-radius: 2px; font-size: 11px; opacity: 0.55; }
+  #slots span.on { background: var(--accent-dim); opacity: 1; outline: 1px solid var(--accent); }
+
+  /* CS2-style match bar: [CT] [clock] [T] segments */
+  /* The score/timer block is Valve's own markup styled by
+     ui/cs2_teamcounter.css. Only its placement on OUR screen lives here. */
+  #scorebar { flex: none; }
+  /* THE PLATE IS A BACKDROP, SO IT MUST NOT SIZE THE BLOCK. Valve's
+     #ScoreAndTimeAndBomb is `height: fit-children` around the timer and score
+     rows (~62px), and Panorama clips the 106px plate inside it. In CSS the
+     plate was a grid child in the same cell, so `fit-content` measured IT --
+     the block grew to 106px and the plate hung 44px below the cards. Taking it
+     out of flow leaves the block at its text height and the clip does the rest.
+     It keeps Valve's 106px so the mask stays calibrated (below); only the
+     bottom of that mask is cropped away, which is what CS2 shows. */
+  #scorebar .pid-ScoreAndTimeAndBombBG { position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%); height: 72px; }
+  /* SHORTENING THE PLATE WITHOUT BREAKING ITS MASK.
+     score-time-mask.svg is 106x130: solid band 0->39.92 (the timer strip),
+     then two columns fading to transparent at 130. Stretched with
+     `mask-size: 100% 100%` the band scales with the box, so any height under
+     ~104px shrinks the band below the 32px timer and the digits fall off it.
+     Pinning the mask to a FIXED 112px height keeps the band at 34.4px
+     (39.92/130 * 112) no matter how short the box is.
+     The box is then 72px, and a second mask layer -- a gradient -- finishes
+     the fade inside those 72px so the bottom edge is soft instead of the ~46%
+     alpha cut the SVG alone would leave. `intersect` shows a pixel only where
+     BOTH masks keep it, so Valve's shape (band, 2px gutter, columns) survives.
+     The gradient holds full strength to 82% and only softens the last sliver. */
+  /* OUR OWN PLATE. Valve fills this `#000000f0` and cuts its shape with
+     score-time-mask.svg (a solid timer band plus two fading columns); both are
+     replaced by a soft dark panel with rounded lower corners, a faint lit line
+     along the top where it meets the team cards, and a fade at the bottom so
+     there is no hard edge -- solid enough that white digits read against a
+     bright skybox, sheer enough that the world still moves behind it.
+     The mask must be cleared with the `mask` SHORTHAND: killing mask-image
+     alone leaves mask-size and mask-composite behind and the old shape
+     returns. */
+  #scorebar .equipinfo--score-time__bg {
+    background: linear-gradient(180deg,
+        rgba(33, 36, 42, 0.88) 0%,
+        rgba(33, 36, 42, 0.84) 55%,
+        rgba(33, 36, 42, 0.68) 88%,
+        rgba(33, 36, 42, 0.50) 100%);
+    border-radius: 0 0 9px 9px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    -webkit-mask: none; mask: none; }
+  /* ...and it must NOT be clipped to the block. The mask fades the plate from
+     opaque at 42/130 to transparent at 130/130; cutting that off at the text's
+     bottom (~62 of 106px) stops it at ~77% alpha, which reads as a hard black
+     brick instead of a fade. Out of flow it costs no layout height, so letting
+     it overflow gives the soft bottom edge without the gap underneath. */
+  #scorebar .pid-ScoreAndTimeAndBomb { overflow: visible; }
+  /* #BombStatus is an overlay too (Valve gives it y:-23px and 80px of height
+     inside a flow-children:none parent). Left in flow its 80px would size the
+     block exactly like the plate did, so it comes out of flow as well -- its
+     own translate carries Valve's -23px offset. */
+  /* absolute so its 80px cannot size the block -- but KEEP Valve's own
+     `top: -23px`. Overriding that to 0 dropped the icon 23px, which parked it
+     over the scores instead of the black band. With -23 the icon's centre
+     lands at 17px and the band's centre is 17.2px. */
+  #scorebar .pid-BombStatus { position: absolute; top: -23px; left: 0; right: 0; }
+  /* CS2 offsets this icon (x: 30% on a 50%-wide image) because its own
+     BombStatus panel carries more than we draw. On its own it reads as simply
+     off-centre, so it is centred here -- a deliberate deviation. */
+  /* Sized to SIT INSIDE the black band, not just centre on it. Valve's
+     `height: 60%` of the 80px BombStatus is 48px, and the mask's solid band is
+     39.92/130 * 112 = 34.4px -- so the icon overhung the black top and bottom.
+     26px leaves ~4px of black above and below it. */
+  /* icon + countdown, centred together in the band. The panel keeps Valve's
+     -23px offset and 80px height, so centring inside it lands on the band. */
+  #scorebar .pid-BombStatus { display: flex; align-items: center;
+    justify-content: center; gap: 4px; }
+  /* BIGGER AND BRIGHTER THAN VALVE'S WASH. At 26px in #b80000 on the black
+     plate the icon was there but read as nothing ("the bomb icon is not
+     showing"): the countdown's own red at 30px is what you can actually see. */
+  #scorebar .pid-BombStatus .bomb_planted { position: static; left: auto;
+    width: 30px; height: 30px; flex: none; --wash: #ff2d20; }
+  #scorebar .bomb-time { font-size: 22px; font-weight: 700; color: #ff2d20;
+    line-height: 1; flex: none; }
+  /* The C4 PULSES the way CS2's does (Valve's `bombDet`: opacity 0.5 -> 1 ->
+     0.5 at 0.8 s, 0.5 s under 20 s, 0.3 s under 10 s -- hud.js retags the tier
+     as the fuse shortens). It never dims past half, so it stays readable; the
+     countdown beside it does not blink at all, so it can be read. */
+  #scorebar .bomb-time { animation: none; opacity: 1; }
+
+  /* THE PLATE'S HEIGHT IS CALIBRATED TO ITS MASK -- do not "shorten" it.
+     score-time-mask.svg is 106x130: a solid full-width band from 0 to 39.92
+     (the timer strip), then two 52-wide columns split by a 2px gutter, each
+     fading to transparent downward (the score backdrops). Stretched over
+     Valve's 106px container that band lands at 39.92/130 * 106 = 32.6px --
+     exactly the 32px timer. Shrinking the box to 68px shrank the band to 21px
+     and pushed the timer off it onto the split columns. The plate extends
+     below the scores because the mask FADES it out there; that fade is the
+     look, not overhang. */
+  #hud.nofps #fps { display: none !important; }   /* Settings > Show FPS: Off */
+  /* THE TOP-RIGHT ROW: fps readout + site badge in one flex row. The readout's
+     width changes with every reading (position, draw calls, render scale), so
+     a fixed right offset either overlapped the badge or wasted space; as flex
+     siblings it always ends one gap short of the badge, whatever it says. */
+  #topright { position: absolute; top: 6px; right: 12px; display: flex; align-items: center; gap: 8px; pointer-events: none; }
+  #fps { text-align: right; font-size: 11px; opacity: 0.7; white-space: nowrap;
+    background: rgba(10,14,18,0.5); padding: 4px 8px; border-radius: 3px; }
+  /* the site badge: the site's name, at the right end of the row */
+  #sitebadge { display: flex; align-items: center; gap: 7px;
+    padding: 4px 9px; border-radius: 8px; background: rgba(10,14,18,0.45); pointer-events: none; user-select: none; }
+  /* the badge is the menu's #logo wordmark at badge size: same font, 900 italic,
+     letter-spacing 2px-at-40px = 0.05em, the .IO in accent green at 24/40 = 0.6em */
+  #sitebadge .sb-name { font-weight: 900; font-style: italic; font-size: 19px; letter-spacing: 0.05em;
+    color: #e8eef2; text-shadow: 0 1px 5px rgba(0,0,0,0.7); line-height: 1; }   /* the menu's text colour, as #logo inherits it */
+  #sitebadge .sb-name span { color: var(--accent); font-size: 0.6em; }
+
+  /* CS2 KILL FEED, 1:1 from panorama/styles/hud/huddeathnotice.vcss.
+     Every number below is Valve's, at Panorama's 1080p design height: the
+     72px top margin and 10px right padding on the container, 3px between
+     rows, 3px corner radius, 6/10/3/10 content padding, 16px labels, 24px
+     weapon/modifier icons, 20px square honour icons, and the in-air icon's
+     deliberate -4px/-14px overhang. `hud-blur-bg-color` resolves to #000000a0
+     in panorama/styles/csgostyles.css -- it is a blur behind glass in CS2,
+     which a canvas HUD cannot do, so the alpha carries it alone. */
+  #killfeed { position: absolute; top: 72px; right: 10px; display: flex; flex-direction: column;
+    align-items: flex-end; }
+  .kf { background: #000000a0; border-radius: 3px; padding: 6px 10px 3px 10px; margin-top: 3px;
+    display: flex; align-items: center; font-size: 16px; line-height: 1;
+    transition: opacity 1s ease-out; }
+  /* CS2 draws the two rows you are in completely differently, and they are not
+     the same thing: DeathNotice_Killer (you got the kill) is a red-bordered
+     near-black row with heavier, wider-tracked text; DeathNotice_Victim (you
+     died) is a dark red fill with no border. */
+  /* the red border is on `.DeathNoticeBGBorder`, a sibling panel behind the
+     content, so in CS2 it changes neither the row's size nor where the text
+     sits. An inset shadow reproduces that exactly; a real `border` would have
+     needed the padding compensating and still shifted the row by 2px. */
+  .kf.kf-killer { box-shadow: inset 0 0 0 2px #e10000; background: #000000e7; }
+  .kf.kf-killer span { font-size: 15px; font-weight: 900; letter-spacing: 0.5px; }
+  .kf.kf-victim { background: #630606d2; }
+  .kf span { margin: 0 2px 2px 2px; max-width: 160px; max-height: 32px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; text-shadow: 1px 1px 1px #000; font-weight: 700; }
+  .kf .ct { color: #6f9ce6; }      /* @define CTColor */
+  .kf .t  { color: #eabe54; }      /* @define TColor  */
+  .kf .wep { color: #888888; }     /* @define FadedColor */
+  /* one size for every icon in the row: CS2's `.DeathNoticeIcon`. `.HonorIcon`
+     (20px square) exists in the stylesheet but is applied to nothing in
+     huddeathnotice.vxml, so revenge and domination are 24px like the rest. */
+  .kficon, .kfhs { height: 24px; width: auto; margin: -2px 2px 0 2px; vertical-align: middle; }
+  .kfair { margin-right: -4px; margin-top: -14px; }
+  .kf.fade { opacity: 0; }
+  /* the .2s ease-out slide the rows below a retiring one get in CS2 */
+  .kf.collapse { height: 0 !important; margin-top: 0; padding-top: 0; padding-bottom: 0;
+    opacity: 0; overflow: hidden;
+    transition: height 0.2s ease-out, margin-top 0.2s ease-out, padding 0.2s ease-out, opacity 0.2s ease-out; }
+
+  /* 128px, not 17%: the buy block is centred and ~64% of the height tall, so
+     its top edge sits at ~17% of the height (159px on a 934px pane, 219px on
+     a 1290px window) -- at 17% the round text ("Round 1 -- plant the bomb",
+     "GO GO GO!") printed straight behind the block's money bar. The text now
+     stacks in PIXELS under the top plate like the freeze-time line does:
+     plate 0-106, "Buy period" 110-125 (#freezeov), this at 128-158, the buy
+     block from 159 up. Percentages moved with the window; the plate and the
+     block's top edge in pixels do not. */
+  /* ...and CENTRED in the gap between that line and the block, not jammed
+     under the line ("a bit too high"): the block's top edge is ~17% of the
+     height, the line ends at 125px, the text is 30px tall, so the middle of the
+     gap is (125 + 17%) / 2 - 15 = 8.5% + 47px. 127px on a 934px pane (as before),
+     157px on a 1290px window. */
+  #announce { position: absolute; top: calc(8.5% + 47px); width: 100%; text-align: center; font-size: 25px; font-weight: 700;
+    letter-spacing: 0.5px; text-shadow: 0 2px 6px rgba(0,0,0,0.85); opacity: 0; transition: opacity 0.4s; }
+  #reward { position: absolute; top: 56%; width: 100%; text-align: center; font-size: 17px; font-weight: 700;
+    color: var(--money); text-shadow: 0 1px 4px rgba(0,0,0,0.85); opacity: 0; transition: opacity 0.3s; }
+
+  #dmgov { position: absolute; inset: 0; opacity: 0; background:
+    radial-gradient(ellipse at center, rgba(200,0,0,0) 55%, rgba(200,0,0,0.55) 100%); }
+  #flashov { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 60; pointer-events: none; }
+  /* CS2 sniper scope, from CS2's OWN HUD art.
+     The pieces live in the PANORAMA image tree -- panorama/images/hud/scope/ --
+     not in materials/. That folder is the whole answer:
+       scope_circle  the aperture: a HARD-edged transparent disc on black, one
+                     texture, no mirroring, ~3% feather
+       scope_lens    the glass: a gentle warm vignette (alpha 59 at centre,
+                     198 in the corners). NOT DRAWN -- see the .sc-mask block
+       scope_line_blur  the hairline, stretched on both axes
+     The materials/sprites/scope_arc quadrant is a much softer 7.4% edge and is
+     NOT what the HUD draws; everything under models/weapons/shared/scope/ is
+     the 3D lens on the weapon model.
+
+     The lens is a SQUARE, centred, sized off the viewport HEIGHT -- see
+     SCOPE_H in hud.js for the fraction and why it is not 1. scope_circle's disc
+     is 0.941 of its half-width, so 106.3% puts its edge exactly on the lens
+     edge. The black around it is the lens's own box-shadow. The hairlines run
+     the FULL SCREEN, past the aperture, which is where CS2 draws them too (and
+     black on black is invisible out there in any case).
+     Every geometry value here is overwritten per-resize by _snapScopeLens();
+     what the stylesheet holds is only the pre-measure fallback. */
+  /* THE HUD SITS ON TOP OF THE SCOPE, NOT UNDERNEATH IT.
+     The blackout around the aperture is the lens's own `box-shadow` -- a
+     100vmax spread of solid #000 -- so it covers every HUD child the browser
+     paints BEFORE it, and #scopeov is built two-thirds of the way down the HUD
+     tree. Scoping therefore swallowed the radar, the killfeed, the hitmarker,
+     the damage arcs, the target ID and the announcements: exactly the readouts
+     you most want while holding an angle, and all of them are visible in CS2's
+     own scoped frame.
+     Ordering it by z-index instead of by DOM position says what is actually
+     true: the aperture is part of the VIEW, and the HUD is drawn over the view.
+     #hud is a stacking context (position: fixed + z-index: 10) with no
+     background of its own, so a negative z-index puts these two behind every
+     other HUD child while still keeping them above the canvas.
+     The smoke tint goes one layer further down for the same reason -- it is
+     what being inside a smoke looks like, so it belongs INSIDE the aperture;
+     painted over the surround it would wash the whole scope out to grey. */
+  #scopeov { position: absolute; inset: 0; display: none; overflow: hidden; z-index: -1; }
+  #smokeov { z-index: -2; }
+  /* THE SIDE BLACKOUT HAS TO OVERLAP THE LENS, NOT ABUT IT.
+     The lens is centred with left:50% + translateX(-50%), so whenever
+     (viewportWidth - viewportHeight) is ODD it lands on a HALF pixel -- e.g.
+     1079x836 puts its edges at 121.5 and 957.5. The element's own paint is
+     clipped at that boundary and the surrounding box-shadow starts at it, and
+     the two do not always composite to a full pixel: the result is a hairline
+     of the live scene showing down one side of the scope. The inset ring paints
+     the last 2px INSIDE the lens solid black, which bridges the seam. It is
+     invisible otherwise -- scope_circle is already black out at that radius. */
+  #scopeov .sc-lens { position: absolute; top: 0; bottom: 0; left: 50%;
+    aspect-ratio: 1 / 1; transform: translateX(-50%); overflow: hidden;
+    box-shadow: 0 0 0 100vmax #000, inset 0 0 0 2px #000; }
+  #scopeov i { position: absolute; display: block; }
+  /* NO GLASS LAYER. It used to draw scope_lens.png -- CS2's photographed lens
+     vignette -- masked to a ring around the aperture. There is no mask width
+     that works: the art is a broad photographic falloff, so any band wide
+     enough to read as a lens rim is also wide enough to read as a black edge
+     eating the sight picture, and because the photo's vignette is not radially
+     even it ate hardest at the top and the two bottom quarters. Tightening it
+     twice only made the band thinner, never absent. CS2's own scoped frame has
+     a HARD edge, so the honest match is no rim at all.
+
+     THE APERTURE IS CUT HARD, AND A HAIR INSIDE THE LENS BOX.
+     scope_circle.png still lays down the black, but its alpha ramp is a ~3%
+     feather that upscales to a visibly soft edge at this size, so the gradient
+     on top of it does the actual cutting: clear to 95% of the aperture radius,
+     solid by 96%. The 1% is only there to keep the edge from aliasing into a
+     staircase. Cutting at 96% rather than 100% also pulls the visible circle
+     that last touch inward, which is what puts the old soft rim OUTSIDE the
+     sight picture instead of inside it. Effective diameter is therefore
+     0.96 * SCOPE_H of the viewport height, not SCOPE_H -- so raising or
+     lowering SCOPE_H is the knob for the scope's size, and this 96% stays put.
+
+     The art goes through --ap rather than being named inline, because
+     _preloadScopeArt() swaps in a decoded blob: URL at boot and an inline
+     `background-image` would replace BOTH layers -- taking the cut with it. */
+  #scopeov .sc-mask { inset: 0; --ap: url(textures/scope_circle.png);
+    background:
+      radial-gradient(circle closest-side at center, transparent 0 95%, #000 96%),
+      var(--ap) center/106.3% 106.3% no-repeat; }
+  /* SHARP hairlines. The file is named scope_line_BLUR for a reason -- it is a
+     pre-blurred line, and stretching it across the screen is what made the
+     crosshair look soft while standing still. CS2's scope crosshair is a hard
+     thin black line; the engine draws it as a solid rect, which is why the
+     panorama folder ships no sharp version to extract. Two device pixels. */
+  /* The hairlines BLUR with inaccuracy (CS2): razor sharp when you are still
+     and settled, softening as movement or air opens the cone, so the scope
+     itself tells you the shot is not trustworthy. Driven from the real scoped
+     cone in hud.updateCrosshair -- see there for the curve. */
+  #scopeov .sc-line { left: 50%; top: 50%; background: #000; will-change: filter; }
+  #scopeov .sc-line.v { width: 2px; height: 200vmax; transform: translate(-50%, -50%); }
+  #scopeov .sc-line.h { height: 2px; width: 200vmax; transform: translate(-50%, -50%); }
+
+  #respawn { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center;
+    justify-content: center; background: rgba(60,0,0,0.25); font-size: 32px; font-weight: 800; gap: 8px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9); }
+  #respawn .small { font-size: 16px; font-weight: 400; opacity: 0.85; }
+
+  /* ---- CS2 scoreboard -------------------------------------------------
+     THE PANEL IS NOT STYLED HERE ANY MORE. Every rule that draws it now comes
+     from ui/cs2_scoreboard.css, which tools/cs2_panorama_css.py generates from
+     Valve's own panorama/styles/scoreboard.vcss (452 rules) -- the same route
+     the top player strip already takes. What used to live here was a set of
+     vh values transcribed by hand out of that file; transcription is how the
+     panel ended up close but never right.
+
+     Only its PLACEMENT ON OUR SCREEN belongs here: Panorama centres .sb-main
+     in a full-screen root, and we have to give it that root. `zoom` on .cs2sb
+     rescales Valve's 1080p-reference px, so the box it occupies is already in
+     scaled units -- inset:0 plus its own horizontal/vertical centring does the
+     rest. */
+  #scoreboard { display: none; position: absolute; inset: 0; z-index: 6;
+    pointer-events: none; }
+  /* Panorama centres .sb-main inside a full-screen root; this is that root.
+     The centring must happen OUTSIDE .cs2sb, because .cs2sb carries the
+     zoom -- a percentage width on a zoomed box is a percentage of the SCALED
+     space, which is how the panel ended up hanging off the left edge. */
+  #scoreboard.on { display: grid; place-items: center; }
+  #scoreboard > .cs2sb { display: grid; place-items: center; }
+  /* Valve sizes CSGOAvatarImage from the engine side (it is a real panel type
+     that measures its own texture), so the sheet gives it only background-size.
+     In a browser it needs the box too -- the cell is already square. */
+  .cs2sb .sb-row__cell--avatar .CSGOAvatarImage { width: 100%; height: 100%;
+    background-position: center; }
+  /* Valve hides the meta buttons behind `.mouse-active-visible` (opacity 0
+     until the cursor is live on the panel). CS2 has a cursor on the scoreboard;
+     this game holds TAB with the mouse locked, so that state never arrives and
+     the buttons would never show. Shown at the opacity CS2 fades them to. */
+  /* Valve sets the server line at 14px and right-aligns it; only the size is
+     changed here -- with the button group gone it carries that row alone. The
+     alignment stays Valve's (horizontal-align: right). */
+  .cs2sb .pid-id-sb-meta__labels__server-viewers { font-size: 17px; }
+  /* THE TEAM LOGO BEHIND THE SCORE, and the ping column's header glyph.
+     Both are artwork CS2 supplies from the engine rather than from a rule --
+     `sb-team-logo-background--CT` appears in scoreboard.vxml with no matching
+     declaration in any panorama sheet -- so the sizing is ours even though the
+     art is Valve's (ui/sb_logo_ct.svg, ui/sb_logo_t.svg, ui/sb_ping4.svg).
+     Both are washed, so they take the same per-team tint as every other icon. */
+  .cs2sb .sb-team__info__score .sb-team-logo { width: 76%; height: 76%;
+    align-self: center; justify-self: center; opacity: 0.22; }
+  .cs2sb .sb-row__cell--ping .sb-ping-header { width: 29px; height: 25px;
+    align-self: center; justify-self: center; opacity: 0.55; }
+
+  /* bomb mode HUD */
+  #progresswrap { position: absolute; left: 50%; bottom: 26%; transform: translateX(-50%); width: 300px;
+    text-align: center; }
+  #progresslabel { font-size: 12px; font-weight: 700; letter-spacing: 3px; margin-bottom: 6px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
+  #progressouter { height: 8px; background: rgba(0,0,0,0.6); border-radius: 2px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.22); }
+  #progressinner { height: 100%; width: 0%; background: var(--accent); }
+  #usehint { position: absolute; left: 50%; bottom: 32%; transform: translateX(-50%); font-size: 15px;
+    font-weight: 600; background: rgba(10,13,16,0.65); padding: 8px 18px; border-radius: 4px; opacity: 0;
+    transition: opacity 0.2s; white-space: nowrap; }
+  /* CS2 has no giant countdown digit: the freeze counts down on the team
+     counter's own timer. This overlay sat at 56px -- straight across the lower
+     half of Valve's 106px plate -- which is why the plate looked missing during
+     the countdown. The digit is gone; the buy hint drops below the plate. */
+  #freezeov { position: absolute; top: 110px; width: 100%; display: none; flex-direction: column;   /* 110: just under the 106px plate, so #announce fits between it and the buy block */
+    align-items: center; pointer-events: none; }
+  .fz-num { display: none; }
+  .fz-sub { font-size: 13px; opacity: 0.85; letter-spacing: 1px; text-shadow: 0 1px 4px rgba(0,0,0,0.85); }
+  #spectatebar { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); font-size: 14px;
+    letter-spacing: 1px; background: rgba(10,13,16,0.75); padding: 10px 22px; border-radius: 4px; }
+  #spectatebar b { color: var(--accent); }
+
+  /* buy menu — CS2 dark panel */
+  /* ============ buy menu: CS2's panorama/styles/buymenu.css, in CSS ============
+     950px left block at 18/18/22/24/18 % columns, radial-gradient item cards
+     with the key top-left / name top-right / price bottom-right, the info
+     panel to the right of the columns beside the agent, nav bar along the
+     bottom. The game is dimmed, not blurred (see the pause note below). */
+  #buymenu { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+    pointer-events: auto !important; font-family: 'Stratum2', 'Stratum2 TF', sans-serif; color: #fff;
+    /* THE BLOCK AND THE AGENT ARE ONE GROUP, CENTRED. The block is --bmw wide;
+       the agent gets a strip --bmagent wide, --bmgap to its right; the pair is
+       centred, so the block's left margin equals the strip's right margin.
+       main.js stands the agent in the middle of that strip (it reads the
+       block's rect, so these numbers live here only). The old layout parked
+       the block at the top-left and the agent at the far right edge. */
+    --bmw: min(52vw, 950px); --bmgap: 40px; --bmagent: 40vh; }
+  /* --bmshift (hud.js fit) nudges the whole group right: centred as a group the
+     block's own centre sits at 39% of the width whatever its size, and the user
+     asked for it closer to the middle. 5vw puts it at ~44% with the agent still
+     clear of the right edge. */
+  .bm-left { position: absolute; left: calc(50% - (var(--bmw) + var(--bmgap) + var(--bmagent)) / 2 + var(--bmshift, 0px)); top: 50%;
+    transform: translateY(-50%) scale(var(--bms, 1)); transform-origin: 50% 50%;
+    width: var(--bmw); display: flex; flex-direction: column; }
+  .bm-info { display: flex; align-items: center; height: 40px; padding: 0 14px; background: rgba(0,0,0,0.62);
+    font-family: 'Stratum2 Bold TF', 'Stratum2'; }
+  .bm-money { color: #e2c46a; font-size: 24px; min-width: 130px; font-family: 'Stratum2 Bold TF'; }
+  .bm-timer { margin: 0 auto; font-size: 17px; color: #d6d6d6; }
+  .bm-timer-val { margin-left: 10px; color: #fff; font-family: 'Stratum2 Regular Monodigit', 'Stratum2 Mono'; }
+  .bm-min { font-size: 14px; color: #9a9a9a; }
+  .bm-body { display: flex; align-items: flex-start; background: rgba(26,26,26,0.78); padding: 10px 4px 14px; }
+  .bm-col { padding: 0 10px; border-left: 1px solid rgba(255,255,255,0.045); }
+  .bm-col:first-child { border-left: 0; }
+  .cc-equipment, .cc-secondary, .cc-grenade { width: 18%; }
+  .cc-smg { width: 22%; }
+  .cc-rifle { width: 24%; }
+  .bm-col-head { display: flex; align-items: baseline; gap: 9px; height: 30px; margin-bottom: 6px; }
+  .bm-key { font-family: 'Stratum2 Mono'; font-size: 13px; color: #8a8a8a; }
+  .bm-col-title { font-family: 'stratum2 condensed', 'Stratum2'; font-size: 22px; color: #e4e4e4; }
+  .bm-col.sel .bm-key, .bm-col.sel .bm-col-title { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.45); }
+  .bm-item { position: relative; display: block; width: 100%; height: 72px; margin-bottom: 6px; padding: 4px 10px;
+    border: 1px solid rgba(0,0,0,0.65); border-radius: 5px; color: #fff; cursor: pointer; text-align: left;
+    background: radial-gradient(circle at 50% 50%, rgba(141,141,141,0.22) 0%, rgba(85,85,85,0.22) 100%);
+    transition: filter 0.12s; }
+  .bm-item:hover { filter: brightness(2.0); }
+  .bm-item-key { position: absolute; left: 8px; top: 5px; font-family: 'Stratum2 Mono'; font-size: 12px; color: #9a9a9a; }
+  .bm-item-name { position: absolute; right: 10px; top: 5px; max-width: 78%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    font-family: 'stratum2 condensed', 'Stratum2'; font-size: 16px; color: #e6e6e6; text-align: right; }
+  .bm-icon { position: absolute; left: 12px; right: 12px; top: 25px; height: 30px; display: block;
+    background: var(--tint, #fff); -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+  .bm-price { position: absolute; right: 10px; bottom: 5px; font-family: 'Stratum2 Regular Monodigit', 'Stratum2 Mono'; font-size: 14px; color: #fff; }
+  .bm-item.cant { background: rgba(43,43,43,0.9); }
+  .bm-item.cant .bm-icon { background: #474747; }
+  .bm-item.cant .bm-price, .bm-item.cant .bm-item-name { color: #808080; }
+  .bm-item.own { border-color: rgba(255,255,255,0.85); }
+  /* THE DROPPED-WEAPONS PANEL, the way CS2 draws it: a separate box a little
+     below the buy grid and as wide as it, dark, with a big, LEGIBLE "Dropped
+     Weapons" title across its middle while nothing lies nearby (CS2's is light
+     grey, thin, letter-spaced -- ours used to be 10% white, which nobody could
+     read), and buy-style tiles inside it when guns do. The box keeps its
+     height either way, so the menu never jumps; and its empty state is `bare`,
+     because the stylesheet's generic .empty (inventory lists) adds a 60px top
+     margin and 0.6 opacity -- that rule matching this box was the extra gap
+     and the dimming the user saw. */
+  .bm-ground { position: relative; margin-top: 8px; min-width: 0; min-height: 150px; box-sizing: border-box; padding: 10px 14px;
+    background: rgba(26,26,26,0.78); }
+  .bm-ground-title { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
+    font-family: 'Stratum2 Thin', 'Stratum2'; font-size: 44px; letter-spacing: 6px; color: rgba(255,255,255,0.42);
+    white-space: nowrap; overflow: hidden; }
+  .bm-ground:not(.bare) .bm-ground-title { display: none; }
+  .bm-ground-list { position: relative; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; }
+  /* a dropped gun is a tile like the buy tiles: count top-left, name top-right, icon across the middle */
+  .bm-ground-entry { position: relative; display: block; width: 150px; height: 72px; padding: 4px 10px; border-radius: 5px; cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.65); color: #fff; text-align: left; font: inherit;
+    background: radial-gradient(circle at 50% 50%, rgba(141,141,141,0.22) 0%, rgba(85,85,85,0.22) 100%); transition: filter 0.12s; }
+  .bm-ground-entry:hover { filter: brightness(2.0); }
+  .bm-ground-entry .bm-icon { position: absolute; left: 12px; right: 12px; top: 25px; height: 30px; width: auto; }
+  .bm-ground-name { position: absolute; right: 10px; top: 5px; max-width: 78%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    font-family: 'stratum2 condensed', 'Stratum2'; font-size: 16px; color: #e6e6e6; }
+  .bm-ground-count { position: absolute; left: 8px; top: 5px; font-family: 'Stratum2 Mono'; font-size: 12px; color: #9a9a9a; }
+  /* the close button at the top right of the block (Esc does the same) */
+  .bm-close { margin-left: 12px; width: 34px; height: 30px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255,255,255,0.28); border-radius: 3px; background: rgba(255,255,255,0.07); color: #e0e0e0;
+    font: inherit; font-size: 17px; line-height: 1; cursor: pointer; }
+  .bm-close:hover { background: rgba(255,255,255,0.2); color: #fff; }
+  /* with the 3D agent up the frame itself is dimmed behind him (main.js
+     _buyDim), so the DOM backdrop would only dim the agent a second time */
+  #buymenu.dim3d { background: transparent; }
+  /* well clear of the bottom HUD (health, emblem, ammo): the row used to sit
+     at 64px and printed straight over the emblem and the health figure */
+  .bm-nav { position: absolute; left: 0; right: 0; bottom: calc(104px + 22px * var(--bms, 1)); display: flex; justify-content: center; align-items: center; gap: 28px;
+    font-family: 'Stratum2 Bold TF', 'Stratum2'; font-size: calc(13px * var(--bms, 1)); letter-spacing: 0.5px; color: #c8c8c8; }
+  .bm-nav button { background: transparent; border: 0; color: #c8c8c8; cursor: pointer; font: inherit; letter-spacing: inherit; }
+  .bm-nav button:hover { color: #fff; }
+  #hud.inmenu #buymenu { display: none !important; }
+
+  /* ============ loadout tab (CS2's loadout_grid, made obvious) ============
+     Big slot cards that say CHANGE when hovered, a centred chooser window with
+     large tiles, one click picks and closes, a toast confirms. The page is
+     dimmed so the lobby character does not sit behind the icons. */
+  #tab-loadout { overflow-y: auto; background: rgba(5,7,10,0.74); }
+  /* BIGGER, BY REQUEST: the grid scales with the viewport height the way the
+     buy menu does (--los, set by hud.js renderLoadout: 1 at 1080p, up to 1.4)
+     on top of larger cards and text; the page scrolls, so nothing is lost. */
+  /* NO SECOND ZOOM HERE. This page used to scale itself off innerHeight/1080
+     (--los, hud.js renderLoadout) back when the menu around it was fixed px.
+     The menu now scales as a whole (#menu zoom: var(--ms)), so keeping this
+     multiplied the two together -- the columns grew past the window and the
+     fifth row of every column ran off the bottom. One scale for everything. */
+  #lo-body { position: relative; padding-bottom: 14px; }
+  #lo-intro { text-align: center; font-size: 15px; color: #c9d3db; margin: 2px auto 8px; max-width: 880px; line-height: 1.38; }
+  #lo-intro b { color: #fff; }
+  #lo-teams { display: flex; justify-content: center; gap: 10px; margin: 0 0 10px; }
+  #lo-teams button { background: rgba(255,255,255,0.05); color: #cfd8de; border: 1px solid rgba(255,255,255,0.12); padding: 9px 26px;
+    border-radius: 5px; cursor: pointer; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+  #lo-teams button.ct.sel { background: rgba(125,184,240,0.18); border-color: #7db8f0; color: #fff; }
+  #lo-teams button.t.sel { background: rgba(234,190,84,0.18); border-color: #eabe54; color: #fff; }
+  #lo-teams button:not(.sel):hover { background: rgba(255,255,255,0.11); }
+  #lo-grid { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 18px; }
+  .lo-col { width: 250px; }
+  .lo-col.fixed { opacity: 0.8; }
+  .lo-title { font-family: 'stratum2 condensed', 'Stratum2'; font-size: 20px; letter-spacing: 1px; text-transform: uppercase; color: #a9bccc; margin: 6px 0 6px; display: flex; align-items: baseline; gap: 8px; }
+  .lo-fixedtag { font-family: inherit; font-size: 12px; letter-spacing: 0.5px; text-transform: none; color: #7f8b95; }
+  .lo-sub { font-size: 12.5px; color: #8fa1b0; margin: 4px 0 4px; letter-spacing: 0.3px; }
+  .lo-slot { position: relative; display: block; width: 100%; height: 88px; margin-bottom: 8px; padding: 6px 10px; text-align: left;
+    border: 1px solid rgba(255,255,255,0.10); border-radius: 6px; color: #fff; cursor: pointer;
+    background: radial-gradient(circle at 50% 50%, rgba(141,141,141,0.22) 0%, rgba(85,85,85,0.22) 100%); transition: filter 0.12s, border-color 0.12s; }
+  .lo-slot.fixed { height: 60px; cursor: default; }
+  .lo-slot:not(.fixed):hover { filter: brightness(1.6); border-color: rgba(255,255,255,0.35); }
+  .lo-slot.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .lo-num { position: absolute; left: 9px; top: 6px; font-family: 'Stratum2 Mono'; font-size: 13px; color: #a0a0a0; }
+  .lo-name { position: absolute; right: 10px; top: 6px; max-width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    font-family: 'stratum2 condensed', 'Stratum2'; font-size: 17px; color: #eaeaea; }
+  .lo-icon { position: absolute; left: 14px; right: 14px; top: 30px; height: 38px; display: block;
+    background: var(--tint, #fff); -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+  .lo-slot.fixed .lo-icon { top: 19px; height: 28px; }
+  .lo-skin { position: absolute; right: 10px; bottom: 6px; font-size: 12px; color: #8fb3d9; max-width: 62%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .lo-change { position: absolute; left: 9px; bottom: 6px; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #0b0f14;
+    background: var(--accent); border-radius: 3px; padding: 2px 6px; opacity: 0; transition: opacity 0.12s; }
+  .lo-slot:not(.fixed):hover .lo-change { opacity: 1; }
+  #lo-actions { text-align: center; margin-top: 9px; }
+  #lo-reset { background: rgba(255,255,255,0.07); color: #fff; border: 1px solid rgba(255,255,255,0.14); padding: 11px 22px; border-radius: 4px; cursor: pointer; font-size: 14px; letter-spacing: 1px; }
+  #lo-reset:hover { background: rgba(255,255,255,0.16); }
+  .lo-hint { display: block; margin-top: 6px; font-size: 13px; opacity: 0.6; }
+  #lo-toast { position: fixed; left: 50%; bottom: 40px; transform: translate(-50%, 12px); background: var(--accent); color: #0b0f14; font-weight: 700;
+    font-size: 13px; padding: 10px 18px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity 0.18s, transform 0.18s; z-index: 30; }
+  #lo-toast.show { opacity: 1; transform: translate(-50%, 0); }
+  /* the chooser */
+  #lo-modal { position: fixed; inset: 0; z-index: 25; background: rgba(2,4,6,0.72); display: flex; align-items: center; justify-content: center; }
+  .lo-modal-card { width: min(1100px, 92vw); max-height: 84vh; display: flex; flex-direction: column; background: #12171c; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .lo-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .lo-modal-title { font-size: 20px; font-weight: 800; letter-spacing: 2px; }
+  .lo-modal-sub { font-size: 13.5px; color: #a9bccc; margin-top: 3px; }
+  .lo-modal-close { background: rgba(255,255,255,0.08); color: #fff; border: 0; width: 34px; height: 34px; border-radius: 6px; cursor: pointer; font-size: 15px; }
+  .lo-modal-close:hover { background: rgba(255,255,255,0.18); }
+  .lo-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; padding: 14px 18px; overflow-y: auto; }
+  /* a <button> centres its content vertically; the name and blurb must sit at the top, over the art */
+  .lo-opt { position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; height: 150px; padding: 8px 12px; text-align: left; border: 1px solid rgba(255,255,255,0.10); border-radius: 6px; color: #fff; cursor: pointer;
+    background: radial-gradient(circle at 50% 50%, rgba(141,141,141,0.22) 0%, rgba(85,85,85,0.22) 100%); transition: filter 0.12s, border-color 0.12s; }
+  .lo-opt:hover { filter: brightness(1.55); border-color: rgba(255,255,255,0.4); }
+  .lo-opt.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  /* already in another slot: clearly greyed, so it reads as "taken" at a glance
+     (0.72 alone was too close to an available card) */
+  .lo-opt.used { opacity: 0.5; filter: grayscale(0.7); }
+  .lo-opt.used:hover { opacity: 0.65; filter: grayscale(0.5) brightness(1.3); }
+  .lo-opt.used .lo-state.used { opacity: 1; }
+  .lo-opt-name { display: block; font-family: 'stratum2 condensed', 'Stratum2'; font-size: 18px; line-height: 1.15; color: #f2f2f2; }
+  .lo-opt-tip { display: block; font-size: 12.5px; line-height: 1.2; color: #93a4b3; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lo-opt .lo-icon { top: 62px; height: 44px; left: 16px; right: 16px; }
+  .lo-opt .lo-price { position: absolute; left: 12px; bottom: 7px; font-family: 'Stratum2 Regular Monodigit', 'Stratum2 Mono'; font-size: 14px; color: #e2c46a; }
+  .lo-opt-skin { position: absolute; right: 12px; bottom: 26px; font-size: 12px; color: #8fb3d9; max-width: 60%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: right; }
+  .lo-state { position: absolute; right: 9px; bottom: 7px; font-size: 11px; font-weight: 700; letter-spacing: 1px; padding: 2px 7px; border-radius: 3px; }
+  .lo-state.cur { background: var(--accent); color: #0b0f14; }
+  .lo-state.used { background: rgba(255,255,255,0.14); color: #dfe7ec; }
+  .lo-modal-foot { padding: 10px 18px 14px; font-size: 13.5px; color: #9fb2c2; border-top: 1px solid rgba(255,255,255,0.08); }
+  @media (max-width: 1100px) { .lo-col { width: 190px; } .lo-slot { height: 74px; } }
+
+  /* ============ pause ============ */
+  /* No screen dim. This used to paint rgba(8,11,14,0.78) over everything,
+     which is most of a stop on the whole frame -- the map went almost black
+     behind the panel. The panel has its own solid background, so it stays
+     perfectly readable without darkening the game behind it. */
+  #pause { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    background: transparent; pointer-events: auto !important; }
+  /* --panel-solid, not --panel: the translucent one was tuned to sit on top of
+     the full-screen dim above, and without that dim the map showed straight
+     through the buttons. The panel carries its own contrast now. */
+  #pause .panel { background: var(--panel-solid); border-radius: 8px; padding: 32px 42px;
+    border: 1px solid rgba(255,255,255,0.07); min-width: 470px; }
+  /* Pause neither dims nor blurs the game. There used to be two blurs to pick
+     between here -- a CSS backdrop-filter on medium/low, and postfx.js's
+     PauseBlurShader inside the render pipeline on High, because a fullscreen
+     backdrop-filter re-blurs the WebGL canvas every compositor frame (~9
+     dropped frames/sec at 1440p). Neither runs now, so the switch is gone. */
+  #pause h2 { font-size: 24px; letter-spacing: 4px; margin-bottom: 20px; text-align: center; }
+  .mbtn { display: block; width: 100%; margin-bottom: 9px; background: rgba(255,255,255,0.06); color: #e8eef2;
+    border: 1px solid rgba(255,255,255,0.1); padding: 13px; border-radius: 4px; cursor: pointer; font-size: 14px;
+    letter-spacing: 1px; }
+  .mbtn:hover { background: var(--accent-dim); border-color: var(--accent); }
+  .key { background: rgba(255,255,255,0.12); border-radius: 3px; padding: 2px 7px; font-size: 11px; }
+  .hint { margin-top: 14px; font-size: 11.5px; opacity: 0.45; text-align: center; line-height: 1.7; }
+  /* HOW TO PLAY: the pause overlay's second panel (hud.js openHowTo), and the
+     same pages under KEY BINDINGS in the home menu's Settings (.settings-howto).
+     The pause panel is wider than the button column, and only its TEXT scrolls,
+     so the tabs and BACK stay on screen however short the window is. */
+  #pause .phowto { display: none; flex-direction: column; width: min(660px, 94vw); min-width: 0;
+    max-height: calc(100% - 32px); padding: 26px 30px; }
+  #pause .phowto h2 { margin-bottom: 14px; }
+  .qrow.htabs { margin-bottom: 14px; }
+  .qrow.htabs button { padding: 9px 6px; font-size: 12px; letter-spacing: 1px; cursor: pointer; }
+  #pause .htbody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+    padding-right: 8px; margin-bottom: 14px; }
+  .htbody { font-size: 13.5px; line-height: 1.55; color: #cfd8de; text-align: left; }
+  .htbody h3 { font-size: 12px; letter-spacing: 2px; color: var(--accent); margin: 16px 0 6px; }
+  .htbody h3:first-child { margin-top: 0; }
+  .htbody p { margin: 0 0 8px; }
+  .htbody ul { margin: 0 0 8px; padding-left: 18px; }
+  .htbody li { margin-bottom: 5px; }
+  .htbody b.ct { color: var(--ct); }
+  .htbody b.t { color: var(--t); }
+  .htrow { display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .htrow > span:last-child { text-align: right; }
+  .htrow .key { white-space: nowrap; }
+  .htnote { font-size: 12px; opacity: 0.6; margin-top: 12px; }
+  #pause .htfoot { display: flex; gap: 10px; }
+  #pause .htfoot .mbtn { margin-bottom: 0; }
+  /* the home menu's copy only: in game the pause menu has its own HOW TO PLAY */
+  #menu.pausemode .settings-howto { display: none; }
+  /* CHANGE KEYBINDS lands on the list: a short accent pulse shows where to click */
+  @keyframes bindflash { 0%, 100% { box-shadow: 0 0 0 0 rgba(139,197,63,0); } 30% { box-shadow: 0 0 0 3px var(--accent); } }
+  #bindlist.bindflash { animation: bindflash 1.2s ease-in-out 2; border-radius: 6px; }
+
+  /* ============ main menu (deadshot style) ============ */
+  /* ONE SCALE FOR THE WHOLE MENU (hud.js _syncMenuScale sets --ms from the
+     window against a 1200x860 design size). inset: 0 still fills the viewport
+     under zoom -- percentages resolve in the zoomed space -- so nothing here
+     needs compensating. */
+  #menu { position: absolute; inset: 0; display: none; pointer-events: auto !important;
+    zoom: var(--ms, 1);
+    background: linear-gradient(180deg, rgba(5,7,10,0.45) 0%, rgba(5,7,10,0.2) 30%, rgba(5,7,10,0.35) 100%); }
+  #topnav { position: absolute; top: 0; left: 0; right: 0; height: 92px; display: flex; align-items: flex-start;
+    justify-content: space-between; padding: 14px 26px 0; background: linear-gradient(180deg, rgba(5,7,10,0.85), rgba(5,7,10,0.35) 80%, transparent); }
+  .nav-side { width: 220px; padding-top: 10px; }
+  .nav-side.right { text-align: right; display: flex; gap: 16px; justify-content: flex-end; align-items: center; }
+  .patch { font-size: 12px; opacity: 0.7; }
+  /* NEWS sits beside the version label. It is its OWN element, not part of
+     .patch, because .patch is display:none under 900px -- folding the button
+     into it would take the button away on a phone too. */
+  #newsbtn, #fsbtn { display: inline-block; margin-top: 5px; padding: 3px 10px; font-size: 10.5px;
+    letter-spacing: 1.1px; font-weight: 700; color: #cfd8de; cursor: pointer;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 4px; transition: background .14s, color .14s; }
+  #newsbtn:hover, #fsbtn:hover { background: rgba(255,255,255,0.16); color: #fff; }
+  #newsbtn { padding: 4px 13px; font-size: 12px; }      /* NEWS a size up from FULLSCREEN (user's call) */
+  /* FULLSCREEN sits UNDER NEWS (a block, so it takes its own line) and only on
+     the home menu: in a match RESUME takes full screen back by itself, and the
+     pause menu's shorter top bar has no room for a second row. hud.js hides it
+     while the page is already full screen. */
+  /* Lowered this far it hangs a few px below the 92px top bar, where the tab
+     page (a later sibling, so painted on top) would swallow clicks on its
+     bottom edge -- lift the button above the page. The overlays are z 60+. */
+  /* 13, not 16: NEWS grew 3px taller, and the user wanted this button left
+     exactly where it was on screen before that. */
+  #fsbtn { display: flex; align-items: center; gap: 6px; margin-top: 13px;
+    position: relative; z-index: 2; }
+  /* the four-corner full-screen mark, drawn in the text's own colour so it
+     follows the hover (no emoji in this interface). SHORT ARMS, BUTT CAPS: the
+     first drawing had arms 3.5 of a 10-unit side with square caps, which add
+     half a stroke to every end -- at this size the gaps closed and it read as
+     a plain square. Here the gap (5) is wider than an arm (3.5). */
+  #fsbtn svg { width: 12px; height: 12px; flex: none; fill: none; stroke: currentColor;
+    stroke-width: 1.7; stroke-linecap: butt; }
+  #menu.pausemode #fsbtn { display: none !important; }
+  #newsov { display: none; position: fixed; inset: 0; z-index: 60; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px; background: rgba(5,7,9,0.92); }
+  #news-close { width: auto; min-width: 150px; display: inline-block; margin: 0; }
+  #news-body { width: min(560px, 92vw); max-height: 74vh; overflow-y: auto;
+    background: rgba(12,15,19,0.96); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 22px 24px; }
+  #news-body h2 { margin: 0 0 2px; font-size: 21px; letter-spacing: 1px; }
+  .news-sub { margin: 0 0 16px; color: #8b969e; font-size: 12.5px; letter-spacing: 0.6px; }
+  .news-list { margin: 0; padding-left: 18px; }
+  .news-list li { margin-bottom: 10px; font-size: 13px; line-height: 1.5; color: #c3ccd3; }
+  .news-list b { color: #e8eef2; }
+  @media (max-width: 900px) { #newsbtn { margin-top: 0; } }
+  #navcenter { text-align: center; }
+  #logo { font-size: 40px; font-weight: 900; font-style: italic; letter-spacing: 2px; line-height: 1;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.7); }
+  #logo span { color: var(--accent); font-size: 24px; }
+  #tabs { display: flex; gap: 4px; justify-content: center; margin-top: 8px; }
+  #tabs button { background: transparent; color: #cfd8de; border: 0; border-bottom: 3px solid transparent;
+    padding: 9px 16px 10px; cursor: pointer; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
+  #tabs button:hover { color: #fff; }
+  #tabs button.sel { color: #fff; border-bottom-color: #fff; background: rgba(255,255,255,0.05); }
+  #navname { font-weight: 800; font-size: 16px; }
+  .rankchip { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 4px;
+    background: linear-gradient(180deg, rgba(139,197,63,0.22), rgba(139,197,63,0.08));
+    border: 1px solid rgba(139,197,63,0.45); color: var(--accent);
+    font-size: 10.5px; font-weight: 800; letter-spacing: 1px; vertical-align: 2px; }
+  #coins { font-weight: 700; color: var(--money); font-size: 15px; }
+  #coins i, .chal-reward i, .case-price i {
+    font-style: normal; display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border-radius: 50%; vertical-align: -2px;
+    background: radial-gradient(circle at 34% 28%, #ffffff, #e2e9f0 34%, #a2b2c2 70%, #74848f);
+    color: #414d58; font-size: 10.5px; font-weight: 900; line-height: 1;
+    box-shadow: 0 0 7px rgba(210,232,252,0.6), inset 0 -1px 2px rgba(25,35,45,0.45), inset 0 1px 1px rgba(255,255,255,0.8);
+  }
+  #coins i { width: 21px; height: 21px; font-size: 14px; margin-left: 3px; }
+
+  .tabpage { position: absolute; inset: 92px 0 0 0; display: none; }
+  .tabpage.sel { display: block; }
+  /* the case grid outgrows the window: scroll it (a page-level scrollbar would
+     drag the header and tabs with it) */
+  #tab-cases { overflow-y: auto; padding-bottom: 40px; }
+  /* ...and so does SETTINGS. Fourteen rows plus the key bindings run ~1450px,
+     and with no scroller everything past the fold -- the bot options, both
+     resets, every key binding -- was simply unreachable in a desktop window
+     (the phone query below already made .tabpage scroll; desktop never did).
+     The room under the last row is #settingsbox's bottom margin. */
+  #tab-settings { overflow-y: auto; }
+  /* Same story for the loadout, the tallest page there is: five columns, then
+     RESET TO <TEAM> DEFAULT LOADOUT and its buy-menu hint under them. The page
+     box is 768 design px whenever the window is height-bound, and the stack
+     wanted 837, so the reset button crossed the bottom edge by 15px and the
+     hint by 40 -- with no desktop scroll to reach either. Its own scroll for
+     the very short windows, and a tighter header (title, intro, team toggle,
+     column headings) so it fits without one at the sizes people actually use. */
+  #tab-loadout { overflow-y: auto; }
+  #tab-loadout .pagetitle { margin-top: 10px; }
+  .pagetitle { text-align: center; font-size: 22px; letter-spacing: 4px; margin-top: 18px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.7); }
+
+  /* play tab */
+  #challenges { position: absolute; left: 0; top: 60px; width: 300px; background: rgba(8,11,14,0.72);
+    padding: 18px 20px; border-radius: 0 8px 8px 0; }
+  .chal-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .chal-tabs span { background: rgba(255,255,255,0.08); padding: 6px 18px; border-radius: 4px; font-weight: 700;
+    font-size: 13px; opacity: 0.6; }
+  .chal-tabs span.sel { opacity: 1; background: rgba(255,255,255,0.16); }
+  #challenges h3 { font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; }
+  .chal { margin-bottom: 14px; }
+  .chal-top { display: flex; justify-content: space-between; font-size: 13.5px; font-weight: 700; margin-bottom: 5px; }
+  .chal-bar { height: 7px; background: rgba(255,255,255,0.12); border-radius: 4px; overflow: hidden; }
+  .chal-bar i { display: block; height: 100%; background: #fff; border-radius: 4px; }
+  .chal-reward { text-align: right; font-size: 12px; color: var(--money); margin-top: 3px; font-weight: 700; }
+  /* 6% put the name down on the agent's head once the lobby body came up
+     (LOBBY_LIFT, main.js): 9px between the two on a short window. The % is of
+     .tabpage, whose box is a fixed 768 design px whenever the window is
+     height-bound, so 4% is the same ~15px lift at every one of those sizes. */
+  #charname { position: absolute; left: 50%; top: 4%; transform: translateX(-50%); font-size: 19px;
+    font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,0.85); }
+  #playbottom { position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); width: 460px;
+    text-align: center; }
+  #quickopts { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .qrow { display: flex; gap: 5px; justify-content: center; }
+  .qrow button { flex: 1; background: rgba(10,13,16,0.65); color: #cfd8de; border: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 6px; border-radius: 3px; cursor: pointer; font-size: 12.5px; }
+  .qrow button:hover { background: rgba(255,255,255,0.14); }
+  .qrow button.sel { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+  /* a greyed placeholder button (Ranked): not selectable, a click only explains */
+  .qrow button.soon, .qrow button.soon:hover { background: rgba(10,13,16,0.4); color: rgba(207,216,222,0.38); border-color: rgba(255,255,255,0.05); cursor: not-allowed; }
+  #mode-toast { text-align: center; font-size: 12px; color: var(--accent); height: 0; opacity: 0; overflow: visible; transition: opacity .2s; margin-top: 2px; }
+  #mode-toast.show { opacity: 1; height: 16px; }
+  #btn-play { width: 100%; background: linear-gradient(180deg, #55aee8, #2f7fc4); color: #fff; font-size: 34px;
+    font-weight: 800; border: 0; padding: 14px; border-radius: 4px; cursor: pointer; letter-spacing: 4px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4); box-shadow: 0 4px 18px rgba(60,140,220,0.35); }
+  #btn-play:hover { background: linear-gradient(180deg, #66bdf4, #3a8cd2); }
+  /* PLAY, WHILE THE MATCH LOADS (hud.js setPlayLoading / setJoinProgress).
+     Pressing PLAY starts the characters, the map and the first weapons loading
+     with the menu still up, and until the team screen appears nothing on
+     screen moved -- the button read as dead. The loading is unchanged; this
+     only SHOWS it: the label becomes the stage and the percent, a bar fills
+     along the bottom edge, and a sheen keeps travelling across it so the long
+     map download (where the number holds still) still reads as work. */
+  #btn-play { position: relative; overflow: hidden; }
+  #btn-play .pl-stage, #btn-play .pl-bar { display: none; }
+  #btn-play.loading { cursor: progress; pointer-events: none; font-size: 22px; letter-spacing: 3px; padding: 12px 14px 20px;
+    background: linear-gradient(180deg, #3f7fae, #275f8f); box-shadow: 0 4px 18px rgba(60,140,220,0.2); }
+  #btn-play.loading .pl-stage { display: block; margin-top: 3px; font-size: 11px; font-weight: 700; letter-spacing: 2px; opacity: 0.85; }
+  #btn-play.loading .pl-bar { display: block; position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: rgba(0,0,0,0.35); }
+  #btn-play.loading .pl-bar b { display: block; height: 100%; width: 0%; background: #e9f4ff; transition: width .35s ease-out; }
+  #btn-play.loading .pl-bar::after { content: ''; position: absolute; top: 0; bottom: 0; width: 28%; left: -30%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent); animation: plsheen 1.25s linear infinite; }
+  @keyframes plsheen { to { left: 102%; } }
+  #playsub { display: flex; gap: 8px; margin-top: 8px; }
+  .ghostbtn { flex: 1; background: rgba(120,128,136,0.35); color: #d8dee4; border: 0; padding: 10px;
+    border-radius: 4px; font-size: 18px; font-weight: 700; opacity: 0.6; }
+  #online { margin-top: 12px; font-size: 15px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+  /* THE COMMUNITY CARD, bottom-left (#menufoot below is bottom-right).
+     Discord's modern brand colour is Blurple #5865F2 -- NOT the older #7289DA
+     it replaced, which is the one most copies of this widget still use. */
+  /* THE CARD IS SIZED BY ITS HEADING. "Join the community!!" is ~20 characters
+     of 800-weight text, so it needs roughly 10.4x the font size in width -- at
+     26px that is ~270px of line, and the card has to stay wider than that plus
+     its padding or the heading wraps to two lines. 340px leaves 306px inside. */
+  /* HOME SCREEN ONLY. On the loadout it sat on top of the Equipment column --
+     that page fills the width with five columns and has no spare bottom-left
+     corner. hud.js stamps #menu[data-tab] on every tab switch. */
+  #menu:not([data-tab="play"]) #discordcard { display: none; }
+  /* 340/26/23 -> 250/19/18, settled over three passes: 20% down read right,
+     a second 18% went too far, this is the step back between them. Every part
+     moves together (width, padding, heading, button text, gap and the mark)
+     so it stays the same card at a different size; changing the text alone
+     leaves a large empty box around it. */
+  #discordcard { position: absolute; bottom: 14px; left: 20px; width: 250px;
+    background: rgba(18,21,26,0.92); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 12px 12px 13px; text-align: center; }
+  #discordcard .dc-head { font-size: 19px; font-weight: 800; letter-spacing: 0.2px;
+    color: #f2f6f9; margin-bottom: 10px; white-space: nowrap; }
+  #discordcard .dc-btn { display: flex; align-items: center; justify-content: center; gap: 9px;
+    background: #5865F2; color: #fff; border-radius: 6px; padding: 10px 11px;
+    text-decoration: none; font-weight: 800; font-size: 18px; letter-spacing: 1.4px;
+    transition: background .14s, transform .14s; }
+  #discordcard .dc-btn:hover { background: #4752c4; transform: translateY(-1px); }
+  #discordcard .dc-btn svg { width: 27px; height: 21px; flex: 0 0 auto; }
+  @media (max-width: 900px) { #discordcard { width: 184px; bottom: 8px; left: 10px; padding: 9px; }
+    #discordcard .dc-head { font-size: 14px; margin-bottom: 7px; }
+    #discordcard .dc-btn { font-size: 13px; padding: 8px 8px; }
+    #discordcard .dc-btn svg { width: 21px; height: 16px; } }
+  #menufoot { position: absolute; bottom: 10px; right: 20px; display: flex; gap: 18px; font-size: 13px;
+    opacity: 0.6; font-weight: 600; }
+  /* Contact is a real link (contact.html, in a new tab so the loaded game stays
+     open); it wears the footer's own look rather than the browser's blue. */
+  #menufoot a { color: inherit; text-decoration: none; cursor: pointer; }
+  #menufoot a:hover { text-decoration: underline; }
+
+  /* cases tab */
+  #caselist { display: flex; gap: 18px; justify-content: center; margin-top: 40px; flex-wrap: wrap; padding: 0 40px; }
+  .casecard { width: 185px; background: rgba(10,13,16,0.85); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 16px 14px; text-align: center; }
+  .case-art { height: 90px; position: relative; margin-bottom: 10px; perspective: 300px; }
+  .case-img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.25s ease;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5)); }
+  .casecard:hover .case-img { transform: rotateX(10deg) rotateY(-7deg) scale(1.07); }
+  .case-body { position: absolute; left: 22px; right: 22px; bottom: 6px; height: 52px; border-radius: 5px;
+    background: linear-gradient(180deg, var(--ct2, var(--ct)) 0%, #14181c 130%); background-color: var(--ct);
+    background: linear-gradient(180deg, var(--ct) 0%, #171b20 140%); box-shadow: inset 0 -8px 14px rgba(0,0,0,0.5); }
+  .case-lid { position: absolute; left: 14px; right: 14px; bottom: 52px; height: 22px; border-radius: 6px 6px 2px 2px;
+    background: linear-gradient(180deg, #3a4048, #22262c); border-bottom: 3px solid #ffd24a; }
+  .casecard[data-case] .case-body { background: linear-gradient(180deg, var(--ct), #171b20 140%); }
+  .case-name { font-weight: 800; font-size: 14.5px; margin-bottom: 4px; }
+  /* the "what's inside" button: a quiet circle in the card's corner until hover */
+  .casecard { position: relative; }
+  .case-info { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px;
+    border-radius: 50%; border: 1px solid rgba(255,255,255,0.22); background: rgba(10,13,16,0.75);
+    color: #cfd8de; font: 700 12px/1 Georgia, serif; cursor: pointer; opacity: 0.5;
+    transition: opacity .15s, background .15s; z-index: 2; }
+  .casecard:hover .case-info { opacity: 1; }
+  .case-info:hover { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+  /* the panel itself */
+  #caseinfo { display: none; position: fixed; inset: 0; z-index: 60; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px; background: rgba(5,7,9,0.92); }
+  /* the panel's CLOSE is a button, not a menu row: .mbtn is display:block
+     width:100%, which stretched it the full 860 px of the panel */
+  #cinf-close { width: auto; min-width: 150px; display: inline-block; margin: 0; }
+  #cinf-body { max-height: 74vh; overflow-y: auto; width: min(860px, 92vw);
+    background: rgba(12,15,19,0.96); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 20px 22px; }
+  .caseinfo h2 { margin: 0 0 2px; font-size: 22px; letter-spacing: 1px; }
+  .ci-sub { margin: 0 0 16px; color: #8b969e; font-size: 12.5px; }
+  .ci-tier { margin-bottom: 14px; }
+  .ci-head { display: flex; justify-content: space-between; align-items: baseline;
+    border-left: 3px solid var(--oc, #666); padding-left: 8px; margin-bottom: 6px; }
+  .ci-head b { color: var(--oc, #ddd); font-size: 13.5px; letter-spacing: 0.4px; }
+  .ci-head span { color: #7d8790; font-size: 11.5px; }
+  .ci-items { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 11px; }
+  /* EACH ENTRY SHOWS THE SKIN, not just its name: the same rendered picture
+     the case reel and the locker draw, so you can see what you are chasing */
+  .ci-item { font-size: 11px; color: #c8d0d6; background: rgba(255,255,255,0.04);
+    border-left: 2px solid var(--oc, #666); border-radius: 2px; padding: 4px 7px 5px;
+    width: 104px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .ci-item img { width: 92px; height: 69px; object-fit: contain; display: block; }
+  .ci-item span { text-align: center; line-height: 1.25; }
+  /* the chip is clickable end to end; the magnifier is the affordance that
+     says so, and it only shows on hover so 650 of them do not fight the art */
+  .ci-item { position: relative; cursor: pointer; }
+  .ci-view { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px;
+    border-radius: 50%; border: 0; background: rgba(8,11,14,0.72); color: #dfe7ec;
+    font-size: 11px; line-height: 22px; padding: 0; cursor: pointer; opacity: 0;
+    transition: opacity .14s, background .14s; }
+  .ci-item:hover .ci-view { opacity: 1; }
+  .ci-view:hover { background: rgba(255,255,255,0.2); }
+  .ci-item:hover { background: rgba(255,255,255,0.09); }
+  .ci-dud { opacity: 0.62; }
+  .ci-dud .ci-head b { color: #96a0a8; }
+  .case-price { color: var(--money); font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+  .case-open { width: 100%; background: linear-gradient(180deg, #98d24a, #78ad2e); border: 0; color: #10230a;
+    font-weight: 800; padding: 9px; border-radius: 4px; cursor: pointer; letter-spacing: 2px; }
+  .case-open:hover { filter: brightness(1.1); }
+
+  /* case opening overlay */
+  #caseopen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center;
+    justify-content: center; background: rgba(4,6,9,0.96); z-index: 20; gap: 22px; }
+  /* THE REEL IS CS2'S OWN. Converted from panorama/styles/popups/
+     popup_capability_decodable.vcss (layout popup_capability_decodable.vxml,
+     snippet ScrollItem), number for number. Two copies of the same list ride
+     over each other, centred in a panel as tall as the screen and 4:3 wide:
+       - the OUTER list: 320 x 224 px cards, brightness .5, softened, seen
+         through case-opening-outer.svg -- a sheet with a circular hole that
+         also fades out toward the panel's left and right edges;
+       - the MAGNIFIED list: 360 x 270 px cards at full brightness with a
+         1 px #444 border, seen only through case-opening.svg, the circle,
+         over a 50 % black disc. That disc is the circle.
+     Every card is a radial grey ground; the rarity colour rises through its
+     bottom 40 % (Valve's grey gradient, washed by the rarity colour: grey 145
+     -> the colour at 57 %); a 12 px rarity bar sits at its foot (white ->
+     grey 200 radial, washed: the colour -> 78 % of it); the item render is
+     drawn last across the full width, and there is no name. The centre bar
+     is 4 x 268 px of Valve's warningColor #b1af2d. Both lists carry the
+     bluedots texture at 2 % (baked into bluedots_2pct.png). Panorama lays out
+     at 1080p and scales by screen height, so each px here is (Valve's px /
+     1080) of the viewport height: --u is one 1080p pixel. hud.js measures the
+     cards' pitch off the layout, so these are the only numbers. */
+  /* ...divided by the menu's own zoom (#menu is zoomed as a whole, --ms), so
+     the sizes come out in SCREEN pixels as Valve's do. */
+  #caseopen { --u: calc(100vh / 1080 / var(--ms, 1)); }
+  /* No overflow clip on the panel itself: its edges land on fractional
+     pixels (centred, zoomed), and a clip there left a one-pixel sliver of
+     the outer list's cards unmasked down the panel's left edge -- "a tiny
+     line with light". The masks already confine the lists to the panel's
+     box, and #caseopen clips at the viewport. */
+  #co-open { position: absolute; left: 50%; top: 50%; height: 100%; width: calc(1440 * var(--u));
+    translate: -50% -50%; }
+  #caseopen { overflow: hidden; }
+  /* .popup-decodable-opening.hidden: folded flat and gone. Valve's hidden
+     state also paints a white radial, but it sits under opacity 0 and the
+     base rule carries no transition, so in CS2 it is never seen -- the reel
+     simply appears. A fade of that white on the way IN was "too much flash". */
+  #co-open.hidden { opacity: 0; transform: scaleY(0); transition: transform 0.25s ease-in, opacity 0.1s ease-in; }
+  .co-list { position: absolute; inset: 0;
+    -webkit-mask: url(ui/cases/case-opening-outer.svg) 0 0 / 100% 100% no-repeat;
+    mask: url(ui/cases/case-opening-outer.svg) 0 0 / 100% 100% no-repeat;
+    background: url(ui/cases/bluedots_2pct.png) 0 0 / calc(360 * var(--u)) calc(360 * var(--u)) repeat; }
+  .co-list--mag { -webkit-mask-image: url(ui/cases/case-opening.svg); mask-image: url(ui/cases/case-opening.svg);
+    background-color: rgba(0,0,0,0.5); }
+  .co-items { position: absolute; left: 0; top: 50%; translate: 0 -50%; display: flex; will-change: transform; }
+  .co-tile { position: relative; flex: 0 0 auto; overflow: hidden;
+    width: calc(320 * var(--u)); height: calc(224 * var(--u)); margin: 0 calc(10 * var(--u));
+    background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(145,145,145,0.75), rgba(100,100,110,0.75));
+    filter: brightness(0.5) blur(1px); }
+  .co-tile.mag { width: calc(360 * var(--u)); height: calc(270 * var(--u)); filter: none;
+    border: 1px solid rgb(68,68,68); border-radius: 2px; }
+  .co-tint { position: absolute; left: 0; right: 0; bottom: 0; height: 40%;
+    background: linear-gradient(to top, color-mix(in srgb, var(--rc) 56.9%, #000), rgba(255,255,255,0)); }
+  .co-rarity { position: absolute; left: 0; right: 0; bottom: 0; height: calc(12 * var(--u));
+    background: radial-gradient(ellipse 50% 120% at 50% 50%, var(--rc), color-mix(in srgb, var(--rc) 78.4%, #000));
+    box-shadow: -2px -2px 4px 4px rgba(65,65,65,0.25); }
+  .co-tile img { position: absolute; left: 0; top: 50%; width: 100%; height: auto; transform: translateY(-50%); }
+  /* the spin itself: the popup sits on a blurred screen (popupbackground="blur")
+     and the panel behind the reel is darkened to .4 (popup-inspect-modelpanel_darken_blur) */
+  #caseopen.spin { background: rgba(4,6,9,0.55); -webkit-backdrop-filter: blur(10px) brightness(0.4); backdrop-filter: blur(10px) brightness(0.4); }
+  #caseopen.spin #co-title { position: absolute; top: calc(44 * var(--u)); left: 0; right: 0; text-align: center; }
+  #caseopen.spin #co-wallet { position: absolute; bottom: calc(40 * var(--u)); left: 0; right: 0; text-align: center; }
+  /* THE UNLOCK BEAT SHOWS THE CASE ITSELF, so the backdrop has to let the
+     canvas through. #caseopen is rgba(4,6,9,0.96) — a wall the 3D crate spins
+     behind, mounted and lit and invisible. Same vignette trick .reveal3d uses
+     for the won skin: clear in the middle, solid at the edges so the menu
+     underneath stays unreadable. Reverts to the solid backdrop the moment the
+     reel starts, which is when the crate is swapped out for the spin. */
+  #caseopen.prespin { background: radial-gradient(circle at 50% 46%,
+      rgba(4,6,9,0.08) 0%, rgba(4,6,9,0.45) 34%, rgba(4,6,9,0.95) 76%); }
+  #caseopen.prespin #co-wallet { opacity: 0.85; }
+  /* ...AND THE MENU BEHIND IT HAS TO GO. Clearing the backdrop let the canvas
+     through, but it also let the case GRID through: the crate turned with
+     "Arms Deal Case" and a row of cards showing straight over it. Same fix
+     .reveal3d uses for the won skin — hide the tabs and chrome for the beat,
+     so the case is alone in the frame. */
+  #menu.prespinmode #tab-cases, #menu.prespinmode #tab-locker, #menu.prespinmode #tab-play,
+  #menu.prespinmode #topnav, #menu.prespinmode #menufoot,
+  #menu.prespinmode #discordcard { visibility: hidden; }
+  .co-unlock { display: inline-block; letter-spacing: 3px; animation: copulse 0.95s ease-in-out infinite; }
+  @keyframes copulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+  #reelmarker { position: absolute; left: 50%; top: 50%; margin-left: calc(-2 * var(--u)); margin-top: calc(-134 * var(--u));
+    width: calc(4 * var(--u)); height: calc(268 * var(--u)); background: #b1af2d;
+    box-shadow: -2px -2px 4px 4px rgba(65,65,65,0.25); }
+  .skintile { position: relative; width: 120px; height: 100%; margin: 0 4px; flex: 0 0 auto; overflow: hidden;
+    background: #14181d; border-radius: 4px; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; border: 1px solid rgba(255,255,255,0.07); }
+  .st-bg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.5; }
+  /* A KNIFE ROW OPENS WITH ITS BLADE (hud.js builds it), the same shape as the
+     Default tile that opens every other weapon's row. Not a click target --
+     there is no bare Bayonet to equip -- so it takes neither the pointer nor
+     the hover lift the owned tiles get. */
+  .lk-grid .skintile.modelhead { cursor: default; background: #101418; }
+  .lk-grid .skintile.modelhead:hover { transform: none; box-shadow: none;
+    border-color: rgba(255,255,255,0.07); }
+  .lk-grid .skintile.modelhead .st-name { opacity: 0.75; font-weight: 600; }
+  .st-icon { position: relative; height: 34px; width: auto; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.8)); }
+  /* CS2's own item render. Wider and shorter than the silhouette icons because
+     that is the shape Valve renders them at (512x384, shipped here at 256x192). */
+  .st-art { height: auto; width: 100%; max-height: 62px; object-fit: contain; }
+  /* THE ART GETS THE TILE'S WIDTH. `.lk-grid .st-icon` below caps every tile
+     image at 38 px tall, which for a 4:3 render is 51 px wide on a 126 px
+     card -- "the skin images are too small". The render is the whole point
+     of the card, so it takes 58 px of height (77 px wide) and the card grows
+     to hold it; the Default silhouettes keep their own size. Three classes
+     deep so it outranks the .st-icon rule that follows it. */
+  .lk-grid .skintile .st-art { height: 58px; max-height: 58px; margin-top: 10px; }
+  /* the item's condition + float, which is half of what identifies it */
+  .st-cond { font-size: 9.5px; letter-spacing: 0.4px; opacity: 0.62;
+    font-family: var(--num-font); margin-top: 1px; }
+  /* StatTrak(TM) -- CS2 marks the item itself, in its orange */
+  .st-tag { position: absolute; top: 5px; right: 6px; font-size: 8.5px; font-weight: 800;
+    letter-spacing: 0.4px; color: #cf6a32; background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(207,106,50,0.5); border-radius: 3px; padding: 1px 3px; }
+  .skintile.stattrak .st-name { color: #e08a4e; }
+  /* the unbox reveal shows the real art and the item's own line */
+  .rv-art { width: min(46vw, 420px); margin: 6px auto 2px; display: block; }
+  /* Valve's own render of the finish, shown over the 3D object. This is the
+     skin -- the model behind it is painted from a sampled palette and cannot
+     show the artwork itself. */
+  .in-art { display: block; width: min(52vw, 560px); margin: 0 auto 4px;
+    filter: drop-shadow(0 8px 26px rgba(0,0,0,0.85)); }
+  .rv-sub, .in-sub { font-size: 11.5px; opacity: 0.7; letter-spacing: 0.4px;
+    font-family: var(--num-font); margin-top: 3px; }
+  /* Side-gear tiles (knife / gloves) draw CS2's vector MASKED so it can take a
+     team colour -- same mechanism as .buyicon and #casebtn .caseico.
+     THE BOX HAS TO BE WIDE, NOT SQUARE. `.st-icon` next door is an <img> at
+     `height: 38px; width: auto`, so it sizes by HEIGHT and lets the aspect
+     ratio set the width -- an AK lands at 105x38. A mask has no intrinsic
+     size, so a square box plus `contain` fits by the SHORT side instead: the
+     knife is 76.8x32 in its own viewBox, so 38x38 rendered it 38x16, a third
+     the size of every weapon beside it. Gloves are square (32x32) and looked
+     right, which is exactly why it went unnoticed. Give it a box wider than
+     any icon can need at this height (the widest is the AK at 2.77:1 -> 105px)
+     and `contain` then fits by height, matching the <img> exactly. */
+  .st-glove, .st-sideicon { position: relative; width: 100px; height: 34px; display: block;
+    background: var(--tint, #fff);
+    -webkit-mask: var(--icon) center / contain no-repeat;
+    mask: var(--icon) center / contain no-repeat; }
+  .lk-grid .st-glove, .lk-grid .st-sideicon { width: 112px; height: 38px; }
+  .st-name { position: relative; font-size: 10.5px; font-weight: 700; text-align: center; padding: 4px 6px 8px;
+    text-shadow: 0 1px 3px #000; line-height: 1.25; }
+  .st-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--rc); }
+  #revealcard { position: relative; display: none; flex-direction: column; align-items: center; gap: 6px;
+    background: #14181d; border: 2px solid var(--rc); border-radius: 10px; padding: 20px 40px;
+    box-shadow: 0 0 40px color-mix(in srgb, var(--rc) 50%, transparent); }
+  #rv-bg { width: 130px; height: 130px; border-radius: 8px; opacity: 0.9; }
+  .rv-icon { height: 52px; margin-top: -95px; margin-bottom: 40px; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.9)); }
+  .rv-glove { font-size: 50px; margin-top: -105px; margin-bottom: 46px; }
+  .rv-name { font-size: 19px; font-weight: 800; }
+  .rv-rarity { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+  .rv-equip { font-size: 11.5px; opacity: 0.6; }
+  #co-btns { display: none; gap: 12px; }
+  #co-close, #co-again { width: 220px; }
+  #co-again:disabled { opacity: 0.4; cursor: default; }
+  #co-wallet { font-size: clamp(12.5px, 1vw, 16px); letter-spacing: 1px; opacity: 0.8; margin: 10px 0 4px; }
+  #co-wallet b { color: var(--accent); font-size: clamp(14px, 1.1vw, 18px); }
+  #co-wallet i, #co-again i { font-style: normal; opacity: 0.7; }
+  /* 3D reveal: pin the wallet strip + buttons to the bottom edge so the
+     opened weapon owns the middle of the screen (CS2 reveal framing) */
+  /* (the reveal's wallet and buttons sit in the CS2 button row now: #co-btns
+     takes .cs2ins-bottom at the reveal and #co-wallet moves inside it) */
+
+  /* inventory tab — CS2-style flowing grid per category */
+  .lk-cat { margin-bottom: 26px; }
+  .lk-cat > h3 { font-size: 13px; letter-spacing: 3px; color: var(--accent); opacity: 0.9;
+    border-bottom: 1px solid rgba(139,197,63,0.25); padding-bottom: 6px; margin-bottom: 12px; }
+  #lockerlist { max-width: 1240px; margin: 26px auto 0; padding: 0 30px; overflow-y: auto; max-height: calc(100% - 90px); }
+  /* each weapon is its own little panel inside the category — tiles of the
+     same gun sit together, guns sit apart ("too clustered" fix) */
+  .lk-grid { display: flex; flex-wrap: wrap; gap: 18px 20px; }
+  .lk-wep { display: flex; gap: 7px; padding: 8px; background: rgba(255,255,255,0.028);
+    border: 1px solid rgba(255,255,255,0.055); border-radius: 7px; }
+  .lk-grid .skintile { width: 126px; height: 132px; margin: 0; cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s; }
+  .lk-grid .skintile:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+    border-color: #fff; }
+  .lk-grid .skintile.equipped { border: 2px solid var(--accent); box-shadow: 0 0 12px rgba(139,197,63,0.4); }
+  .st-wep { position: absolute; top: 0; left: 0; right: 0; padding: 4px 6px 10px; font-size: 9.5px;
+    font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; opacity: 0.75; text-align: left;
+    background: linear-gradient(rgba(0,0,0,0.55), transparent); white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; z-index: 1; pointer-events: none; }
+  .lk-grid .st-icon { height: 38px; margin-top: 8px; }
+  .lk-grid .skintile.gear .st-icon { height: 42px; }
+  .lk-grid .skintile.gear .st-name { opacity: 0.55; font-weight: 600; }
+  .empty { text-align: center; opacity: 0.6; margin-top: 60px; line-height: 2; font-size: 15px; }
+
+  /* settings tab */
+  #settingsbox { max-width: 520px; margin: 30px auto 40px; background: rgba(10,13,16,0.8); padding: 26px 30px;
+    border-radius: 8px; border: 1px solid rgba(255,255,255,0.07); }
+  /* In game the page opens from the pause menu, and #pause-back is fixed over its
+     bottom edge (26px up, ~40px tall): leave room to scroll the last row clear of
+     it. Phones set their own margin in the query below. */
+  #menu.pausemode #settingsbox { margin-bottom: 90px; }
+  .srow { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .srow label { width: 120px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.6; }
+  .srow input[type=range] { flex: 1; accent-color: var(--accent); }
+  .srow span { width: 44px; font-size: 13px; }
+  /* the FPS readout doubles as a text field -- click it and type a number */
+  #fps-val, .numval { width: 74px; cursor: text; padding: 2px 5px; border-radius: 3px;
+             border: 1px solid transparent; outline: none; }
+  #fps-val:hover, .numval:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.05); }
+  #fps-val:focus, .numval:focus { border-color: var(--accent); background: rgba(255,255,255,0.09); }
+  .srow input[type=text], #opt-name { flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; padding: 9px 12px; border-radius: 4px; font-size: 14px; }
+  .srow .qrow { flex: 1; }
+  /* bot count and bot skill mean nothing with the bots switched off */
+  #menu.nobots .srow.botdep { opacity: 0.35; pointer-events: none; }
+  /* no text selection anywhere (kills the iOS tap-loupe); inputs stay editable */
+  html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  input, textarea { -webkit-user-select: auto; user-select: auto; }
+  .tbtn svg { width: 52%; height: 52%; pointer-events: none; display: block; }
+
+  /* cases shortcut under the radar */
+  /* Sits BELOW the radar, derived from the dial rather than pinned: the radar
+     is --rd-inset from the corner and 250px tall at Valve's 1080p reference,
+     both scaled by --cs2-ui-scale, so a fixed `top: 200px` fell inside it as
+     soon as the dial took CS2's real size. 12px of clearance under the rim. */
+  /* THE CASE BUTTON WEARS A FADE. The three stops and their positions are the
+     game's own Fade finish, not a hand-picked gradient: PAINTERS.fade in
+     skins.js lays c1/c2/c3 down at 0 / 0.55 / 1, and these are the stops the
+     Fade skins in SKINS use (`knife_fade`, `gloves_fade`) -- yellow into
+     magenta into violet. So the button is painted by the same recipe that
+     paints a Fade in the world, which is what makes it read as one. */
+  #casebtn { position: absolute; left: 16px; z-index: 6;
+    width: auto; min-width: 56px; height: 38px; padding: 0 8px; box-sizing: border-box;
+    top: calc((var(--rd-inset, 14px) + 250px) * var(--cs2-ui-scale, 1) + 12px);
+    display: flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 46%),
+      linear-gradient(135deg, #f8d838 0%, #e848a8 55%, #4838e8 100%);
+    border: 1px solid rgba(255,255,255,0.30); border-radius: 8px;
+    /* white, because no single ink reads across yellow AND violet -- the
+       shadow is what carries it over the pale end */
+    color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.65);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.42), inset 0 -1px 3px rgba(0,0,0,0.28);
+    /* FULL COLOUR AT ANY BALANCE. This used to drop to saturate(0.5)
+       brightness(0.82) below 250 coins, the price of one case, and only
+       return to full paint once you could afford one. It was the only chip
+       on the HUD with a washed-out state and nothing on screen explained
+       it, so it read as a broken or disabled button rather than as a price
+       signal. The wallet no longer changes how the button is painted; the
+       only thing left that marks an affordable case is the glow `.afford`
+       adds below, which is a shadow and does not touch the colours. */
+    filter: none;
+    pointer-events: auto;
+    transition: filter 0.25s, box-shadow 0.25s, transform 0.12s ease-out; }
+  /* the case glyph is masked so it still takes the button's `color` */
+  #casebtn .caseico { width: 21px; height: 21px; flex: 0 0 auto;
+    background: currentColor;
+    -webkit-mask: var(--icon) center / contain no-repeat;
+    mask: var(--icon) center / contain no-repeat;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6)); }
+  /* no plate behind the key -- the button's own text-shadow is what carries it
+     over the pale end of the gradient */
+  #casebtn .casekey { font-size: 11px; font-weight: 800; line-height: 1; }
+  #casebtn .casekey:empty { display: none; }
+  /* a full wallet adds the glow and nothing else -- no `filter` here, or the
+     two states would differ in paint again (see the base rule above). */
+  #casebtn.afford {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.42), 0 0 14px rgba(232,72,168,0.34),
+                inset 0 -1px 3px rgba(0,0,0,0.28); }
+  #casebtn:hover { filter: saturate(1.15) brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5), 0 0 20px rgba(232,72,168,0.5),
+                inset 0 -1px 3px rgba(0,0,0,0.28); }
+  #casebtn:active { transform: translateY(0) scale(0.96); }
+  /* HIDDEN IN BOTH MENU STATES, like every other piece of HUD. This listed
+     only `.inmenu`, so the button sat on the team-select and loading screens
+     with no radar under it to belong to -- it just was not noticeable while it
+     was a dark slab. */
+  #hud.inmenu #casebtn, #hud.teamselect #casebtn { display: none; }
+  /* touch: same derivation, just the bigger tap target */
+  body.touchmode #casebtn { min-width: 62px; height: 44px; }
+
+  /* buy-zone chip: shows when buying is possible (bomb mode) */
+  /* clear of the money line, which now sits at CS2's 22px */
+  /* BESIDE THE MONEY, NOT ABOVE IT. left/top are written by the HUD tick from
+     the money's measured box (see updateBuyHint) -- the figure is 42px type and
+     its width changes with the amount, so a fixed offset would either overlap
+     "$16000" or leave a hole after "$800". These values are only the fallback
+     for the frame before the first measurement. */
+  #buyhint { position: absolute; left: 16px; display: none; align-items: center; gap: 7px;
+    bottom: calc(78px * var(--cs2-ui-scale, 1));
+    background: rgba(13,17,21,0.72); border: 1px solid rgba(139,197,63,0.5); color: var(--accent);
+    padding: 5px 11px; border-radius: 5px; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; }
+  #buyhint b { background: var(--accent); color: #10150c; border-radius: 3px; padding: 1px 6px; font-size: 11px; }
+  #hud.inmenu #buyhint, #hud.teamselect #buyhint { display: none !important; }
+
+  /* soft CS2-style vignette: grounds the frame, free (no render cost) */
+  #vignette {
+    position: fixed; inset: 0; z-index: 5; pointer-events: none;
+    background: radial-gradient(ellipse 108% 96% at 50% 46%, transparent 62%, rgba(8,10,14,0.32) 100%);
+  }
+
+  /* ================= mobile / touch ================= */
+  #touchui {
+    /* `viewport-fit=cover` is set on the viewport meta, so the page extends
+       UNDER the notch and the home indicator. Nothing used env() before, which
+       on a landscape iPhone puts the gear and the aim button beneath the
+       rounded corner / Dynamic Island. Inset the control layer by the safe
+       area; the look and move ZONES deliberately still span the full screen. */
+    position: fixed; z-index: 40; display: none;
+    top: env(safe-area-inset-top, 0px); right: env(safe-area-inset-right, 0px);
+    bottom: env(safe-area-inset-bottom, 0px); left: env(safe-area-inset-left, 0px);
+    pointer-events: none; user-select: none; -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent; font-family: inherit;
+  }
+  .tz { position: absolute; bottom: 0; height: 78%; pointer-events: auto; touch-action: none; }
+  .tz-move { left: 0; width: 42%; }
+  .tz-look { right: 0; width: 58%; }
+  .stick-base, .stick-nub {
+    position: fixed; pointer-events: none; border-radius: 50%; z-index: 41;
+  }
+  /* CONTROL SIZES SCALE WITH SCREEN HEIGHT.
+     They were fixed px, tuned against a ~620px-tall viewport. A landscape
+     phone is ~393px tall, so the SAME pixels ate 1.6x the relative space:
+     measured at a 2.17:1 aspect the stick was 33% of screen height, the fire
+     button 25%, and two pairs actually COLLIDED (stick/left-fire 10x35px,
+     fire/crouch 18x9px). Each size is now clamp(tappable-floor, the vh that
+     reproduces the tuned proportion at 620px, the original px) -- so a tall
+     screen is unchanged and a short one shrinks instead of cramming. The
+     floors keep every control at or above a comfortable touch target. */
+  .stick-base { width: clamp(84px, 18.1vh, 112px); height: clamp(84px, 18.1vh, 112px);
+    border: 2px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.05); }
+  .stick-nub { width: clamp(40px, 8.4vh, 52px); height: clamp(40px, 8.4vh, 52px);
+    background: rgba(255,255,255,0.3); border: 2px solid rgba(255,255,255,0.5); }
+  .tbtn {
+    position: absolute; pointer-events: auto; touch-action: none; z-index: 42;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; color: rgba(255,255,255,0.85);
+    background: rgba(20,26,32,0.4); border: 2px solid rgba(255,255,255,0.22);
+    font-weight: 700; letter-spacing: 0.06em;
+  }
+  .tbtn.held, .tbtn.on { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .tbtn-fire  { right: 3.5%; bottom: 14%; width: clamp(64px, 13.5vh, 84px); height: clamp(64px, 13.5vh, 84px); font-size: 15px; }
+  .tbtn-firel { left: 3%; bottom: 36%; width: clamp(46px, 9.4vh, 58px); height: clamp(46px, 9.4vh, 58px); font-size: 11px; opacity: 0.8; }
+  .tbtn-aim   { right: 4%; bottom: 1%; width: clamp(46px, 9.0vh, 56px); height: clamp(46px, 9.0vh, 56px); font-size: 12px; }
+  .tbtn-jump  { right: 2.5%; bottom: 40%; width: clamp(46px, 9.4vh, 58px); height: clamp(46px, 9.4vh, 58px); font-size: 20px; }
+  .tbtn-crouch{ right: 12.5%; bottom: 36%; width: clamp(42px, 8.1vh, 50px); height: clamp(42px, 8.1vh, 50px); font-size: 18px; }
+  .tbtn-reload{ right: 26%; bottom: 26%; width: clamp(40px, 7.4vh, 46px); height: clamp(40px, 7.4vh, 46px); font-size: 14px; }
+  .tbtn-use   { right: 17.5%; bottom: 23%; width: clamp(40px, 7.4vh, 46px); height: clamp(40px, 7.4vh, 46px); font-size: 14px; }
+  .tbtn-buy   { left: 2.5%; bottom: 22%; width: clamp(38px, 7.1vh, 44px); height: clamp(38px, 7.1vh, 44px); font-size: 15px; color: var(--money); }
+  .tbtn-pause { right: 1.5%; top: 4%; width: clamp(34px, 6.5vh, 40px); height: clamp(34px, 6.5vh, 40px); font-size: 17px; border-radius: 10px; }
+  .slotstrip {
+    position: absolute; left: 50%; transform: translateX(-50%); bottom: 2%;
+    display: flex; gap: 6px; pointer-events: auto; touch-action: none; z-index: 42;
+  }
+  .tslot {
+    width: clamp(36px, 6.5vh, 40px); height: clamp(32px, 5.5vh, 34px); border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    background: rgba(20,26,32,0.45); border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 700;
+  }
+  /* spectating / death cam: gameplay controls hide — only the pause gear
+     stays, and the look zone keeps handling tap-to-switch-target */
+  #touchui.spec .tz-move, #touchui.spec .stick-base, #touchui.spec .stick-nub,
+  #touchui.spec .tbtn:not(.tbtn-pause), #touchui.spec .slotstrip { display: none !important; }
+  /* MENU OPEN: same idea, and it is what made settings unusable on a phone.
+     #touchui sits at z-index 40 with the look/move zones spanning the whole
+     screen, so with the panel open a tap anywhere but the far left column hit
+     .tz and dragged the view instead of pressing the control under the finger.
+     The gear stays -- it is now the way back out. */
+  body.menuopen #touchui .tz, body.menuopen #touchui .stick-base,
+  body.menuopen #touchui .stick-nub, body.menuopen #touchui .slotstrip,
+  body.menuopen #touchui .tbtn:not(.tbtn-pause) { display: none !important; }
+  .rotateov {
+    position: fixed; inset: 0; z-index: 300; display: none;
+    flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    background: rgba(8,10,13,0.96); color: #fff; font-size: 20px; font-weight: 800; letter-spacing: 0.12em;
+  }
+  .rotateov div { font-size: 54px; animation: rotspin 2.4s ease-in-out infinite; }
+  .rotateov span { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.55); letter-spacing: 0.05em; }
+  @keyframes rotspin { 0%, 55% { transform: rotate(0deg); } 75%, 100% { transform: rotate(90deg); } }
+
+  /* PHONES: the two strips plus the score bar need ~533px of a single row and
+     a phone has 375. CS2 has no portrait layout to copy here, so drop both
+     strips onto a second row directly under the bar rather than letting them
+     run off both edges (measured at 375px: CT started at -74, T ended at 415). */
+  /* #hud-prefixed so this wins over the max-width:980px block below, which
+     matches too and would otherwise take it on source order alone. */
+
+
+  /* compact HUD on small screens (elements use ids via el()) */
+  @media (max-width: 980px) {
+    /* Handhelds shrink the dial but keep CS2's GEOMETRY: the same 25/65/250
+       proportions, taken down by a single factor. Pinning 150px at (8,8) was
+       throwing the radar off CS2's position entirely -- and because the query
+       is max-width, a windowed desktop under 980px got the phone layout too. */
+    #radar { --rd: calc(var(--cs2-ui-scale, 1) * 0.62);
+      left: calc(var(--rd-inset) * var(--rd)); top: calc(var(--rd-inset) * var(--rd));
+      width: calc(250px * var(--rd)); height: calc(250px * var(--rd)); }
+    /* the dial is 0.62 here, so the button under it has to shrink by the same
+       factor or it would sit in a gap */
+    #casebtn { top: calc((var(--rd-inset, 14px) + 250px)
+      * var(--cs2-ui-scale, 1) * 0.62 + 10px); }
+    /* NO size overrides for the player strip any more. It is authored in vh
+       from CS2's own values, so it already scales with the viewport -- pinning
+       it to 30px here was overriding CS2's 54px card and undoing the extract. */
+    #scorebar { font-size: 12px !important; }
+    /* 92px was tuned against an older, narrower bar and now runs the strips
+       under it: the bar is 221px wide, so each side needs at least 111px. */
+    #hp { font-size: 24px !important; }
+    #ammo { font-size: 20px !important; }
+    #money, #wname { font-size: 13px !important; }
+    /* Panorama's px are at a 1080p design height and scale with the viewport;
+       a phone gets the same layout at a smaller size rather than a different one. */
+    #killfeed .kf { font-size: 11px; padding: 4px 7px 2px 7px; }
+    #killfeed .kficon, #killfeed .kfhs { height: 17px; }
+    #killfeed { top: 46px; }
+    #topright { right: 54px !important; top: 4px !important; gap: 6px !important; }   /* clear of the pause button */
+    #fps { font-size: 9px !important; }
+    #sitebadge { padding: 2px 6px !important; }
+    #sitebadge .sb-name { font-size: 14px !important; }
+    #buymenu { width: 96vw !important; max-width: 96vw !important; max-height: 86vh !important; overflow-y: auto !important; }
+    body.touchmode #statr { right: 118px !important; bottom: 10px !important; }
+    body.touchmode #statl { left: 60px !important; }
+    #killcard { transform: translateX(-50%) scale(0.85) !important; }
+    #menu { overflow-y: auto; }
+
+    /* NO MENU REFLOW ON A SMALL WINDOW ANY MORE.
+       The menu is zoomed as a single unit (hud.js _syncMenuScale -> #menu's
+       `zoom: var(--ms)`), so a small window gets the SAME layout smaller
+       instead of a different one. These rules did the opposite: they re-sized
+       the nav to 60px, dropped the logo to 22px, hid the challenges panel and
+       re-anchored the play column -- so dragging the window narrower changed
+       the design rather than its scale, and under the zoom they also shrank a
+       second time on top of it.
+       The scroll affordance stays: a very short window can still run out of
+       height even with everything scaled down. */
+    .tabpage { overflow-y: auto; }
+    /* team select fits a landscape phone */
+    #teamsel h1 { font-size: 17px; letter-spacing: 4px; }
+    #teamsel .tsmap { font-size: 10px; margin-top: -6px; }
+    #teamsel .tscards { gap: 14px; }
+    .tscard { width: 204px; height: 232px; }
+    .tscard * { font-size: 90%; }
+    /* settings / bind list compact */
+    .bindrow { padding: 2px 0; font-size: 11.5px; }
+    #bindlist { max-height: 46vh; overflow-y: auto; }
+    /* THE SETTINGS PANEL HAD NO WAY TO SCROLL. `.tabpage` is position:absolute,
+       so it contributes nothing to #menu's scroll height -- the box measured
+       645px inside a 360px landscape viewport and everything past the fold was
+       simply unreachable. Make the page its own scroller and shrink the rows
+       so most of it fits without scrolling at all. Scoped to .pausemode: this
+       is the in-game overlay, not the main menu. */
+    #menu.pausemode #topnav { height: 62px; padding-top: 8px; }
+    #menu.pausemode .tabpage { inset: 62px 0 0 0; overflow-y: auto;
+      -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    #menu.pausemode .pagetitle { display: none; }        /* 40px of "SETTINGS" above a panel reached from a gear */
+    #menu.pausemode #settingsbox { max-width: none; margin: 6px 12px 48px;
+      padding: 8px 12px; }                              /* 58px clears #pause-back (39px tall at bottom:10) */
+    #menu.pausemode .srow { gap: 8px; margin-bottom: 5px; }
+    #menu.pausemode .srow label { width: 88px; font-size: 9.5px; letter-spacing: 0.8px; }
+    #menu.pausemode .srow span { width: 38px; font-size: 12px; }
+    #menu.pausemode .srow input[type=text], #menu.pausemode #opt-name { padding: 6px 9px; font-size: 13px; }
+    #menu.pausemode #pause-back { bottom: 10px; padding: 9px 20px; font-size: 12px; }
+    /* TWO COLUMNS. A landscape phone is wide and short -- the panel measured
+       590px tall in a 298px page, so one column per row wasted the entire
+       width and forced a scroll for every setting. Paired up it clears the
+       fold. `label + control` stays on one line inside each cell. */
+    body.touchmode #menu.pausemode #settingsbox {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px;
+      align-content: start; }
+    /* 14 rows is too many for two columns once the video settings are in --
+       a wide landscape phone takes three and the panel clears #pause-back,
+       which otherwise floats over the last row and swallows its taps. */
+    @media (min-width: 700px) {
+      body.touchmode #menu.pausemode #settingsbox { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      body.touchmode #menu.pausemode .srow label { width: 76px; }
+    }
+    body.touchmode #menu.pausemode .srow { margin-bottom: 5px; min-width: 0; }
+    body.touchmode #menu.pausemode .srow .qrow { min-width: 0; flex: 1; }
+    body.touchmode #menu.pausemode .qrow button { padding: 5px 2px; font-size: 9.5px;
+      min-width: 0; flex: 1; }
+    body.touchmode #menu.pausemode .setsub,
+    body.touchmode #menu.pausemode #bindlist,
+    body.touchmode #menu.pausemode #binds-reset { grid-column: 1 / -1; }
+    /* KEY BINDINGS ARE DEAD WEIGHT ON A PHONE -- there is no keyboard to bind
+       to, and the list was the single tallest thing in the panel. */
+    body.touchmode #menu.pausemode .setsub,
+    body.touchmode #menu.pausemode #bindlist,
+    body.touchmode #menu.pausemode #binds-reset { display: none; }
+    /* the FPS readout is a text FIELD and its value can be the word
+       "Unlimited" -- the 38px .srow span width broke it over three lines */
+    body.touchmode #menu.pausemode #fps-val, body.touchmode #menu.pausemode .numval { width: 62px; font-size: 10.5px; text-align: center; }
+    /* labels wrap to two lines at this width ("CROSSHAIR FOLLOWS SHOTS");
+       tighten the leading so a wrapped label does not grow its row */
+    body.touchmode #menu.pausemode .srow label { line-height: 1.15; }
+    body.touchmode #menu.pausemode .srow { align-items: center; min-height: 26px; }
+  }
+
+  /* ===================== THE COMPACT MENU (small desktop windows) =====================
+     hud.js _syncMenuScale puts `.compact` on #menu when the one-scale layout
+     would shrink below 0.72 (a window under about 1008x619), and lays the menu
+     out on a 920x518 canvas instead of 1400x860. A game portal shows the game
+     in a box as small as 800x450; there the normal layout's 12px labels were
+     6px, and here they are 10.4px.
+     The SPACE these rules have is the window divided by that scale: 920x518 at
+     the smallest, more when the window is not 16:9 (a tall narrow one gives
+     920x1180, a wide short one 1800x518), so everything is anchored to an edge
+     or centred -- nothing is placed by a fixed x.
+     SAME MENU, SAME PARTS. Only what cannot fit is re-seated: the play column
+     moves to the right-hand side (at the bottom-centre it covered the agent
+     from the chest down once the window was this short), the challenges panel
+     narrows to the strip left of the agent, and the top bar loses 14px.
+     Never on a handheld, never above the threshold. */
+  #menu.compact #topnav { height: 78px; padding: 8px 14px 0; }
+  #menu.compact .tabpage { inset: 78px 0 0 0; }
+  #menu.compact .nav-side { width: 186px; flex: none; padding-top: 4px; }
+  #menu.compact .nav-side.right { gap: 10px; }
+  #menu.compact .patch { font-size: 11.5px; white-space: nowrap; }
+  #menu.compact #newsbtn { margin-top: 4px; padding: 3px 11px; font-size: 11.5px; }
+  #menu.compact #fsbtn { margin-top: 6px; font-size: 11.5px; }
+  #menu.compact #logo { font-size: 30px; letter-spacing: 1.5px; }
+  #menu.compact #logo span { font-size: 18px; }
+  /* the seven tabs have 521px: 920 less the bar's padding and the two 186px sides */
+  #menu.compact #tabs { margin-top: 5px; gap: 0; }
+  #menu.compact #navcenter #tabs button { padding: 6px 5px 7px; font-size: 12px; letter-spacing: 0.4px; }
+  #menu.compact #tabs [data-tab="market"]::after { content: 'MARKET'; }
+  #menu.compact #navname { font-size: 14px; }
+  #menu.compact .rankchip { font-size: 11.5px; margin-left: 0; padding: 2px 7px; letter-spacing: 0.6px; white-space: nowrap; }
+  #menu.compact #coins { font-size: 14px; white-space: nowrap; }
+  /* play tab: challenges | agent | play column */
+  #menu.compact #challenges { top: 6px; width: 216px; padding: 12px 14px; }
+  #menu.compact .chal-tabs { margin-bottom: 9px; gap: 6px; }
+  #menu.compact .chal-tabs span { padding: 5px 13px; font-size: 12px; }
+  #menu.compact #challenges h3 { font-size: 14px; margin-bottom: 8px; padding-bottom: 6px; }
+  #menu.compact .chal { margin-bottom: 9px; }
+  #menu.compact .chal-top { font-size: 12.5px; margin-bottom: 4px; }
+  #menu.compact .chal-bar { height: 6px; }
+  #menu.compact #charname { top: 2%; font-size: 16px; }
+  #menu.compact #playbottom { left: auto; right: 14px; bottom: auto; top: 46%;
+    transform: translateY(-50%); width: 336px; }
+  #menu.compact #quickopts { margin-bottom: 9px; }
+  #menu.compact .qrow button { padding: 8px 3px; font-size: 12px; white-space: nowrap; }
+  #menu.compact #btn-play { font-size: 28px; padding: 11px; letter-spacing: 3px; }
+  #menu.compact #btn-play.loading { font-size: 18px; padding: 9px 12px 16px; }
+  #menu.compact #discordcard { width: 190px; bottom: 8px; left: 10px; padding: 9px; }
+  #menu.compact #discordcard .dc-head { font-size: 13.5px; margin-bottom: 6px; }
+  #menu.compact #discordcard .dc-btn { font-size: 12.5px; padding: 7px 8px; }
+  #menu.compact #discordcard .dc-btn svg { width: 20px; height: 15px; }
+  #menu.compact #menufoot { bottom: 8px; right: 14px; gap: 14px; font-size: 12px; }
+  /* the footer links float over the page; on the scrolling tabs that put them
+     across a row of tiles, so in this layout they stay on the play tab */
+  #menu.compact:not([data-tab="play"]) #menufoot { display: none; }
+  #menu.compact .pagetitle { margin-top: 10px; font-size: 19px; letter-spacing: 3px; }
+  /* loadout: all five columns on one row (5 x 168 + 4 x 10 = 880 of 920); at
+     190 the fifth wrapped to a row of its own 500px further down the page */
+  #menu.compact #lo-grid { gap: 10px; }
+  #menu.compact .lo-col { width: 168px; }
+  #menu.compact .lo-slot { height: 72px; }
+  #menu.compact .lo-slot.fixed { height: 56px; }
+  #menu.compact .lo-icon { top: 27px; height: 32px; }
+  #menu.compact .lo-name { font-size: 15.5px; }
+  #menu.compact .lo-title { font-size: 17px; }
+  #menu.compact #lo-intro { font-size: 13px; margin-bottom: 6px; }
+  #menu.compact #lo-teams button { padding: 7px 18px; font-size: 13px; }
+  /* the in-match settings panel: its phone rules (88px labels at 9.5px, a 38px
+     value column that broke "Unlimited" over three lines) were sized for a
+     much lower scale than this layout runs at */
+  #menu.compact.pausemode .srow label { width: 116px; font-size: 11px; }
+  #menu.compact.pausemode .srow span, #menu.compact.pausemode #fps-val,
+  #menu.compact.pausemode .numval { width: 66px; font-size: 12px; }
+  /* THE INSPECT AND CASE-OPENING SCREENS are drawn in 1080p units scaled by the
+     window's height (--u), which at 450px tall made the condition / pattern /
+     float line and the wallet 7-8px. The unit gets a floor instead: below a
+     670px-tall window it stops shrinking, so that line is 12px and the button
+     row 15px, and the reel (270 units tall) is still only 167px of the 450. */
+  #menu.compact #inspectov, #menu.compact #caseopen { --u: calc(max(100vh / 1080, 0.62px) / var(--ms, 1)); }
+
+  /* THE BUY MENU IN A SMALL WINDOW (hud.js `fit` puts .compact on it and picks
+     one scale). Full 950px design width, so the cards keep room for their
+     names; shorter cards and a shorter dropped-weapons box, so the block is
+     492px tall instead of 680 and the scale the height allows is higher; and
+     the small print a size up, since that scale is about 0.63 at 800x450:
+     names and prices come out at 10px where they were under 6. */
+  #buymenu.compact { --bmw: 950px; --bmgap: 24px; --bmagent: 30vh;
+    /* the old small-screen rule (96vw wide, 86vh tall, its own scroller) is
+       from the menu before this one and breaks `inset: 0`: the block's 50%
+       and the hints' `bottom` were being measured in a box 63px short */
+    width: auto !important; max-width: none !important; max-height: none !important; overflow: visible !important; }
+  /* the wallet beside the BUY key: the 980px rule pins it at 13px for a phone,
+     which under this window's 0.6 HUD scale is 7.8px */
+  #hud.compact-win #money, #hud.compact-win #wname { font-size: 18px !important; }
+  /* the block runs corner to corner in a window this small */
+  #hud.buy-compact #radar, #hud.buy-compact #casebtn { visibility: hidden; }
+  #buymenu.compact .bm-left { top: calc(50% - 20px); }
+  #buymenu.compact .bm-info { height: 34px; }
+  #buymenu.compact .bm-min { font-size: 16px; }
+  #buymenu.compact .bm-col-head { height: 26px; }
+  #buymenu.compact .bm-key { font-size: 14px; }
+  #buymenu.compact .bm-item { height: 60px; }
+  #buymenu.compact .bm-item-key { font-size: 14px; top: 3px; }
+  #buymenu.compact .bm-item-name { font-size: 17px; top: 2px; }
+  #buymenu.compact .bm-icon { top: 22px; height: 24px; }
+  #buymenu.compact .bm-price { font-size: 16px; bottom: 2px; }
+  #buymenu.compact .bm-ground { min-height: 64px; padding: 6px 12px; }
+  #buymenu.compact .bm-ground-title { font-size: 26px; letter-spacing: 4px; }
+  #buymenu.compact .bm-ground-entry { height: 52px; }
+  #buymenu.compact .bm-ground-entry .bm-icon { top: 20px; height: 22px; }
+  /* the key hints: their own size (they followed --bms down to 8px) and a seat
+     just above the bottom HUD row, under the raised block */
+  #buymenu.compact .bm-nav { bottom: 56px; gap: 16px; font-size: 11px; }
+
+  /* ============ CS2 MENU OVERHAUL (main-menu only, HUD untouched) ============
+     Valve Panorama language: Stratum2 condensed uppercase micro-labels,
+     1px rgba(255,255,255,.09) borders, #1e2126 panels with top highlight,
+     green #8bc53f primary. Lays OVER existing rules (later in cascade). */
+  #menu {
+    font-family: 'Stratum2', 'Segoe UI', sans-serif;
+    background:
+      radial-gradient(120% 90% at 50% 10%, rgba(0,0,0,0) 40%, rgba(4,6,8,0.55) 100%),
+      linear-gradient(90deg, rgba(5,7,10,0.88) 0%, rgba(5,7,10,0.55) 22%, rgba(5,7,10,0) 45%, rgba(5,7,10,0) 55%, rgba(5,7,10,0.55) 78%, rgba(5,7,10,0.88) 100%),
+      linear-gradient(180deg, rgba(5,7,10,0.6) 0%, rgba(5,7,10,0.15) 28%, rgba(5,7,10,0.3) 100%);
+  }
+  #topnav {
+    height: 64px; padding: 10px 22px 0;
+    background: linear-gradient(180deg, #20242a 0%, #1a1d22 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.09);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.6), 0 8px 28px rgba(0,0,0,0.45);
+  }
+  .nav-side { width: 250px; padding-top: 6px; }
+  .patch { font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; font-size: 11px;
+    letter-spacing: 1.6px; text-transform: uppercase; opacity: 0.55; }
+  #newsbtn, #fsbtn {
+    font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; text-transform: uppercase;
+    letter-spacing: 1.4px; background: #262b31; border: 1px solid rgba(255,255,255,0.11);
+    border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  #newsbtn:hover, #fsbtn:hover { background: #31373e; border-color: rgba(255,255,255,0.2); }
+  #navcenter #logo, #logo {
+    font-family: 'Stratum2 Black', 'Stratum2', sans-serif; font-style: italic;
+    font-size: 30px; letter-spacing: 1px; color: #f2f5f7;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.55), 0 4px 18px rgba(0,0,0,0.6);
+  }
+  #logo span { color: var(--accent); font-size: 20px; font-family: 'Stratum2 Bold', 'Stratum2', sans-serif; }
+  #tabs { margin-top: 4px; gap: 2px; }
+  #navcenter #tabs button, #tabs button {
+    font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; text-transform: uppercase;
+    font-size: 14px; letter-spacing: 2.2px; color: #9aa7b4; padding: 8px 15px 9px;
+    border-bottom: 2px solid transparent; border-radius: 0; background: transparent;
+  }
+  #navcenter #tabs button:hover, #tabs button:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  #navcenter #tabs button.sel, #tabs button.sel {
+    color: #fff; border-bottom-color: var(--accent); background: rgba(139,197,63,0.08);
+  }
+  .nav-side.right { align-items: center; }
+  #navname { font-family: 'Stratum2 Bold', 'Stratum2', sans-serif; font-size: 15px; letter-spacing: 0.6px;
+    background: #262b31; border: 1px solid rgba(255,255,255,0.11); border-radius: 3px;
+    padding: 6px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+  .rankchip { background: rgba(139,197,63,0.12); border: 1px solid rgba(139,197,63,0.5); }
+  #coins { font-family: 'Stratum2 Bold', 'Stratum2', sans-serif; background: #262b31;
+    border: 1px solid rgba(255,255,255,0.11); border-radius: 3px; padding: 6px 12px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+  .tabpage .pagetitle, .pagetitle {
+    font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; text-transform: uppercase;
+    letter-spacing: 5px; color: #dfe5ea; text-shadow: 0 2px 0 rgba(0,0,0,0.5);
+  }
+  /* play column as one CS2 card */
+  #playbottom {
+    width: 476px; background: rgba(24,27,32,0.88); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 16px 16px 14px; bottom: 2.5%;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 18px 50px rgba(0,0,0,0.55);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  }
+  #charname {
+    font-family: 'Stratum2 Black', 'Stratum2', sans-serif; text-transform: uppercase;
+    letter-spacing: 3px; font-size: 17px; color: #e8eef2;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.6), 0 0 26px rgba(139,197,63,0.25);
+  }
+  #quickopts { gap: 6px; margin-bottom: 12px; }
+  .qrow { gap: 6px; }
+  .qrow button {
+    font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; text-transform: uppercase;
+    letter-spacing: 1.6px; font-size: 13px; background: #262b31; color: #b9c2ca;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 3px; padding: 9px 6px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); transition: all .12s;
+  }
+  .qrow button:hover { background: #31373e; color: #fff; border-color: rgba(255,255,255,0.2); }
+  .qrow button.sel {
+    background: linear-gradient(180deg, rgba(139,197,63,0.28), rgba(139,197,63,0.14));
+    border-color: var(--accent); color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 0 14px rgba(139,197,63,0.25);
+  }
+  #btn-play {
+    font-family: 'Stratum2 Black', 'Stratum2', sans-serif; text-transform: uppercase;
+    background: linear-gradient(180deg, #9bd44f 0%, #7ab52f 55%, #679e27 100%);
+    border: 1px solid #557f22; border-bottom: 3px solid #4a6f1e; border-radius: 3px;
+    font-size: 30px; letter-spacing: 6px; text-indent: 6px; padding: 13px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.35); color: #10160a;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 26px rgba(139,197,63,0.35);
+  }
+  #btn-play:hover { background: linear-gradient(180deg, #a8de5e 0%, #84bd36 55%, #6fa72c 100%); filter: none; }
+  #btn-play:active { transform: translateY(1px); border-bottom-width: 2px; }
+  #playsub .ghostbtn, .ghostbtn {
+    font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; text-transform: uppercase;
+    letter-spacing: 2px; font-size: 15px; background: #262b31; opacity: 1; color: #9aa7b4;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  #online {
+    font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif; text-transform: uppercase;
+    letter-spacing: 2.4px; font-size: 12.5px; color: #8bc53f;
+    text-shadow: 0 0 12px rgba(139,197,63,0.4);
+  }
+  /* challenges card */
+  #challenges {
+    background: rgba(24,27,32,0.88); border: 1px solid rgba(255,255,255,0.1);
+    border-left: none; border-radius: 0 6px 6px 0; top: 110px; width: 308px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 18px 50px rgba(0,0,0,0.5);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  }
+  .chal-tabs span { font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif;
+    text-transform: uppercase; letter-spacing: 1.6px; border-radius: 3px; }
+  .chal-tabs span.sel { background: rgba(139,197,63,0.16); color: #fff; }
+  #challenges h3 { font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif;
+    text-transform: uppercase; letter-spacing: 2.4px; border-bottom-color: rgba(139,197,63,0.35); }
+  .chal-top { font-family: 'Stratum2', 'Stratum2', sans-serif; }
+  .chal-bar { height: 5px; background: rgba(255,255,255,0.1); }
+  .chal-bar i { background: linear-gradient(90deg, #7ab52f, #9bd44f); box-shadow: 0 0 10px rgba(139,197,63,0.5); }
+  .chal-reward { font-family: 'Stratum2 Bold', 'Stratum2', sans-serif; }
+  /* discord + footer quieter so PLAY owns the screen */
+  #discordcard { background: rgba(24,27,32,0.88); border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 12px 30px rgba(0,0,0,0.5);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  #discordcard .dc-head { font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif;
+    text-transform: uppercase; letter-spacing: 1.8px; }
+  #menufoot { font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif;
+    text-transform: uppercase; letter-spacing: 1.6px; opacity: 0.45; }
+</style>
+</head>
+<body>
+  <div id="game"></div>
+<div id="vignette"></div>
+  <script>
+  /* OFFLINE DIAGNOSTICS: log every failing fetch/XHR URL so a [startGame]
+     "Failed to fetch" shows WHICH file is missing instead of a bare TypeError.
+     Zero behaviour change on success. */
+  (function () {
+    try {
+      var _f = window.fetch;
+      window.fetch = function () {
+        var url = arguments.length && arguments[0];
+        var key = typeof url === 'string' ? url : (url && url.url) || '';
+        return _f.apply(this, arguments).then(function (r) {
+          if (!r.ok) console.error('[fetch http!=ok]', r.status, key);
+          return r;
+        }, function (e) {
+          console.error('[fetch threw]', key, e);
+          throw e;
+        });
+      };
+    } catch (e) {}
+  })();
+  </script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

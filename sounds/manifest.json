@@ -1,0 +1,3618 @@
+{
+"addammo_ak47": [
+"addammo_ak47.m4a"
+],
+"addammo_aug": [
+"addammo_aug.mp3"
+],
+"addammo_bizon": [
+"addammo_bizon.mp3"
+],
+"addammo_cz75": [
+"addammo_cz75.mp3"
+],
+"addammo_deagle": [
+"addammo_deagle.mp3"
+],
+"addammo_dualies": [
+"addammo_dualies.m4a"
+],
+"addammo_famas": [
+"addammo_famas.mp3"
+],
+"addammo_fiveseven": [
+"addammo_fiveseven.mp3"
+],
+"addammo_g3sg1": [
+"addammo_g3sg1.mp3"
+],
+"addammo_galil": [
+"addammo_galil.m4a"
+],
+"addammo_m4a1s": [
+"addammo_m4a1s.mp3"
+],
+"addammo_m4a4": [
+"addammo_m4a4.mp3"
+],
+"addammo_mac10": [
+"addammo_mac10.mp3"
+],
+"addammo_mag7": [
+"addammo_mag7.mp3"
+],
+"addammo_mp5sd": [
+"addammo_mp5sd.mp3"
+],
+"addammo_mp7": [
+"addammo_mp7.mp3"
+],
+"addammo_mp9": [
+"addammo_mp9.mp3"
+],
+"addammo_nova": [
+"addammo_nova_1.mp3",
+"addammo_nova_2.mp3",
+"addammo_nova_3.mp3"
+],
+"addammo_p2000": [
+"addammo_p2000.mp3"
+],
+"addammo_p250": [
+"addammo_p250.mp3"
+],
+"addammo_sawedoff": [
+"addammo_sawedoff_1.mp3",
+"addammo_sawedoff_2.mp3",
+"addammo_sawedoff_3.mp3",
+"addammo_sawedoff_4.mp3"
+],
+"addammo_scar20": [
+"addammo_scar20.mp3"
+],
+"addammo_sg553": [
+"addammo_sg553.m4a"
+],
+"addammo_ssg08": [
+"addammo_ssg08.mp3"
+],
+"addammo_tec9": [
+"addammo_tec9.mp3"
+],
+"addammo_ump45": [
+"addammo_ump45.mp3"
+],
+"addammo_usps": [
+"addammo_usps.mp3"
+],
+"addammo_xm1014": [
+"addammo_xm1014_1.mp3",
+"addammo_xm1014_2.mp3",
+"addammo_xm1014_3.mp3"
+],
+"announce_ct_win": [
+"announce_ct_win.m4a"
+],
+"announce_defused": [
+"announce_defused.m4a"
+],
+"announce_defused_legacy1": [
+"announce_defused_legacy1_1.m4a",
+"announce_defused_legacy1_2.m4a",
+"announce_defused_legacy1_3.m4a"
+],
+"announce_defused_legacy2": [
+"announce_defused_legacy2_1.m4a",
+"announce_defused_legacy2_2.m4a",
+"announce_defused_legacy2_3.m4a"
+],
+"announce_defused_legacy3": [
+"announce_defused_legacy3_1.m4a",
+"announce_defused_legacy3_2.m4a",
+"announce_defused_legacy3_3.m4a"
+],
+"announce_draw": [
+"announce_draw.m4a"
+],
+"announce_planted": [
+"announce_planted.m4a"
+],
+"announce_t_win": [
+"announce_t_win.m4a"
+],
+"barrelroll_q_r8": [
+"barrelroll_q_r8.m4a"
+],
+"barrelroll_r8": [
+"barrelroll_r8.m4a"
+],
+"beep": [
+"beep.m4a"
+],
+"beep_fast": [
+"beep_fast.m4a"
+],
+"bolt": [
+"bolt.m4a"
+],
+"bolt_ak47": [
+"bolt_ak47.m4a"
+],
+"bolt_aug": [
+"bolt_aug.mp3"
+],
+"bolt_awp": [
+"bolt_awp.m4a"
+],
+"bolt_bizon": [
+"bolt_bizon.m4a"
+],
+"bolt_deagle": [
+"bolt_deagle.m4a"
+],
+"bolt_dualies": [
+"bolt_dualies.m4a"
+],
+"bolt_famas": [
+"bolt_famas.m4a"
+],
+"bolt_fiveseven": [
+"bolt_fiveseven.mp3"
+],
+"bolt_g3sg1": [
+"bolt_g3sg1.m4a"
+],
+"bolt_galil": [
+"bolt_galil.m4a"
+],
+"bolt_glock": [
+"bolt_glock.m4a"
+],
+"bolt_m249": [
+"bolt_m249.m4a"
+],
+"bolt_m4a1s": [
+"bolt_m4a1s.m4a"
+],
+"bolt_m4a4": [
+"bolt_m4a4.mp3"
+],
+"bolt_mac10": [
+"bolt_mac10.m4a"
+],
+"bolt_mag7": [
+"bolt_mag7.m4a"
+],
+"bolt_mp5sd": [
+"bolt_mp5sd.m4a"
+],
+"bolt_mp7": [
+"bolt_mp7.m4a"
+],
+"bolt_mp9": [
+"bolt_mp9.m4a"
+],
+"bolt_negev": [
+"bolt_negev.m4a"
+],
+"bolt_nova": [
+"bolt_nova.mp3"
+],
+"bolt_p2000": [
+"bolt_p2000.m4a"
+],
+"bolt_p250": [
+"bolt_p250.m4a"
+],
+"bolt_p90": [
+"bolt_p90.m4a"
+],
+"bolt_r8": [
+"bolt_r8.m4a"
+],
+"bolt_sawedoff": [
+"bolt_sawedoff.m4a"
+],
+"bolt_scar20": [
+"bolt_scar20.mp3"
+],
+"bolt_sg553": [
+"bolt_sg553.m4a"
+],
+"bolt_ssg08": [
+"bolt_ssg08.mp3"
+],
+"bolt_tec9": [
+"bolt_tec9.m4a"
+],
+"bolt_ump45": [
+"bolt_ump45.m4a"
+],
+"bolt_usps": [
+"bolt_usps.m4a"
+],
+"bolt_xm1014": [
+"bolt_xm1014.mp3"
+],
+"bolt_zeus": [
+"bolt_zeus.m4a"
+],
+"bomb_explode": [
+"bomb_explode.m4a"
+],
+"bomb_trigger_trip": [
+"bomb_trigger_trip.m4a"
+],
+"bounce": [
+"bounce_1.m4a",
+"bounce_2.m4a"
+],
+"boxin_m249": [
+"boxin_m249.m4a"
+],
+"boxin_negev": [
+"boxin_negev.m4a"
+],
+"boxout_m249": [
+"boxout_m249.m4a"
+],
+"boxout_negev": [
+"boxout_negev.m4a"
+],
+"break_glass_sheet": [
+"break_glass_sheet_1.m4a",
+"break_glass_sheet_2.m4a",
+"break_glass_sheet_3.m4a"
+],
+"break_glassbottle": [
+"break_glassbottle_1.m4a",
+"break_glassbottle_2.m4a"
+],
+"break_metal": [
+"break_metal_1.m4a",
+"break_metal_2.m4a",
+"break_metal_3.m4a"
+],
+"break_pottery": [
+"break_pottery_1.m4a",
+"break_pottery_2.m4a",
+"break_pottery_3.m4a"
+],
+"break_wood_furniture": [
+"break_wood_furniture_1.m4a",
+"break_wood_furniture_2.m4a"
+],
+"buy": [
+"buy_1.m4a",
+"buy_2.m4a"
+],
+"buy_pistol": [
+"buy_pistol.m4a"
+],
+"c4_boom": [
+"c4_boom.mp3"
+],
+"c4_close": [
+"c4_close.mp3"
+],
+"c4_debris": [
+"c4_debris_1.mp3",
+"c4_debris_2.mp3",
+"c4_debris_3.mp3",
+"c4_debris_4.mp3"
+],
+"c4_hit": [
+"c4_hit_1.mp3",
+"c4_hit_2.mp3"
+],
+"c4_initiate": [
+"c4_initiate.m4a"
+],
+"case_tick": [
+"case_tick.m4a"
+],
+"case_unlock": [
+"case_unlock.m4a"
+],
+"chain_m249": [
+"chain_m249.m4a"
+],
+"chain_negev": [
+"chain_negev.m4a"
+],
+"clip_in": [
+"clip_in.mp3"
+],
+"clip_out": [
+"clip_out.mp3"
+],
+"cliphit_famas": [
+"cliphit_famas.mp3"
+],
+"cliphit_m4a1s": [
+"cliphit_m4a1s.m4a"
+],
+"cliphit_m4a4": [
+"cliphit_m4a4.m4a"
+],
+"cliphit_p90": [
+"cliphit_p90.m4a"
+],
+"cliphit_sg553": [
+"cliphit_sg553.m4a"
+],
+"cliphit_ssg08": [
+"cliphit_ssg08.mp3"
+],
+"clipin_ak47": [
+"clipin_ak47.m4a"
+],
+"clipin_aug": [
+"clipin_aug.mp3"
+],
+"clipin_awp": [
+"clipin_awp.mp3"
+],
+"clipin_bizon": [
+"clipin_bizon.mp3"
+],
+"clipin_cz75": [
+"clipin_cz75.mp3"
+],
+"clipin_deagle": [
+"clipin_deagle.mp3"
+],
+"clipin_dualies": [
+"clipin_dualies.m4a"
+],
+"clipin_famas": [
+"clipin_famas.mp3"
+],
+"clipin_fiveseven": [
+"clipin_fiveseven.mp3"
+],
+"clipin_g3sg1": [
+"clipin_g3sg1.mp3"
+],
+"clipin_galil": [
+"clipin_galil.m4a"
+],
+"clipin_glock": [
+"clipin_glock.m4a"
+],
+"clipin_m249": [
+"clipin_m249.m4a"
+],
+"clipin_m4a1s": [
+"clipin_m4a1s.mp3"
+],
+"clipin_m4a4": [
+"clipin_m4a4.mp3"
+],
+"clipin_mac10": [
+"clipin_mac10.mp3"
+],
+"clipin_mag7": [
+"clipin_mag7.mp3"
+],
+"clipin_mp5sd": [
+"clipin_mp5sd.mp3"
+],
+"clipin_mp7": [
+"clipin_mp7.mp3"
+],
+"clipin_mp9": [
+"clipin_mp9.mp3"
+],
+"clipin_negev": [
+"clipin_negev.m4a"
+],
+"clipin_nova": [
+"clipin_nova_1.mp3",
+"clipin_nova_2.mp3",
+"clipin_nova_3.mp3"
+],
+"clipin_p2000": [
+"clipin_p2000.mp3"
+],
+"clipin_p250": [
+"clipin_p250.mp3"
+],
+"clipin_p90": [
+"clipin_p90.m4a"
+],
+"clipin_r8": [
+"clipin_r8.m4a"
+],
+"clipin_sawedoff": [
+"clipin_sawedoff_1.m4a",
+"clipin_sawedoff_2.m4a",
+"clipin_sawedoff_3.m4a"
+],
+"clipin_scar20": [
+"clipin_scar20.m4a"
+],
+"clipin_sg553": [
+"clipin_sg553.m4a"
+],
+"clipin_ssg08": [
+"clipin_ssg08.mp3"
+],
+"clipin_tec9": [
+"clipin_tec9.mp3"
+],
+"clipin_ump45": [
+"clipin_ump45.mp3"
+],
+"clipin_usps": [
+"clipin_usps.m4a"
+],
+"clipin_xm1014": [
+"clipin_xm1014_1.mp3",
+"clipin_xm1014_2.mp3",
+"clipin_xm1014_3.mp3"
+],
+"clipout_ak47": [
+"clipout_ak47.m4a"
+],
+"clipout_aug": [
+"clipout_aug.mp3"
+],
+"clipout_awp": [
+"clipout_awp.mp3"
+],
+"clipout_bizon": [
+"clipout_bizon.m4a"
+],
+"clipout_cz75": [
+"clipout_cz75.m4a"
+],
+"clipout_deagle": [
+"clipout_deagle.m4a"
+],
+"clipout_dualies": [
+"clipout_dualies.m4a"
+],
+"clipout_famas": [
+"clipout_famas.m4a"
+],
+"clipout_fiveseven": [
+"clipout_fiveseven.m4a"
+],
+"clipout_g3sg1": [
+"clipout_g3sg1.mp3"
+],
+"clipout_galil": [
+"clipout_galil.mp3"
+],
+"clipout_glock": [
+"clipout_glock.m4a"
+],
+"clipout_m249": [
+"clipout_m249.m4a"
+],
+"clipout_m4a1s": [
+"clipout_m4a1s.mp3"
+],
+"clipout_m4a4": [
+"clipout_m4a4.mp3"
+],
+"clipout_mac10": [
+"clipout_mac10.m4a"
+],
+"clipout_mag7": [
+"clipout_mag7.m4a"
+],
+"clipout_mp5sd": [
+"clipout_mp5sd.mp3"
+],
+"clipout_mp7": [
+"clipout_mp7.m4a"
+],
+"clipout_mp9": [
+"clipout_mp9.mp3"
+],
+"clipout_negev": [
+"clipout_negev.m4a"
+],
+"clipout_p2000": [
+"clipout_p2000.m4a"
+],
+"clipout_p250": [
+"clipout_p250.m4a"
+],
+"clipout_p90": [
+"clipout_p90.m4a"
+],
+"clipout_r8": [
+"clipout_r8.m4a"
+],
+"clipout_scar20": [
+"clipout_scar20.mp3"
+],
+"clipout_sg553": [
+"clipout_sg553.mp3"
+],
+"clipout_ssg08": [
+"clipout_ssg08.mp3"
+],
+"clipout_tec9": [
+"clipout_tec9.m4a"
+],
+"clipout_ump45": [
+"clipout_ump45.m4a"
+],
+"clipout_usps": [
+"clipout_usps.m4a"
+],
+"counter_beep": [
+"counter_beep.m4a"
+],
+"counter_beep_done": [
+"counter_beep_done.m4a"
+],
+"coverdown_m249": [
+"coverdown_m249.m4a"
+],
+"coverdown_negev": [
+"coverdown_negev.m4a"
+],
+"coverup_m249": [
+"coverup_m249.m4a"
+],
+"coverup_negev": [
+"coverup_negev.m4a"
+],
+"death": [
+"death_1.m4a",
+"death_2.m4a",
+"death_3.m4a",
+"death_4.m4a",
+"death_5.m4a",
+"death_6.m4a"
+],
+"death_sting": [
+"death_sting.m4a"
+],
+"death_taser": [
+"death_taser_1.m4a",
+"death_taser_2.m4a",
+"death_taser_3.m4a",
+"death_taser_4.m4a",
+"death_taser_5.m4a",
+"death_taser_6.m4a"
+],
+"decoy_inspect01_ring": [
+"decoy_inspect01_ring_1.mp3",
+"decoy_inspect01_ring_2.mp3",
+"decoy_inspect01_ring_3.mp3"
+],
+"decoy_inspect02_ring": [
+"decoy_inspect01_ring_1.mp3",
+"decoy_inspect01_ring_2.mp3",
+"decoy_inspect01_ring_3.mp3"
+],
+"decoy_inspect02_spins": [
+"decoy_inspect02_spins_1.mp3",
+"decoy_inspect02_spins_2.mp3",
+"decoy_inspect02_spins_3.mp3",
+"decoy_inspect02_spins_4.mp3",
+"decoy_inspect02_spins_5.mp3",
+"decoy_inspect02_spins_6.mp3",
+"decoy_inspect02_spins_7.mp3"
+],
+"decoy_inspect02_squeeze": [
+"decoy_inspect02_squeeze_1.mp3",
+"decoy_inspect02_squeeze_2.mp3",
+"decoy_inspect02_squeeze_3.mp3",
+"decoy_inspect02_squeeze_4.mp3",
+"decoy_inspect02_squeeze_5.mp3",
+"decoy_inspect02_squeeze_6.mp3"
+],
+"defuse_clip": [
+"defuse_clip.m4a"
+],
+"defused": [
+"defused.m4a"
+],
+"denied": [
+"denied.m4a"
+],
+"draw": [
+"draw_1.mp3",
+"draw_2.mp3"
+],
+"draw_ak47": [
+"draw_ak47.m4a"
+],
+"draw_aug": [
+"draw_aug.mp3"
+],
+"draw_awp": [
+"draw_awp.m4a"
+],
+"draw_bizon": [
+"draw_bizon.m4a"
+],
+"draw_deagle": [
+"draw_deagle.m4a"
+],
+"draw_dualies": [
+"draw_dualies.mp3"
+],
+"draw_famas": [
+"draw_famas.m4a"
+],
+"draw_fiveseven": [
+"draw_fiveseven.m4a"
+],
+"draw_g3sg1": [
+"draw_g3sg1.mp3"
+],
+"draw_galil": [
+"draw_galil.mp3"
+],
+"draw_glock": [
+"draw_glock.m4a"
+],
+"draw_m249": [
+"draw_m249.m4a"
+],
+"draw_m4a1s": [
+"draw_m4a1s.mp3"
+],
+"draw_m4a4": [
+"draw_m4a4.mp3"
+],
+"draw_mac10": [
+"draw_mac10.m4a"
+],
+"draw_mag7": [
+"draw_mag7.mp3"
+],
+"draw_mp5sd": [
+"draw_mp5sd.m4a"
+],
+"draw_mp7": [
+"draw_mp7.m4a"
+],
+"draw_mp9": [
+"draw_mp9.m4a"
+],
+"draw_negev": [
+"draw_negev.m4a"
+],
+"draw_nova": [
+"draw_nova.mp3"
+],
+"draw_p2000": [
+"draw_p2000.m4a"
+],
+"draw_p250": [
+"draw_p250.m4a"
+],
+"draw_p90": [
+"draw_p90.mp3"
+],
+"draw_r8": [
+"draw_r8.m4a"
+],
+"draw_sawedoff": [
+"draw_sawedoff.m4a"
+],
+"draw_scar20": [
+"draw_scar20.mp3"
+],
+"draw_sg553": [
+"draw_sg553.mp3"
+],
+"draw_ssg08": [
+"draw_ssg08.mp3"
+],
+"draw_tec9": [
+"draw_tec9.mp3"
+],
+"draw_ump45": [
+"draw_ump45.mp3"
+],
+"draw_usps": [
+"draw_usps.m4a"
+],
+"draw_xm1014": [
+"draw_xm1014.mp3"
+],
+"draw_zeus": [
+"draw_zeus.m4a"
+],
+"drop_defuser": [
+"drop_defuser_1.m4a",
+"drop_defuser_2.m4a",
+"drop_defuser_3.m4a",
+"drop_defuser_4.m4a"
+],
+"drop_flash": [
+"drop_flash_1.m4a",
+"drop_flash_2.m4a",
+"drop_flash_3.m4a",
+"drop_flash_4.m4a"
+],
+"drop_he": [
+"drop_he_1.m4a",
+"drop_he_2.m4a",
+"drop_he_3.m4a"
+],
+"drop_heavy": [
+"drop_heavy_1.m4a",
+"drop_heavy_2.m4a",
+"drop_heavy_3.m4a",
+"drop_heavy_4.m4a"
+],
+"drop_incend": [
+"drop_incend_1.m4a",
+"drop_incend_2.m4a",
+"drop_incend_3.m4a",
+"drop_incend_4.m4a"
+],
+"drop_knife": [
+"drop_knife_1.m4a",
+"drop_knife_2.m4a",
+"drop_knife_3.m4a",
+"drop_knife_4.m4a"
+],
+"drop_molotov": [
+"drop_molotov_1.m4a",
+"drop_molotov_2.m4a",
+"drop_molotov_3.m4a",
+"drop_molotov_4.m4a"
+],
+"drop_pistol": [
+"drop_pistol_1.m4a",
+"drop_pistol_2.m4a",
+"drop_pistol_3.m4a",
+"drop_pistol_4.m4a"
+],
+"drop_rifle": [
+"drop_rifle_1.m4a",
+"drop_rifle_2.m4a",
+"drop_rifle_3.m4a",
+"drop_rifle_4.m4a",
+"drop_rifle_5.m4a"
+],
+"drop_shotgun": [
+"drop_shotgun_1.m4a",
+"drop_shotgun_2.m4a",
+"drop_shotgun_3.m4a",
+"drop_shotgun_4.m4a",
+"drop_shotgun_5.m4a"
+],
+"drop_smg": [
+"drop_smg_1.m4a",
+"drop_smg_2.m4a",
+"drop_smg_3.m4a",
+"drop_smg_4.m4a",
+"drop_smg_5.m4a",
+"drop_smg_6.m4a"
+],
+"drop_sniper": [
+"drop_sniper_1.m4a",
+"drop_sniper_2.m4a",
+"drop_sniper_3.m4a",
+"drop_sniper_4.m4a",
+"drop_sniper_5.m4a"
+],
+"drown_start": [
+"drown_start.m4a"
+],
+"dry": [
+"dry.m4a"
+],
+"dry_pistol": [
+"dry_pistol.m4a"
+],
+"explosion": [
+"explosion_1.m4a",
+"explosion_2.m4a"
+],
+"explosion_far": [
+"explosion_far_1.m4a",
+"explosion_far_2.m4a"
+],
+"fall_damage": [
+"fall_damage_1.m4a",
+"fall_damage_2.m4a",
+"fall_damage_3.m4a"
+],
+"far_ak47": [
+"far_ak47.m4a"
+],
+"far_aug": [
+"far_aug.m4a"
+],
+"far_awp": [
+"far_awp.m4a"
+],
+"far_bizon": [
+"far_bizon.m4a"
+],
+"far_cz75": [
+"far_cz75.m4a"
+],
+"far_deagle": [
+"far_deagle.m4a"
+],
+"far_dualies": [
+"far_dualies.m4a"
+],
+"far_famas": [
+"far_famas.m4a"
+],
+"far_fiveseven": [
+"far_fiveseven.m4a"
+],
+"far_g3sg1": [
+"far_g3sg1.m4a"
+],
+"far_galil": [
+"far_galil.m4a"
+],
+"far_glock": [
+"far_glock.m4a"
+],
+"far_m249": [
+"far_m249.m4a"
+],
+"far_m4a4": [
+"far_m4a4.m4a"
+],
+"far_mac10": [
+"far_mac10.m4a"
+],
+"far_mag7": [
+"far_mag7.m4a"
+],
+"far_mp7": [
+"far_mp7.m4a"
+],
+"far_mp9": [
+"far_mp9.m4a"
+],
+"far_negev": [
+"far_negev.m4a"
+],
+"far_nova": [
+"far_nova.m4a"
+],
+"far_p2000": [
+"far_p2000.m4a"
+],
+"far_p250": [
+"far_p250.m4a"
+],
+"far_p90": [
+"far_p90.m4a"
+],
+"far_r8": [
+"far_r8.m4a"
+],
+"far_sawedoff": [
+"far_sawedoff.m4a"
+],
+"far_scar20": [
+"far_scar20.m4a"
+],
+"far_sg553": [
+"far_sg553.m4a"
+],
+"far_ssg08": [
+"far_ssg08.m4a"
+],
+"far_tec9": [
+"far_tec9.m4a"
+],
+"far_ump45": [
+"far_ump45.m4a"
+],
+"far_xm1014": [
+"far_xm1014.m4a"
+],
+"fhit_mp5sd": [
+"fhit_mp5sd.mp3"
+],
+"fhit_scar20": [
+"fhit_scar20.mp3"
+],
+"fhit_zeus": [
+"fhit_zeus.m4a"
+],
+"fire_loop": [
+"fire_loop.m4a"
+],
+"flash_inspect_ring": [
+"flash_inspect_ring_1.mp3",
+"flash_inspect_ring_2.mp3",
+"flash_inspect_ring_3.mp3",
+"flash_inspect_ring_4.mp3"
+],
+"flash_inspect_ringmove": [
+"flash_inspect_ringmove.mp3"
+],
+"flash_inspect_spins": [
+"flash_inspect_spins_1.mp3",
+"flash_inspect_spins_2.mp3",
+"flash_inspect_spins_3.mp3",
+"flash_inspect_spins_4.mp3",
+"flash_inspect_spins_5.mp3",
+"flash_inspect_spins_6.mp3",
+"flash_inspect_spins_7.mp3",
+"flash_inspect_spins_8.mp3",
+"flash_inspect_spins_9.mp3",
+"flash_inspect_spins_10.mp3",
+"flash_inspect_spins_11.mp3",
+"flash_inspect_spins_12.mp3",
+"flash_inspect_spins_13.mp3"
+],
+"flash_pop": [
+"flash_pop_1.m4a",
+"flash_pop_2.m4a"
+],
+"flash_pop_far": [
+"flash_pop_far.m4a"
+],
+"gear_grenadespin": [
+"gear_grenadespin_1.mp3",
+"gear_grenadespin_2.mp3",
+"gear_grenadespin_3.mp3",
+"gear_grenadespin_4.mp3",
+"gear_grenadespin_5.mp3",
+"gear_grenadespin_6.mp3",
+"gear_grenadespin_7.mp3",
+"gear_grenadespin_8.mp3",
+"gear_grenadespin_9.mp3",
+"gear_grenadespin_10.mp3"
+],
+"gear_grenadetoss": [
+"gear_grenadetoss_1.mp3",
+"gear_grenadetoss_2.mp3",
+"gear_grenadetoss_3.mp3",
+"gear_grenadetoss_4.mp3",
+"gear_grenadetoss_5.mp3",
+"gear_grenadetoss_6.mp3",
+"gear_grenadetoss_7.mp3",
+"gear_grenadetoss_8.mp3",
+"gear_grenadetoss_9.mp3",
+"gear_grenadetoss_10.mp3",
+"gear_grenadetoss_11.mp3",
+"gear_grenadetoss_12.mp3",
+"gear_grenadetoss_13.mp3",
+"gear_grenadetoss_14.mp3",
+"gear_grenadetoss_15.mp3",
+"gear_grenadetoss_16.mp3",
+"gear_grenadetoss_17.mp3",
+"gear_grenadetoss_18.mp3"
+],
+"gear_small": [
+"gear_small_1.mp3",
+"gear_small_2.mp3",
+"gear_grenadetoss_1.mp3",
+"gear_small_4.mp3",
+"gear_small_5.mp3",
+"gear_small_6.mp3",
+"gear_small_7.mp3",
+"gear_grenadetoss_2.mp3",
+"gear_grenadetoss_3.mp3",
+"gear_grenadetoss_4.mp3",
+"gear_grenadetoss_5.mp3",
+"gear_small_12.mp3",
+"gear_grenadetoss_6.mp3",
+"gear_grenadetoss_7.mp3",
+"gear_grenadetoss_8.mp3",
+"gear_small_16.mp3",
+"gear_small_17.mp3",
+"gear_small_18.mp3",
+"gear_small_19.mp3",
+"gear_grenadetoss_9.mp3",
+"gear_small_21.mp3",
+"gear_grenadetoss_10.mp3",
+"gear_small_23.mp3",
+"gear_grenadetoss_11.mp3",
+"gear_grenadetoss_12.mp3",
+"gear_grenadetoss_13.mp3",
+"gear_small_27.mp3",
+"gear_grenadetoss_14.mp3",
+"gear_grenadetoss_15.mp3",
+"gear_grenadetoss_16.mp3",
+"gear_grenadetoss_17.mp3",
+"gear_grenadetoss_18.mp3"
+],
+"gear_ultrasmall": [
+"gear_small_2.mp3",
+"gear_grenadetoss_1.mp3",
+"gear_small_4.mp3",
+"gear_small_5.mp3",
+"gear_small_6.mp3",
+"gear_small_7.mp3",
+"gear_grenadetoss_2.mp3",
+"gear_grenadetoss_3.mp3",
+"gear_grenadetoss_4.mp3",
+"gear_grenadetoss_5.mp3",
+"gear_grenadetoss_6.mp3",
+"gear_grenadetoss_7.mp3",
+"gear_small_21.mp3",
+"gear_grenadetoss_10.mp3",
+"gear_grenadetoss_11.mp3",
+"gear_grenadetoss_12.mp3",
+"gear_grenadetoss_13.mp3",
+"gear_grenadetoss_15.mp3"
+],
+"grab_mp5sd": [
+"grab_mp5sd.m4a"
+],
+"grab_xm1014": [
+"grab_xm1014.mp3"
+],
+"handle_mp5sd": [
+"handle_mp5sd.m4a"
+],
+"handles_scar20": [
+"handles_scar20.mp3"
+],
+"he_inspect01_handles": [
+"he_inspect01_handles_1.mp3",
+"he_inspect01_handles_2.mp3",
+"he_inspect01_handles_3.mp3",
+"he_inspect01_handles_4.mp3",
+"he_inspect01_handles_5.mp3"
+],
+"he_inspect02_catch": [
+"he_inspect02_catch_1.mp3",
+"he_inspect02_catch_2.mp3",
+"he_inspect02_catch_3.mp3"
+],
+"he_inspect02_toss1": [
+"he_inspect02_toss1.mp3"
+],
+"he_inspect02_toss2": [
+"he_inspect02_toss2_1.mp3",
+"he_inspect02_toss2_2.mp3"
+],
+"headshot_kill": [
+"headshot_kill_1.m4a",
+"headshot_kill_2.m4a"
+],
+"headshot_kill_dink": [
+"headshot_kill_dink.m4a"
+],
+"headshot_kill_flesh": [
+"headshot_kill_flesh.m4a"
+],
+"hit_armor": [
+"hit_armor_1.m4a",
+"hit_armor_2.m4a",
+"hit_armor_3.m4a",
+"hit_armor_4.m4a",
+"hit_armor_5.m4a"
+],
+"hit_armor_fb": [
+"hit_armor_fb_1.m4a",
+"hit_armor_fb_2.m4a",
+"hit_armor_fb_3.m4a",
+"hit_armor_fb_4.m4a",
+"hit_armor_fb_5.m4a",
+"hit_armor_fb_6.m4a",
+"hit_armor_fb_7.m4a",
+"hit_armor_fb_8.m4a"
+],
+"hit_armor_fb_flesh": [
+"hit_armor_fb_flesh_1.m4a",
+"hit_armor_fb_flesh_2.m4a",
+"hit_armor_fb_flesh_3.m4a"
+],
+"hit_body": [
+"hit_body_1.m4a",
+"hit_body_2.m4a",
+"hit_body_3.m4a",
+"hit_body_4.m4a",
+"hit_body_5.m4a"
+],
+"hit_body_fb": [
+"hit_body_fb_1.m4a",
+"hit_body_fb_2.m4a",
+"hit_body_fb_3.m4a",
+"hit_body_fb_4.m4a"
+],
+"hit_head": [
+"hit_head_1.m4a",
+"hit_head_2.m4a",
+"hit_head_3.m4a",
+"hit_head_4.m4a",
+"hit_head_5.m4a"
+],
+"hit_head_dink": [
+"hit_head_dink.m4a"
+],
+"hit_head_flesh": [
+"hit_head_flesh_1.m4a",
+"hit_head_flesh_2.m4a"
+],
+"hurt": [
+"hurt_1.m4a",
+"hurt_2.m4a",
+"hurt_3.m4a"
+],
+"hurt_victim": [
+"hurt_victim_1.m4a",
+"hurt_victim_2.m4a",
+"hurt_victim_3.m4a",
+"hurt_victim_4.m4a",
+"hurt_victim_5.m4a"
+],
+"hurt_victim_armor": [
+"hurt_victim_armor_1.m4a",
+"hurt_victim_armor_2.m4a",
+"hurt_victim_armor_3.m4a",
+"hurt_victim_armor_4.m4a",
+"hurt_victim_armor_5.m4a",
+"hurt_victim_armor_6.m4a",
+"hurt_victim_armor_7.m4a",
+"hurt_victim_armor_8.m4a"
+],
+"hurt_victim_flesh": [
+"hurt_victim_flesh_1.m4a",
+"hurt_victim_flesh_2.m4a",
+"hurt_victim_flesh_3.m4a",
+"hurt_victim_flesh_4.m4a"
+],
+"hurt_victim_head": [
+"hurt_victim_head_1.m4a",
+"hurt_victim_head_2.m4a",
+"hurt_victim_head_3.m4a",
+"hurt_victim_head_4.m4a",
+"hurt_victim_head_5.m4a"
+],
+"hurt_victim_head_armor": [
+"hurt_victim_head_armor.m4a"
+],
+"incend_fly": [
+"incend_fly.mp3"
+],
+"incend_inspect_move": [
+"incend_inspect_move_1.mp3",
+"incend_inspect_move_2.mp3",
+"incend_inspect_move_3.mp3",
+"incend_inspect_move_4.mp3"
+],
+"incend_inspect_ringmove": [
+"flash_inspect_ringmove.mp3"
+],
+"incend_inspect_shake": [
+"incend_inspect_shake_1.mp3",
+"incend_inspect_shake_2.mp3",
+"incend_inspect_shake_3.mp3",
+"incend_inspect_shake_4.mp3",
+"incend_inspect_shake_5.mp3",
+"incend_inspect_shake_6.mp3"
+],
+"incend_pop": [
+"incend_pop.m4a"
+],
+"incend_start": [
+"incend_start_1.m4a",
+"incend_start_2.m4a",
+"incend_start_3.m4a"
+],
+"incend_start_far": [
+"incend_start_far_1.m4a",
+"incend_start_far_2.m4a",
+"incend_start_far_3.m4a"
+],
+"inspect_ak47_f006": [
+"inspect_ak47_f006.m4a"
+],
+"inspect_ak47_f013": [
+"inspect_ak47_f013.m4a"
+],
+"inspect_ak47_f100": [
+"inspect_ak47_f100.m4a"
+],
+"inspect_ak47_f190": [
+"inspect_ak47_f190.m4a"
+],
+"inspect_ak47_f245": [
+"inspect_ak47_f245.m4a"
+],
+"inspect_deagle_f009": [
+"inspect_deagle_f009.m4a"
+],
+"inspect_deagle_f036": [
+"inspect_deagle_f036.m4a"
+],
+"inspect_deagle_f057": [
+"inspect_deagle_f057.m4a"
+],
+"inspect_deagle_f081": [
+"inspect_deagle_f081.m4a"
+],
+"inspect_deagle_f111": [
+"inspect_deagle_f111.m4a"
+],
+"inspect_deagle_f133": [
+"inspect_deagle_f133.m4a"
+],
+"inspect_deagle_f166": [
+"inspect_deagle_f166.m4a"
+],
+"inspect_deagle_f193": [
+"inspect_deagle_f193.m4a"
+],
+"inspect_deagle_f228": [
+"inspect_deagle_f228.m4a"
+],
+"inspect_knife": [
+"inspect_knife_1.mp3",
+"inspect_knife_2.mp3",
+"inspect_knife_3.mp3",
+"inspect_knife_4.mp3",
+"inspect_knife_5.mp3",
+"inspect_knife_6.mp3",
+"inspect_knife_7.mp3",
+"inspect_knife_8.mp3",
+"inspect_knife_9.mp3",
+"inspect_knife_10.mp3",
+"inspect_knife_11.mp3",
+"inspect_knife_12.mp3"
+],
+"kill_body": [
+"kill_body_1.m4a",
+"kill_body_2.m4a",
+"kill_body_3.m4a",
+"kill_body_4.m4a"
+],
+"kill_body_armor": [
+"kill_body_armor_1.m4a",
+"kill_body_armor_2.m4a",
+"kill_body_armor_3.m4a",
+"kill_body_armor_4.m4a",
+"kill_body_armor_5.m4a",
+"kill_body_armor_6.m4a",
+"kill_body_armor_7.m4a",
+"kill_body_armor_8.m4a"
+],
+"kill_body_armor_flesh": [
+"kill_body_armor_flesh_1.m4a",
+"kill_body_armor_flesh_2.m4a",
+"kill_body_armor_flesh_3.m4a"
+],
+"kill_confirm": [
+"kill_confirm.m4a"
+],
+"knife_bowie_lookatend": [
+"knife_bowie_lookatend.m4a"
+],
+"knife_butterfly_gloves": [
+"knife_butterfly_gloves_1.m4a",
+"knife_butterfly_gloves_2.m4a",
+"knife_butterfly_gloves_3.m4a",
+"knife_butterfly_gloves_4.m4a",
+"knife_butterfly_gloves_5.m4a"
+],
+"knife_butterfly_look01_a": [
+"knife_butterfly_look01_a.m4a"
+],
+"knife_butterfly_look01_b": [
+"knife_butterfly_look01_b.m4a"
+],
+"knife_butterfly_look02_a": [
+"knife_butterfly_look02_a.m4a"
+],
+"knife_butterfly_look02_b": [
+"knife_butterfly_look02_b.m4a"
+],
+"knife_butterfly_look03_a": [
+"knife_butterfly_look03_a.m4a"
+],
+"knife_butterfly_look03_b": [
+"knife_butterfly_look03_b.m4a"
+],
+"knife_butterfly_n_clack": [
+"knife_butterfly_n_clack.m4a"
+],
+"knife_butterfly_n_end": [
+"knife_butterfly_n_end_1.m4a",
+"knife_butterfly_n_end_2.m4a"
+],
+"knife_butterfly_n_inspect_clack": [
+"knife_butterfly_n_inspect_clack_1.m4a",
+"knife_butterfly_n_inspect_clack_2.m4a",
+"knife_butterfly_n_inspect_clack_3.m4a",
+"knife_butterfly_n_inspect_clack_4.m4a"
+],
+"knife_butterfly_t_end": [
+"knife_butterfly_t_end_1.m4a",
+"knife_butterfly_t_end_2.m4a",
+"knife_butterfly_t_end_3.m4a",
+"knife_butterfly_t_end_4.m4a",
+"knife_butterfly_t_end_5.m4a",
+"knife_butterfly_t_end_6.m4a",
+"knife_butterfly_t_end_7.m4a",
+"knife_butterfly_t_end_8.m4a",
+"knife_butterfly_t_end_9.m4a",
+"knife_butterfly_t_end_10.m4a",
+"knife_butterfly_t_end_11.m4a",
+"knife_butterfly_t_end_12.m4a",
+"knife_butterfly_t_end_13.m4a",
+"knife_butterfly_t_end_14.m4a",
+"knife_butterfly_t_end_15.m4a",
+"knife_butterfly_t_end_16.m4a",
+"knife_butterfly_t_end_17.m4a"
+],
+"knife_butterfly_t_movement": [
+"knife_butterfly_t_movement_1.m4a",
+"knife_butterfly_t_movement_2.m4a",
+"knife_butterfly_t_movement_3.m4a",
+"knife_butterfly_t_movement_4.m4a",
+"knife_butterfly_t_movement_5.m4a",
+"knife_butterfly_t_movement_6.m4a",
+"knife_butterfly_t_movement_7.m4a",
+"knife_butterfly_t_movement_8.m4a",
+"knife_butterfly_t_movement_9.m4a",
+"knife_butterfly_t_movement_10.m4a",
+"knife_butterfly_t_movement_11.m4a",
+"knife_butterfly_t_movement_12.m4a",
+"knife_butterfly_t_movement_13.m4a",
+"knife_butterfly_t_movement_14.m4a",
+"knife_butterfly_t_movement_15.m4a",
+"knife_butterfly_t_movement_16.m4a",
+"knife_butterfly_t_movement_17.m4a",
+"knife_butterfly_t_movement_18.m4a",
+"knife_butterfly_t_movement_19.m4a",
+"knife_butterfly_t_movement_20.m4a",
+"knife_butterfly_t_movement_21.m4a",
+"knife_butterfly_t_movement_22.m4a",
+"knife_butterfly_t_movement_23.m4a",
+"knife_butterfly_t_movement_24.m4a",
+"knife_butterfly_t_movement_25.m4a",
+"knife_butterfly_t_movement_26.m4a",
+"knife_butterfly_t_movement_27.m4a",
+"knife_butterfly_t_movement_28.m4a",
+"knife_butterfly_t_movement_29.m4a",
+"knife_butterfly_t_movement_30.m4a",
+"knife_butterfly_t_movement_31.m4a",
+"knife_butterfly_t_movement_32.m4a",
+"knife_butterfly_t_movement_33.m4a",
+"knife_butterfly_t_movement_34.m4a",
+"knife_butterfly_t_movement_35.m4a",
+"knife_butterfly_t_movement_36.m4a",
+"knife_butterfly_t_movement_37.m4a",
+"knife_butterfly_t_movement_38.m4a",
+"knife_butterfly_t_movement_39.m4a",
+"knife_butterfly_t_movement_40.m4a",
+"knife_butterfly_t_movement_41.m4a",
+"knife_butterfly_t_movement_42.m4a",
+"knife_butterfly_t_movement_43.m4a",
+"knife_butterfly_t_movement_44.m4a",
+"knife_butterfly_t_movement_45.m4a",
+"knife_butterfly_t_movement_46.m4a",
+"knife_butterfly_t_movement_47.m4a",
+"knife_butterfly_t_movement_48.m4a",
+"knife_butterfly_t_movement_49.m4a",
+"knife_butterfly_t_movement_50.m4a",
+"knife_butterfly_t_movement_51.m4a"
+],
+"knife_butterfly_t_spins": [
+"knife_butterfly_t_spins_1.m4a",
+"knife_butterfly_t_spins_2.m4a",
+"knife_butterfly_t_spins_3.m4a",
+"knife_butterfly_t_spins_4.m4a",
+"knife_butterfly_t_spins_5.m4a",
+"knife_butterfly_t_spins_6.m4a"
+],
+"knife_butterfly_t_spins_q": [
+"knife_butterfly_t_spins_1.m4a",
+"knife_butterfly_t_spins_2.m4a",
+"knife_butterfly_t_spins_3.m4a",
+"knife_butterfly_t_spins_4.m4a",
+"knife_butterfly_t_spins_5.m4a",
+"knife_butterfly_t_spins_6.m4a"
+],
+"knife_catch": [
+"knife_catch_1.mp3",
+"knife_catch_2.mp3"
+],
+"knife_catch_quiet": [
+"knife_catch_2.mp3",
+"knife_catch_1.mp3"
+],
+"knife_catch_softgrab": [
+"knife_catch_softgrab_1.mp3",
+"knife_catch_softgrab_2.mp3",
+"knife_catch_softgrab_3.mp3",
+"knife_catch_softgrab_4.mp3",
+"knife_catch_softgrab_5.mp3",
+"knife_catch_softgrab_6.mp3"
+],
+"knife_catch_softgrab_quiet": [
+"knife_catch_softgrab_1.mp3",
+"knife_catch_softgrab_2.mp3",
+"knife_catch_softgrab_3.mp3",
+"knife_catch_softgrab_4.mp3",
+"knife_catch_softgrab_5.mp3",
+"knife_catch_softgrab_6.mp3"
+],
+"knife_draw": [
+"knife_draw_1.m4a",
+"knife_draw_2.mp3",
+"knife_draw_3.mp3"
+],
+"knife_draw_gear": [
+"knife_draw_gear_1.mp3",
+"knife_draw_gear_2.mp3"
+],
+"knife_draw_t": [
+"knife_draw_t_1.m4a",
+"knife_draw_t_2.m4a"
+],
+"knife_flip_draw_end": [
+"knife_flip_draw_end.mp3"
+],
+"knife_hit": [
+"knife_hit_1.mp3",
+"knife_hit_2.mp3",
+"knife_hit_3.mp3",
+"knife_hit_4.mp3",
+"knife_hit_5.mp3",
+"knife_hit_6.mp3"
+],
+"knife_hit_heavy": [
+"knife_hit_heavy_1.mp3",
+"knife_hit_heavy_2.mp3",
+"knife_hit_heavy_3.mp3",
+"knife_hit_heavy_4.mp3",
+"knife_hit_heavy_5.mp3"
+],
+"knife_inspect_swish": [
+"knife_inspect_swish_1.mp3",
+"knife_inspect_swish_2.mp3",
+"knife_inspect_swish_3.mp3",
+"knife_inspect_swish_4.mp3"
+],
+"knife_inspect_swish_heavy": [
+"knife_inspect_swish_1.mp3",
+"knife_inspect_swish_2.mp3",
+"knife_inspect_swish_3.mp3",
+"knife_inspect_swish_4.mp3"
+],
+"knife_navaja_handling_q": [
+"knife_navaja_handling_q_1.mp3",
+"knife_navaja_handling_q_2.mp3",
+"knife_navaja_handling_q_3.mp3",
+"knife_navaja_handling_q_4.mp3",
+"knife_navaja_handling_q_5.mp3",
+"knife_navaja_handling_q_6.mp3",
+"knife_navaja_handling_q_7.mp3",
+"knife_navaja_handling_q_8.mp3",
+"knife_navaja_handling_q_9.mp3",
+"knife_navaja_handling_q_10.mp3",
+"knife_navaja_handling_q_11.mp3",
+"knife_navaja_handling_q_12.mp3",
+"knife_navaja_handling_q_13.mp3",
+"knife_navaja_handling_q_14.mp3",
+"knife_navaja_handling_q_15.mp3",
+"knife_navaja_handling_q_16.mp3",
+"knife_navaja_handling_q_17.mp3",
+"knife_navaja_handling_q_18.mp3",
+"knife_navaja_handling_q_19.mp3",
+"knife_navaja_handling_q_20.mp3",
+"knife_navaja_handling_q_21.mp3",
+"knife_navaja_handling_q_22.mp3",
+"knife_navaja_handling_q_23.mp3",
+"knife_navaja_handling_q_24.mp3",
+"knife_navaja_handling_q_25.mp3",
+"knife_navaja_handling_q_26.mp3",
+"knife_navaja_handling_q_27.mp3",
+"knife_navaja_handling_q_28.mp3",
+"knife_navaja_handling_q_29.mp3",
+"knife_navaja_handling_q_30.mp3",
+"knife_navaja_handling_q_31.mp3",
+"knife_navaja_handling_q_32.mp3",
+"knife_navaja_handling_q_33.mp3",
+"knife_navaja_handling_q_34.mp3",
+"knife_navaja_handling_q_35.mp3",
+"knife_navaja_handling_q_36.mp3",
+"knife_navaja_handling_q_37.mp3",
+"knife_navaja_handling_q_38.mp3",
+"knife_navaja_handling_q_39.mp3",
+"knife_navaja_handling_q_40.mp3",
+"knife_navaja_handling_q_41.mp3",
+"knife_navaja_handling_q_42.mp3",
+"knife_navaja_handling_q_43.mp3",
+"knife_navaja_handling_q_44.mp3"
+],
+"knife_navaja_open": [
+"knife_navaja_open_1.mp3",
+"knife_navaja_open_2.mp3",
+"knife_navaja_open_3.mp3",
+"knife_navaja_open_4.mp3",
+"knife_navaja_open_5.mp3",
+"knife_navaja_open_6.mp3",
+"knife_navaja_open_7.mp3",
+"knife_navaja_open_8.mp3"
+],
+"knife_push_inspect_swish": [
+"knife_inspect_swish_1.mp3",
+"knife_inspect_swish_2.mp3",
+"knife_inspect_swish_3.mp3",
+"knife_inspect_swish_4.mp3"
+],
+"knife_skeleton_spin": [
+"inspect_knife_1.mp3",
+"inspect_knife_2.mp3",
+"inspect_knife_3.mp3",
+"inspect_knife_4.mp3",
+"inspect_knife_5.mp3",
+"inspect_knife_6.mp3",
+"inspect_knife_7.mp3",
+"inspect_knife_8.mp3",
+"inspect_knife_9.mp3",
+"inspect_knife_10.mp3",
+"inspect_knife_11.mp3",
+"inspect_knife_12.mp3"
+],
+"knife_stab": [
+"knife_stab.m4a"
+],
+"knife_stiletto_handling_q": [
+"knife_navaja_handling_q_1.mp3",
+"knife_navaja_handling_q_2.mp3",
+"knife_navaja_handling_q_3.mp3",
+"knife_navaja_handling_q_4.mp3",
+"knife_navaja_handling_q_5.mp3",
+"knife_navaja_handling_q_6.mp3",
+"knife_navaja_handling_q_7.mp3",
+"knife_navaja_handling_q_8.mp3",
+"knife_navaja_handling_q_9.mp3",
+"knife_navaja_handling_q_10.mp3",
+"knife_navaja_handling_q_11.mp3",
+"knife_navaja_handling_q_12.mp3",
+"knife_navaja_handling_q_13.mp3",
+"knife_navaja_handling_q_14.mp3",
+"knife_navaja_handling_q_15.mp3",
+"knife_navaja_handling_q_16.mp3",
+"knife_navaja_handling_q_17.mp3",
+"knife_navaja_handling_q_18.mp3",
+"knife_navaja_handling_q_19.mp3",
+"knife_navaja_handling_q_20.mp3",
+"knife_navaja_handling_q_21.mp3",
+"knife_navaja_handling_q_22.mp3",
+"knife_navaja_handling_q_23.mp3",
+"knife_navaja_handling_q_24.mp3",
+"knife_navaja_handling_q_25.mp3",
+"knife_navaja_handling_q_26.mp3",
+"knife_navaja_handling_q_27.mp3",
+"knife_navaja_handling_q_28.mp3",
+"knife_navaja_handling_q_29.mp3",
+"knife_navaja_handling_q_30.mp3",
+"knife_navaja_handling_q_31.mp3",
+"knife_navaja_handling_q_32.mp3",
+"knife_navaja_handling_q_33.mp3",
+"knife_navaja_handling_q_34.mp3",
+"knife_navaja_handling_q_35.mp3",
+"knife_navaja_handling_q_36.mp3",
+"knife_navaja_handling_q_37.mp3",
+"knife_navaja_handling_q_38.mp3",
+"knife_navaja_handling_q_39.mp3",
+"knife_navaja_handling_q_40.mp3",
+"knife_navaja_handling_q_41.mp3",
+"knife_navaja_handling_q_42.mp3",
+"knife_navaja_handling_q_43.mp3",
+"knife_navaja_handling_q_44.mp3"
+],
+"knife_swing": [
+"knife_swing_1.m4a",
+"knife_swing_2.m4a"
+],
+"knife_swing_heavy": [
+"knife_swing_heavy_1.mp3",
+"knife_swing_heavy_2.mp3",
+"knife_swing_heavy_3.mp3",
+"knife_swing_heavy_4.mp3",
+"knife_swing_heavy_5.mp3"
+],
+"knife_ursus_flip_01": [
+"knife_ursus_flip_01.m4a"
+],
+"knife_ursus_flip_02": [
+"knife_ursus_flip_02.m4a"
+],
+"knife_ursus_flip_loop": [
+"knife_ursus_flip_01.m4a",
+"knife_ursus_flip_02.m4a",
+"knife_ursus_flip_loop_3.m4a",
+"knife_ursus_flip_loop_4.m4a",
+"knife_ursus_flip_loop_4.m4a"
+],
+"knife_wall": [
+"knife_wall_1.m4a",
+"knife_wall_2.m4a",
+"knife_wall_3.mp3"
+],
+"ladder_step": [
+"ladder_step_1.m4a",
+"ladder_step_2.m4a",
+"ladder_step_3.m4a",
+"ladder_step_4.m4a",
+"ladder_step_5.m4a",
+"ladder_step_6.m4a",
+"ladder_step_7.m4a",
+"ladder_step_8.m4a",
+"ladder_step_9.m4a",
+"ladder_step_10.m4a",
+"ladder_step_11.m4a"
+],
+"ladder_step_wood": [
+"ladder_step_wood_1.m4a",
+"ladder_step_wood_2.m4a",
+"ladder_step_wood_3.m4a",
+"ladder_step_wood_4.m4a",
+"ladder_step_wood_5.m4a",
+"ladder_step_wood_6.m4a",
+"ladder_step_wood_7.m4a",
+"ladder_step_wood_8.m4a",
+"ladder_step_wood_9.m4a",
+"ladder_step_wood_10.m4a",
+"ladder_step_wood_11.m4a",
+"ladder_step_wood_12.m4a",
+"ladder_step_wood_13.m4a",
+"ladder_step_wood_14.m4a"
+],
+"land": [
+"land_1.m4a",
+"land_2.m4a",
+"land_3.m4a",
+"land_4.m4a",
+"land_5.m4a",
+"land_6.m4a"
+],
+"land_thud": [
+"land_thud.m4a"
+],
+"lose_round": [
+"lose_round.m4a"
+],
+"lowammo": [
+"lowammo.m4a"
+],
+"molotov": [
+"molotov_1.m4a",
+"molotov_2.m4a"
+],
+"molotov_fly": [
+"molotov_fly.mp3"
+],
+"molotov_fly_fire": [
+"molotov_fly_fire_1.mp3",
+"molotov_fly_fire_2.mp3",
+"molotov_fly_fire_3.mp3",
+"molotov_fly_fire_4.mp3",
+"molotov_fly_fire_5.mp3",
+"molotov_fly_fire_6.mp3"
+],
+"molotov_idle": [
+"molotov_idle.m4a"
+],
+"molotov_inspect_liquid": [
+"molotov_inspect_liquid_1.mp3",
+"molotov_inspect_liquid_2.mp3",
+"molotov_inspect_liquid_3.mp3",
+"molotov_inspect_liquid_4.mp3",
+"molotov_inspect_liquid_5.mp3",
+"molotov_inspect_liquid_6.mp3",
+"molotov_inspect_liquid_7.mp3",
+"molotov_inspect_liquid_8.mp3"
+],
+"molotov_inspect_throwcatch": [
+"molotov_inspect_throwcatch_1.mp3",
+"molotov_inspect_throwcatch_2.mp3",
+"molotov_inspect_throwcatch_3.mp3",
+"molotov_inspect_throwcatch_4.mp3"
+],
+"molotov_light": [
+"molotov_light_1.m4a",
+"molotov_light_2.m4a"
+],
+"move1": [
+"move1.m4a"
+],
+"move1_ak47": [
+"move1_ak47.m4a"
+],
+"move1_aug": [
+"move1_aug.m4a"
+],
+"move1_awp": [
+"move1_awp.m4a"
+],
+"move1_bizon": [
+"move1_bizon.m4a"
+],
+"move1_deagle": [
+"move1_deagle.m4a"
+],
+"move1_famas": [
+"move1_famas.m4a"
+],
+"move1_g3sg1": [
+"move1_g3sg1.m4a"
+],
+"move1_galil": [
+"move1_galil.m4a"
+],
+"move1_m4a1s": [
+"move1_m4a1s.m4a"
+],
+"move1_m4a4": [
+"move1_m4a4.m4a"
+],
+"move1_mac10": [
+"move1_mac10.m4a"
+],
+"move1_mag7": [
+"move1_mag7.m4a"
+],
+"move1_mp5sd": [
+"move1_mp5sd.m4a"
+],
+"move1_mp7": [
+"move1_mp7.m4a"
+],
+"move1_mp9": [
+"move1_mp9.m4a"
+],
+"move1_nova": [
+"move1_nova.m4a"
+],
+"move1_p90": [
+"move1_p90.m4a"
+],
+"move1_sawedoff": [
+"move1_sawedoff.m4a"
+],
+"move1_scar20": [
+"move1_scar20.m4a"
+],
+"move1_sg553": [
+"move1_sg553.m4a"
+],
+"move1_ssg08": [
+"move1_ssg08.m4a"
+],
+"move1_ump45": [
+"move1_ump45.m4a"
+],
+"move1_xm1014": [
+"move1_xm1014_1.m4a",
+"move1_xm1014_2.m4a",
+"move1_xm1014_3.m4a"
+],
+"move2": [
+"move2.m4a"
+],
+"move2_ak47": [
+"move2_ak47.m4a"
+],
+"move2_aug": [
+"move2_aug.m4a"
+],
+"move2_awp": [
+"move2_awp.m4a"
+],
+"move2_bizon": [
+"move2_bizon.m4a"
+],
+"move2_deagle": [
+"move2_deagle.m4a"
+],
+"move2_famas": [
+"move2_famas.m4a"
+],
+"move2_g3sg1": [
+"move2_g3sg1.m4a"
+],
+"move2_galil": [
+"move2_galil.m4a"
+],
+"move2_m4a1s": [
+"move2_m4a1s.m4a"
+],
+"move2_m4a4": [
+"move2_m4a4.m4a"
+],
+"move2_mac10": [
+"move2_mac10.m4a"
+],
+"move2_mp5sd": [
+"move2_mp5sd.m4a"
+],
+"move2_mp7": [
+"move2_mp7.m4a"
+],
+"move2_mp9": [
+"move2_mp9.m4a"
+],
+"move2_nova": [
+"move2_nova.m4a"
+],
+"move2_p90": [
+"move2_p90.m4a"
+],
+"move2_sawedoff": [
+"move2_sawedoff.m4a"
+],
+"move2_scar20": [
+"move2_scar20.m4a"
+],
+"move2_sg553": [
+"move2_sg553.m4a"
+],
+"move2_ssg08": [
+"move2_ssg08.m4a"
+],
+"move2_ump45": [
+"move2_ump45.m4a"
+],
+"move2_xm1014": [
+"move2_xm1014.m4a"
+],
+"move3": [
+"move3.m4a"
+],
+"move3_ak47": [
+"move3_ak47.m4a"
+],
+"move3_aug": [
+"move3_aug.m4a"
+],
+"move3_awp": [
+"move3_awp.m4a"
+],
+"move3_bizon": [
+"move3_bizon.m4a"
+],
+"move3_deagle": [
+"move3_deagle.m4a"
+],
+"move3_famas": [
+"move3_famas.m4a"
+],
+"move3_g3sg1": [
+"move3_g3sg1.m4a"
+],
+"move3_galil": [
+"move3_galil.m4a"
+],
+"move3_m4a1s": [
+"move3_m4a1s.m4a"
+],
+"move3_m4a4": [
+"move3_m4a4.m4a"
+],
+"move3_mac10": [
+"move3_mac10.m4a"
+],
+"move3_mp5sd": [
+"move3_mp5sd.m4a"
+],
+"move3_mp7": [
+"move3_mp7.m4a"
+],
+"move3_mp9": [
+"move3_mp9.m4a"
+],
+"move3_nova": [
+"move3_nova.m4a"
+],
+"move3_p90": [
+"move3_p90.m4a"
+],
+"move3_sawedoff": [
+"move3_sawedoff.m4a"
+],
+"move3_scar20": [
+"move3_scar20.m4a"
+],
+"move3_sg553": [
+"move3_sg553.m4a"
+],
+"move3_ssg08": [
+"move3_ssg08.m4a"
+],
+"move3_ump45": [
+"move3_ump45.m4a"
+],
+"move3_xm1014": [
+"move3_xm1014.m4a"
+],
+"move4_deagle": [
+"move4_deagle.m4a"
+],
+"pickup": [
+"pickup.m4a"
+],
+"pin": [
+"pin.m4a"
+],
+"pin_decoy": [
+"pin_decoy.mp3"
+],
+"pin_flash": [
+"pin_flash_1.mp3",
+"pin_flash_2.mp3",
+"pin_flash_3.mp3",
+"pin_flash_4.mp3"
+],
+"pin_frag": [
+"pin_frag.m4a"
+],
+"pin_gear": [
+"pin_gear_1.mp3",
+"pin_gear_2.mp3",
+"pin_gear_3.mp3",
+"pin_gear_4.mp3",
+"pin_gear_5.mp3",
+"pin_gear_6.mp3",
+"pin_gear_7.mp3"
+],
+"pin_he": [
+"pin_he.mp3"
+],
+"pin_incend": [
+"pin_incend.mp3"
+],
+"pin_smoke": [
+"pin_smoke.mp3"
+],
+"plant_key": [
+"plant_key_1.mp3",
+"plant_key_2.mp3",
+"plant_key_3.mp3",
+"plant_key_4.mp3",
+"plant_key_5.mp3"
+],
+"planted": [
+"planted.m4a"
+],
+"reveal_common": [
+"reveal_common.m4a"
+],
+"reveal_gold": [
+"reveal_gold.m4a"
+],
+"reveal_rare": [
+"reveal_rare.m4a"
+],
+"ric": [
+"ric_1.m4a",
+"ric_2.m4a",
+"ric_3.m4a",
+"ric_4.m4a",
+"ric_5.m4a",
+"ric_6.m4a"
+],
+"shot_ak47": [
+"shot_ak47_1.m4a",
+"shot_ak47_2.m4a",
+"shot_ak47_3.m4a",
+"shot_ak47_4.m4a"
+],
+"shot_aug": [
+"shot_aug_1.m4a",
+"shot_aug_2.m4a",
+"shot_aug_3.m4a",
+"shot_aug_4.m4a"
+],
+"shot_awp": [
+"shot_awp_1.m4a",
+"shot_awp_2.m4a"
+],
+"shot_bizon": [
+"shot_bizon_1.m4a",
+"shot_bizon_2.m4a"
+],
+"shot_cz75": [
+"shot_cz75_1.m4a",
+"shot_cz75_2.m4a",
+"shot_cz75_3.m4a"
+],
+"shot_deagle": [
+"shot_deagle_1.m4a",
+"shot_deagle_2.m4a"
+],
+"shot_dualies": [
+"shot_dualies_1.m4a",
+"shot_dualies_2.m4a",
+"shot_dualies_3.m4a",
+"shot_dualies_4.m4a"
+],
+"shot_famas": [
+"shot_famas_1.m4a",
+"shot_famas_2.m4a",
+"shot_famas_3.m4a"
+],
+"shot_fiveseven": [
+"shot_fiveseven.m4a"
+],
+"shot_g3sg1": [
+"shot_g3sg1_1.m4a",
+"shot_g3sg1_2.m4a",
+"shot_g3sg1_3.m4a"
+],
+"shot_galil": [
+"shot_galil_1.m4a",
+"shot_galil_2.m4a",
+"shot_galil_3.m4a",
+"shot_galil_4.m4a"
+],
+"shot_glock": [
+"shot_glock_1.m4a",
+"shot_glock_2.m4a"
+],
+"shot_m249": [
+"shot_m249_1.m4a",
+"shot_m249_2.m4a",
+"shot_m249_3.m4a"
+],
+"shot_m4a1s": [
+"shot_m4a1s.m4a"
+],
+"shot_m4a4": [
+"shot_m4a4_1.m4a",
+"shot_m4a4_2.m4a",
+"shot_m4a4_3.m4a",
+"shot_m4a4_4.m4a"
+],
+"shot_mac10": [
+"shot_mac10_1.m4a",
+"shot_mac10_2.m4a"
+],
+"shot_mag7": [
+"shot_mag7_1.m4a",
+"shot_mag7_2.m4a"
+],
+"shot_mp5sd": [
+"shot_mp5sd.m4a"
+],
+"shot_mp7": [
+"shot_mp7_1.m4a",
+"shot_mp7_2.m4a",
+"shot_mp7_3.m4a",
+"shot_mp7_4.m4a"
+],
+"shot_mp9": [
+"shot_mp9_1.m4a",
+"shot_mp9_2.m4a",
+"shot_mp9_3.m4a",
+"shot_mp9_4.m4a"
+],
+"shot_negev": [
+"shot_negev_1.m4a",
+"shot_negev_2.m4a"
+],
+"shot_nova": [
+"shot_nova.m4a"
+],
+"shot_p2000": [
+"shot_p2000_1.m4a",
+"shot_p2000_2.m4a",
+"shot_p2000_3.m4a"
+],
+"shot_p250": [
+"shot_p250.m4a"
+],
+"shot_p90": [
+"shot_p90_1.m4a",
+"shot_p90_2.m4a"
+],
+"shot_r8": [
+"shot_r8.m4a"
+],
+"shot_sawedoff": [
+"shot_sawedoff.m4a"
+],
+"shot_scar20": [
+"shot_scar20_1.m4a",
+"shot_scar20_2.m4a",
+"shot_scar20_3.m4a"
+],
+"shot_sg553": [
+"shot_sg553_1.m4a",
+"shot_sg553_2.m4a",
+"shot_sg553_3.m4a",
+"shot_sg553_4.m4a"
+],
+"shot_ssg08": [
+"shot_ssg08.m4a"
+],
+"shot_tec9": [
+"shot_tec9.m4a"
+],
+"shot_ump45": [
+"shot_ump45.m4a"
+],
+"shot_usps": [
+"shot_usps_1.m4a",
+"shot_usps_2.m4a",
+"shot_usps_3.m4a"
+],
+"shot_xm1014": [
+"shot_xm1014.m4a"
+],
+"shot_zeus": [
+"shot_zeus.m4a"
+],
+"sideback2_r8": [
+"sideback2_r8.m4a"
+],
+"sideback_r8": [
+"sideback_r8.m4a"
+],
+"siderelease_q_r8": [
+"siderelease_q_r8.m4a"
+],
+"siderelease_r8": [
+"siderelease_r8.m4a"
+],
+"smoke_emit": [
+"smoke_emit.m4a"
+],
+"smoke_inspect01_turns": [
+"smoke_inspect01_turns_1.mp3",
+"smoke_inspect01_turns_2.mp3",
+"smoke_inspect01_turns_3.mp3",
+"smoke_inspect01_turns_4.mp3",
+"smoke_inspect01_turns_5.mp3",
+"smoke_inspect01_turns_6.mp3"
+],
+"smoke_inspect02_catch": [
+"smoke_inspect02_catch_1.mp3",
+"smoke_inspect02_catch_2.mp3",
+"smoke_inspect02_catch_3.mp3",
+"smoke_inspect02_catch_4.mp3",
+"smoke_inspect02_catch_5.mp3",
+"smoke_inspect02_catch_6.mp3"
+],
+"smoke_inspect02_handle": [
+"smoke_inspect01_turns_1.mp3",
+"smoke_inspect01_turns_2.mp3",
+"smoke_inspect01_turns_3.mp3",
+"smoke_inspect01_turns_4.mp3",
+"smoke_inspect01_turns_5.mp3",
+"smoke_inspect01_turns_6.mp3"
+],
+"smoke_inspect02_jingle": [
+"smoke_inspect02_jingle_1.mp3",
+"smoke_inspect02_jingle_2.mp3",
+"smoke_inspect02_jingle_3.mp3",
+"smoke_inspect02_jingle_4.mp3",
+"smoke_inspect02_jingle_5.mp3",
+"smoke_inspect02_jingle_6.mp3",
+"smoke_inspect02_jingle_7.mp3",
+"smoke_inspect02_jingle_8.mp3"
+],
+"smoke_pop": [
+"smoke_pop_1.m4a",
+"smoke_pop_2.m4a"
+],
+"step": [
+"step_1.m4a",
+"step_2.m4a",
+"step_3.m4a",
+"step_4.m4a",
+"step_5.m4a",
+"step_6.m4a",
+"step_7.m4a",
+"step_8.m4a",
+"step_9.m4a",
+"step_10.m4a",
+"step_11.m4a",
+"step_12.m4a",
+"step_13.m4a",
+"step_14.m4a",
+"step_15.m4a",
+"step_16.m4a",
+"step_17.m4a"
+],
+"step_carpet": [
+"step_carpet_1.m4a",
+"step_carpet_2.m4a",
+"step_carpet_3.m4a",
+"step_carpet_4.m4a",
+"step_carpet_5.m4a",
+"step_carpet_6.m4a",
+"step_carpet_7.m4a",
+"step_carpet_8.m4a",
+"step_carpet_9.m4a",
+"step_carpet_10.m4a",
+"step_carpet_11.m4a",
+"step_carpet_12.m4a",
+"step_carpet_13.m4a",
+"step_carpet_14.m4a"
+],
+"step_chainlink": [
+"step_chainlink_1.m4a",
+"step_chainlink_2.m4a",
+"step_chainlink_3.m4a",
+"step_chainlink_4.m4a",
+"step_chainlink_5.m4a",
+"step_chainlink_6.m4a",
+"step_chainlink_7.m4a",
+"step_chainlink_8.m4a"
+],
+"step_dirt": [
+"step_dirt_1.m4a",
+"step_dirt_2.m4a",
+"step_dirt_3.m4a",
+"step_dirt_4.m4a",
+"step_dirt_5.m4a",
+"step_dirt_6.m4a",
+"step_dirt_7.m4a",
+"step_dirt_8.m4a",
+"step_dirt_9.m4a",
+"step_dirt_10.m4a",
+"step_dirt_11.m4a",
+"step_dirt_12.m4a",
+"step_dirt_13.m4a",
+"step_dirt_14.m4a"
+],
+"step_glass": [
+"step_glass_1.m4a",
+"step_glass_2.m4a",
+"step_glass_3.m4a",
+"step_glass_4.m4a",
+"step_glass_5.m4a",
+"step_glass_6.m4a",
+"step_glass_7.m4a",
+"step_glass_8.m4a"
+],
+"step_grass": [
+"step_grass_1.m4a",
+"step_grass_2.m4a",
+"step_grass_3.m4a",
+"step_grass_4.m4a",
+"step_grass_5.m4a",
+"step_grass_6.m4a",
+"step_grass_7.m4a",
+"step_grass_8.m4a",
+"step_grass_9.m4a",
+"step_grass_10.m4a",
+"step_grass_11.m4a",
+"step_grass_12.m4a",
+"step_grass_13.m4a"
+],
+"step_gravel": [
+"step_gravel_1.m4a",
+"step_gravel_2.m4a",
+"step_gravel_3.m4a",
+"step_gravel_4.m4a",
+"step_gravel_5.m4a",
+"step_gravel_6.m4a",
+"step_gravel_7.m4a",
+"step_gravel_8.m4a",
+"step_gravel_9.m4a",
+"step_gravel_10.m4a"
+],
+"step_ladder": [
+"step_ladder_1.m4a",
+"step_ladder_2.m4a",
+"step_ladder_3.m4a",
+"step_ladder_4.m4a",
+"step_ladder_5.m4a",
+"step_ladder_6.m4a",
+"step_ladder_7.m4a",
+"step_ladder_8.m4a",
+"step_ladder_9.m4a",
+"step_ladder_10.m4a",
+"step_ladder_11.m4a"
+],
+"step_ladder_wood": [
+"step_ladder_wood_1.m4a",
+"step_ladder_wood_2.m4a",
+"step_ladder_wood_3.m4a",
+"step_ladder_wood_4.m4a",
+"step_ladder_wood_5.m4a",
+"step_ladder_wood_6.m4a",
+"step_ladder_wood_7.m4a",
+"step_ladder_wood_8.m4a",
+"step_ladder_wood_9.m4a"
+],
+"step_metal": [
+"step_metal_1.m4a",
+"step_metal_2.m4a",
+"step_metal_3.m4a",
+"step_metal_4.m4a",
+"step_metal_5.m4a",
+"step_metal_6.m4a",
+"step_metal_7.m4a",
+"step_metal_8.m4a",
+"step_metal_9.m4a",
+"step_metal_10.m4a",
+"step_metal_11.m4a",
+"step_metal_12.m4a",
+"step_metal_13.m4a",
+"step_metal_14.m4a",
+"step_metal_15.m4a",
+"step_metal_16.m4a"
+],
+"step_metalrail": [
+"step_metalrail_1.m4a",
+"step_metalrail_2.m4a",
+"step_metalrail_3.m4a",
+"step_metalrail_4.m4a",
+"step_metalrail_5.m4a",
+"step_metalrail_6.m4a",
+"step_metalrail_7.m4a",
+"step_metalrail_8.m4a",
+"step_metalrail_9.m4a"
+],
+"step_metalvent": [
+"step_metalvent_1.m4a",
+"step_metalvent_2.m4a",
+"step_metalvent_3.m4a",
+"step_metalvent_4.m4a",
+"step_metalvent_5.m4a",
+"step_metalvent_6.m4a"
+],
+"step_sand": [
+"step_sand_1.m4a",
+"step_sand_2.m4a",
+"step_sand_3.m4a",
+"step_sand_4.m4a",
+"step_sand_5.m4a",
+"step_sand_6.m4a",
+"step_sand_7.m4a",
+"step_sand_8.m4a",
+"step_sand_9.m4a",
+"step_sand_10.m4a",
+"step_sand_11.m4a",
+"step_sand_12.m4a"
+],
+"step_tile": [
+"step_tile_1.m4a",
+"step_tile_2.m4a",
+"step_tile_3.m4a",
+"step_tile_4.m4a",
+"step_tile_5.m4a",
+"step_tile_6.m4a",
+"step_tile_7.m4a",
+"step_tile_8.m4a",
+"step_tile_9.m4a",
+"step_tile_10.m4a",
+"step_tile_11.m4a",
+"step_tile_12.m4a",
+"step_tile_13.m4a",
+"step_tile_14.m4a"
+],
+"step_wood": [
+"step_wood_1.m4a",
+"step_wood_2.m4a",
+"step_wood_3.m4a",
+"step_wood_4.m4a",
+"step_wood_5.m4a",
+"step_wood_6.m4a",
+"step_wood_7.m4a",
+"step_wood_8.m4a",
+"step_wood_9.m4a",
+"step_wood_10.m4a",
+"step_wood_11.m4a",
+"step_wood_12.m4a",
+"step_wood_13.m4a",
+"step_wood_14.m4a",
+"step_wood_15.m4a"
+],
+"tauntlook1_dualies": [
+"tauntlook1_dualies_1.m4a",
+"tauntlook1_dualies_2.m4a",
+"tauntlook1_dualies_3.m4a"
+],
+"tauntlook2_dualies": [
+"tauntlook2_dualies_1.m4a",
+"tauntlook2_dualies_2.m4a",
+"tauntlook2_dualies_3.m4a"
+],
+"tauntstarttap_dualies": [
+"tauntstarttap_dualies_1.m4a",
+"tauntstarttap_dualies_2.m4a",
+"tauntstarttap_dualies_3.m4a"
+],
+"taunttap1_dualies": [
+"taunttap1_dualies.m4a"
+],
+"taunttap2_dualies": [
+"taunttap2_dualies.m4a"
+],
+"taunttwirl_dualies": [
+"taunttwirl_dualies.mp3"
+],
+"tinnitus": [
+"tinnitus.m4a"
+],
+"toss": [
+"toss.m4a"
+],
+"toss_decoy": [
+"toss_decoy.mp3"
+],
+"toss_flash": [
+"toss_flash.mp3"
+],
+"toss_he": [
+"toss_he.mp3"
+],
+"toss_incend": [
+"toss_incend_1.mp3",
+"toss_incend_2.mp3",
+"toss_incend_3.mp3"
+],
+"toss_molotov": [
+"toss_molotov_1.mp3",
+"toss_molotov_2.mp3",
+"toss_molotov_3.mp3",
+"toss_molotov_4.mp3",
+"toss_molotov_5.mp3",
+"toss_molotov_6.mp3"
+],
+"toss_smoke": [
+"toss_smoke.mp3"
+],
+"uiclick": [
+"uiclick.m4a"
+],
+"uihover": [
+"uihover.m4a"
+],
+"underwater": [
+"underwater.mp3"
+],
+"vo_ct_affirmative": [
+"vo_ct_affirmative_1.m4a",
+"vo_ct_affirmative_2.m4a",
+"vo_ct_affirmative_3.m4a",
+"vo_ct_affirmative_4.m4a"
+],
+"vo_ct_agree": [
+"vo_ct_agree_1.m4a",
+"vo_ct_agree_2.m4a",
+"vo_ct_agree_3.m4a",
+"vo_ct_agree_4.m4a"
+],
+"vo_ct_blinded": [
+"vo_ct_blinded_1.m4a",
+"vo_ct_blinded_2.m4a",
+"vo_ct_blinded_3.m4a",
+"vo_ct_blinded_4.m4a"
+],
+"vo_ct_bombsiteclear": [
+"vo_ct_bombsiteclear_1.m4a",
+"vo_ct_bombsiteclear_2.m4a",
+"vo_ct_bombsiteclear_3.m4a"
+],
+"vo_ct_bombtickingdown": [
+"vo_ct_bombtickingdown_1.m4a",
+"vo_ct_bombtickingdown_2.m4a",
+"vo_ct_bombtickingdown_3.m4a",
+"vo_ct_bombtickingdown_4.m4a",
+"vo_ct_bombtickingdown_5.m4a"
+],
+"vo_ct_clearedarea": [
+"vo_ct_clearedarea_1.m4a",
+"vo_ct_clearedarea_2.m4a",
+"vo_ct_clearedarea_3.m4a",
+"vo_ct_clearedarea_4.m4a",
+"vo_ct_clearedarea_5.m4a"
+],
+"vo_ct_commanderdown": [
+"vo_ct_commanderdown_1.m4a",
+"vo_ct_commanderdown_2.m4a",
+"vo_ct_commanderdown_3.m4a"
+],
+"vo_ct_coveringfriend": [
+"vo_ct_coveringfriend_1.m4a",
+"vo_ct_coveringfriend_2.m4a",
+"vo_ct_coveringfriend_3.m4a",
+"vo_ct_coveringfriend_4.m4a"
+],
+"vo_ct_coverme": [
+"vo_ct_coverme_1.m4a",
+"vo_ct_coverme_2.m4a",
+"vo_ct_coverme_3.m4a"
+],
+"vo_ct_ct_bombexploding": [
+"vo_ct_ct_bombexploding_1.m4a",
+"vo_ct_ct_bombexploding_2.m4a",
+"vo_ct_ct_bombexploding_3.m4a",
+"vo_ct_ct_bombexploding_4.m4a",
+"vo_ct_ct_bombexploding_5.m4a",
+"vo_ct_ct_bombexploding_6.m4a",
+"vo_ct_ct_bombexploding_7.m4a",
+"vo_ct_ct_bombexploding_8.m4a",
+"vo_ct_ct_bombexploding_9.m4a",
+"vo_ct_ct_bombexploding_10.m4a"
+],
+"vo_ct_ct_death": [
+"vo_ct_ct_death_1.m4a",
+"vo_ct_ct_death_2.m4a",
+"vo_ct_ct_death_3.m4a",
+"vo_ct_ct_death_4.m4a",
+"vo_ct_ct_death_5.m4a",
+"vo_ct_ct_death_6.m4a"
+],
+"vo_ct_ct_decoy": [
+"vo_ct_ct_decoy_1.m4a",
+"vo_ct_ct_decoy_2.m4a",
+"vo_ct_ct_decoy_3.m4a"
+],
+"vo_ct_ct_flashbang": [
+"vo_ct_ct_flashbang_1.m4a",
+"vo_ct_ct_flashbang_2.m4a",
+"vo_ct_ct_flashbang_3.m4a"
+],
+"vo_ct_ct_grenade": [
+"vo_ct_ct_grenade_1.m4a",
+"vo_ct_ct_grenade_2.m4a",
+"vo_ct_ct_grenade_3.m4a",
+"vo_ct_ct_grenade_4.m4a"
+],
+"vo_ct_ct_molotov": [
+"vo_ct_ct_molotov_1.m4a",
+"vo_ct_ct_molotov_2.m4a",
+"vo_ct_ct_molotov_3.m4a",
+"vo_ct_ct_molotov_4.m4a"
+],
+"vo_ct_ct_smoke": [
+"vo_ct_ct_smoke_1.m4a",
+"vo_ct_ct_smoke_2.m4a",
+"vo_ct_ct_smoke_3.m4a"
+],
+"vo_ct_ctmap_cs_source": [
+"vo_ct_ctmap_cs_source_1.m4a",
+"vo_ct_ctmap_cs_source_2.m4a",
+"vo_ct_ctmap_cs_source_3.m4a",
+"vo_ct_ctmap_cs_source_4.m4a",
+"vo_ct_ctmap_cs_source_5.m4a",
+"vo_ct_ctmap_cs_source_6.m4a",
+"vo_ct_ctmap_cs_source_7.m4a",
+"vo_ct_ctmap_cs_source_8.m4a",
+"vo_ct_ctmap_cs_source_9.m4a",
+"vo_ct_ctmap_cs_source_10.m4a",
+"vo_ct_ctmap_cs_source_11.m4a",
+"vo_ct_ctmap_cs_source_12.m4a",
+"vo_ct_ctmap_cs_source_13.m4a",
+"vo_ct_ctmap_cs_source_14.m4a",
+"vo_ct_ctmap_cs_source_15.m4a",
+"vo_ct_ctmap_cs_source_16.m4a",
+"vo_ct_ctmap_cs_source_17.m4a",
+"vo_ct_ctmap_cs_source_18.m4a",
+"vo_ct_ctmap_cs_source_19.m4a",
+"vo_ct_ctmap_cs_source_20.m4a",
+"vo_ct_ctmap_cs_source_21.m4a",
+"vo_ct_ctmap_cs_source_22.m4a",
+"vo_ct_ctmap_cs_source_23.m4a",
+"vo_ct_ctmap_cs_source_24.m4a",
+"vo_ct_ctmap_cs_source_25.m4a",
+"vo_ct_ctmap_cs_source_26.m4a",
+"vo_ct_ctmap_cs_source_27.m4a",
+"vo_ct_ctmap_cs_source_28.m4a",
+"vo_ct_ctmap_cs_source_29.m4a",
+"vo_ct_ctmap_cs_source_30.m4a",
+"vo_ct_ctmap_cs_source_31.m4a",
+"vo_ct_ctmap_cs_source_32.m4a",
+"vo_ct_ctmap_cs_source_33.m4a",
+"vo_ct_ctmap_cs_source_34.m4a",
+"vo_ct_ctmap_cs_source_35.m4a",
+"vo_ct_ctmap_cs_source_36.m4a",
+"vo_ct_ctmap_cs_source_37.m4a",
+"vo_ct_ctmap_cs_source_38.m4a",
+"vo_ct_ctmap_cs_source_39.m4a",
+"vo_ct_ctmap_cs_source_40.m4a",
+"vo_ct_ctmap_cs_source_41.m4a",
+"vo_ct_ctmap_cs_source_42.m4a",
+"vo_ct_ctmap_cs_source_43.m4a",
+"vo_ct_ctmap_cs_source_44.m4a",
+"vo_ct_ctmap_cs_source_45.m4a",
+"vo_ct_ctmap_cs_source_46.m4a",
+"vo_ct_ctmap_cs_source_47.m4a",
+"vo_ct_ctmap_cs_source_48.m4a",
+"vo_ct_ctmap_cs_source_49.m4a",
+"vo_ct_ctmap_cs_source_50.m4a",
+"vo_ct_ctmap_cs_source_51.m4a",
+"vo_ct_ctmap_cs_source_52.m4a",
+"vo_ct_ctmap_cs_source_53.m4a",
+"vo_ct_ctmap_cs_source_54.m4a",
+"vo_ct_ctmap_cs_source_55.m4a",
+"vo_ct_ctmap_cs_source_56.m4a",
+"vo_ct_ctmap_cs_source_57.m4a",
+"vo_ct_ctmap_cs_source_58.m4a",
+"vo_ct_ctmap_cs_source_59.m4a",
+"vo_ct_ctmap_cs_source_60.m4a",
+"vo_ct_ctmap_cs_source_61.m4a",
+"vo_ct_ctmap_cs_source_62.m4a",
+"vo_ct_ctmap_cs_source_63.m4a",
+"vo_ct_ctmap_cs_source_64.m4a",
+"vo_ct_ctmap_cs_source_65.m4a",
+"vo_ct_ctmap_cs_source_66.m4a",
+"vo_ct_ctmap_cs_source_67.m4a",
+"vo_ct_ctmap_cs_source_68.m4a",
+"vo_ct_ctmap_cs_source_69.m4a",
+"vo_ct_ctmap_cs_source_70.m4a",
+"vo_ct_ctmap_cs_source_71.m4a",
+"vo_ct_ctmap_cs_source_72.m4a",
+"vo_ct_ctmap_cs_source_73.m4a",
+"vo_ct_ctmap_cs_source_74.m4a",
+"vo_ct_ctmap_cs_source_75.m4a",
+"vo_ct_ctmap_cs_source_76.m4a",
+"vo_ct_ctmap_cs_source_77.m4a",
+"vo_ct_ctmap_cs_source_78.m4a",
+"vo_ct_ctmap_cs_source_79.m4a",
+"vo_ct_ctmap_cs_source_80.m4a",
+"vo_ct_ctmap_cs_source_81.m4a",
+"vo_ct_ctmap_cs_source_82.m4a",
+"vo_ct_ctmap_cs_source_83.m4a",
+"vo_ct_ctmap_cs_source_84.m4a",
+"vo_ct_ctmap_cs_source_85.m4a",
+"vo_ct_ctmap_cs_source_86.m4a",
+"vo_ct_ctmap_cs_source_87.m4a",
+"vo_ct_ctmap_cs_source_88.m4a",
+"vo_ct_ctmap_cs_source_89.m4a",
+"vo_ct_ctmap_cs_source_90.m4a",
+"vo_ct_ctmap_cs_source_91.m4a",
+"vo_ct_ctmap_cs_source_92.m4a",
+"vo_ct_ctmap_cs_source_93.m4a",
+"vo_ct_ctmap_cs_source_94.m4a",
+"vo_ct_ctmap_cs_source_95.m4a",
+"vo_ct_ctmap_cs_source_96.m4a",
+"vo_ct_ctmap_cs_source_97.m4a",
+"vo_ct_ctmap_cs_source_98.m4a",
+"vo_ct_ctmap_cs_source_99.m4a",
+"vo_ct_ctmap_cs_source_100.m4a",
+"vo_ct_ctmap_cs_source_101.m4a",
+"vo_ct_ctmap_cs_source_102.m4a",
+"vo_ct_ctmap_cs_source_103.m4a",
+"vo_ct_ctmap_cs_source_104.m4a",
+"vo_ct_ctmap_cs_source_105.m4a",
+"vo_ct_ctmap_cs_source_106.m4a",
+"vo_ct_ctmap_cs_source_107.m4a",
+"vo_ct_ctmap_cs_source_108.m4a",
+"vo_ct_ctmap_cs_source_109.m4a",
+"vo_ct_ctmap_cs_source_110.m4a",
+"vo_ct_ctmap_cs_source_111.m4a",
+"vo_ct_ctmap_cs_source_112.m4a",
+"vo_ct_ctmap_cs_source_113.m4a",
+"vo_ct_ctmap_cs_source_114.m4a",
+"vo_ct_ctmap_cs_source_115.m4a",
+"vo_ct_ctmap_cs_source_116.m4a",
+"vo_ct_ctmap_cs_source_117.m4a",
+"vo_ct_ctmap_cs_source_118.m4a",
+"vo_ct_ctmap_cs_source_119.m4a",
+"vo_ct_ctmap_cs_source_120.m4a",
+"vo_ct_ctmap_cs_source_121.m4a",
+"vo_ct_ctmap_cs_source_122.m4a",
+"vo_ct_ctmap_cs_source_123.m4a",
+"vo_ct_ctmap_cs_source_124.m4a",
+"vo_ct_ctmap_cs_source_125.m4a",
+"vo_ct_ctmap_cs_source_126.m4a",
+"vo_ct_ctmap_cs_source_127.m4a",
+"vo_ct_ctmap_cs_source_128.m4a",
+"vo_ct_ctmap_cs_source_129.m4a",
+"vo_ct_ctmap_cs_source_130.m4a",
+"vo_ct_ctmap_cs_source_131.m4a",
+"vo_ct_ctmap_cs_source_132.m4a",
+"vo_ct_ctmap_cs_source_133.m4a",
+"vo_ct_ctmap_cs_source_134.m4a",
+"vo_ct_ctmap_cs_source_135.m4a",
+"vo_ct_ctmap_cs_source_136.m4a",
+"vo_ct_ctmap_cs_source_137.m4a"
+],
+"vo_ct_defusingbomb": [
+"vo_ct_defusingbomb_1.m4a",
+"vo_ct_defusingbomb_2.m4a",
+"vo_ct_defusingbomb_3.m4a",
+"vo_ct_defusingbomb_4.m4a"
+],
+"vo_ct_disagree": [
+"vo_ct_disagree_1.m4a",
+"vo_ct_disagree_2.m4a",
+"vo_ct_disagree_3.m4a",
+"vo_ct_disagree_4.m4a"
+],
+"vo_ct_enemydown": [
+"vo_ct_enemydown_1.m4a",
+"vo_ct_enemydown_2.m4a",
+"vo_ct_enemydown_3.m4a",
+"vo_ct_enemydown_4.m4a",
+"vo_ct_enemydown_5.m4a",
+"vo_ct_enemydown_6.m4a",
+"vo_ct_enemydown_7.m4a",
+"vo_ct_enemydown_8.m4a",
+"vo_ct_enemydown_9.m4a",
+"vo_ct_enemydown_10.m4a",
+"vo_ct_enemydown_11.m4a",
+"vo_ct_enemydown_12.m4a",
+"vo_ct_enemydown_13.m4a",
+"vo_ct_enemydown_14.m4a",
+"vo_ct_enemydown_15.m4a"
+],
+"vo_ct_followingfriend": [
+"vo_ct_followingfriend_1.m4a",
+"vo_ct_followingfriend_2.m4a",
+"vo_ct_followingfriend_3.m4a",
+"vo_ct_followingfriend_4.m4a"
+],
+"vo_ct_friendlyfire": [
+"vo_ct_friendlyfire_1.m4a",
+"vo_ct_friendlyfire_2.m4a",
+"vo_ct_friendlyfire_3.m4a",
+"vo_ct_friendlyfire_4.m4a",
+"vo_ct_friendlyfire_5.m4a",
+"vo_ct_friendlyfire_6.m4a",
+"vo_ct_friendlyfire_7.m4a",
+"vo_ct_friendlyfire_8.m4a",
+"vo_ct_friendlyfire_9.m4a"
+],
+"vo_ct_goingtoguardloosebomb": [
+"vo_ct_goingtoguardloosebomb_1.m4a",
+"vo_ct_goingtoguardloosebomb_2.m4a",
+"vo_ct_goingtoguardloosebomb_3.m4a"
+],
+"vo_ct_guardingloosebomb": [
+"vo_ct_guardingloosebomb_1.m4a",
+"vo_ct_guardingloosebomb_2.m4a",
+"vo_ct_guardingloosebomb_3.m4a"
+],
+"vo_ct_heardnoise": [
+"vo_ct_heardnoise_1.m4a",
+"vo_ct_heardnoise_2.m4a",
+"vo_ct_heardnoise_3.m4a"
+],
+"vo_ct_help": [
+"vo_ct_help_1.m4a",
+"vo_ct_help_2.m4a",
+"vo_ct_help_3.m4a",
+"vo_ct_help_4.m4a"
+],
+"vo_ct_incombat": [
+"vo_ct_incombat_1.m4a",
+"vo_ct_incombat_2.m4a",
+"vo_ct_incombat_3.m4a",
+"vo_ct_incombat_4.m4a",
+"vo_ct_incombat_5.m4a",
+"vo_ct_incombat_6.m4a",
+"vo_ct_incombat_7.m4a",
+"vo_ct_incombat_8.m4a",
+"vo_ct_incombat_9.m4a"
+],
+"vo_ct_inposition": [
+"vo_ct_inposition_1.m4a",
+"vo_ct_inposition_2.m4a",
+"vo_ct_inposition_3.m4a"
+],
+"vo_ct_killedfriend": [
+"vo_ct_killedfriend_1.m4a",
+"vo_ct_killedfriend_2.m4a",
+"vo_ct_killedfriend_3.m4a",
+"vo_ct_killedfriend_4.m4a",
+"vo_ct_killedfriend_5.m4a",
+"vo_ct_killedfriend_6.m4a",
+"vo_ct_killedfriend_7.m4a",
+"vo_ct_killedfriend_8.m4a",
+"vo_ct_killedfriend_9.m4a"
+],
+"vo_ct_lastmanstanding": [
+"vo_ct_lastmanstanding_1.m4a",
+"vo_ct_lastmanstanding_2.m4a",
+"vo_ct_lastmanstanding_3.m4a",
+"vo_ct_lastmanstanding_4.m4a",
+"vo_ct_lastmanstanding_5.m4a",
+"vo_ct_lastmanstanding_6.m4a",
+"vo_ct_lastmanstanding_7.m4a",
+"vo_ct_lastmanstanding_8.m4a",
+"vo_ct_lastmanstanding_9.m4a"
+],
+"vo_ct_lostenemy": [
+"vo_ct_lostenemy_1.m4a",
+"vo_ct_lostenemy_2.m4a",
+"vo_ct_lostenemy_3.m4a"
+],
+"vo_ct_negative": [
+"vo_ct_negative_1.m4a",
+"vo_ct_negative_2.m4a",
+"vo_ct_negative_3.m4a",
+"vo_ct_negative_4.m4a",
+"vo_ct_negative_5.m4a",
+"vo_ct_negative_6.m4a"
+],
+"vo_ct_niceshot": [
+"vo_ct_niceshot_1.m4a",
+"vo_ct_niceshot_2.m4a",
+"vo_ct_niceshot_3.m4a",
+"vo_ct_niceshot_4.m4a",
+"vo_ct_niceshot_5.m4a",
+"vo_ct_niceshot_6.m4a",
+"vo_ct_niceshot_7.m4a",
+"vo_ct_niceshot_8.m4a",
+"vo_ct_niceshot_9.m4a",
+"vo_ct_niceshot_10.m4a",
+"vo_ct_niceshot_11.m4a",
+"vo_ct_niceshot_12.m4a"
+],
+"vo_ct_noenemiesleft": [
+"vo_ct_noenemiesleft_1.m4a",
+"vo_ct_noenemiesleft_2.m4a",
+"vo_ct_noenemiesleft_3.m4a",
+"vo_ct_noenemiesleft_4.m4a",
+"vo_ct_noenemiesleft_5.m4a"
+],
+"vo_ct_noenemiesleftbomb": [
+"vo_ct_noenemiesleftbomb_1.m4a",
+"vo_ct_noenemiesleftbomb_2.m4a",
+"vo_ct_noenemiesleftbomb_3.m4a",
+"vo_ct_noenemiesleftbomb_4.m4a",
+"vo_ct_noenemiesleftbomb_5.m4a",
+"vo_ct_noenemiesleftbomb_6.m4a",
+"vo_ct_noenemiesleftbomb_7.m4a"
+],
+"vo_ct_onarollbrag": [
+"vo_ct_onarollbrag_1.m4a",
+"vo_ct_onarollbrag_2.m4a",
+"vo_ct_onarollbrag_3.m4a",
+"vo_ct_onarollbrag_4.m4a",
+"vo_ct_onarollbrag_5.m4a",
+"vo_ct_onarollbrag_6.m4a",
+"vo_ct_onarollbrag_7.m4a",
+"vo_ct_onarollbrag_8.m4a",
+"vo_ct_onarollbrag_9.m4a",
+"vo_ct_onarollbrag_10.m4a",
+"vo_ct_onarollbrag_11.m4a",
+"vo_ct_onarollbrag_12.m4a",
+"vo_ct_onarollbrag_13.m4a",
+"vo_ct_onarollbrag_14.m4a"
+],
+"vo_ct_oneenemyleft": [
+"vo_ct_oneenemyleft_1.m4a",
+"vo_ct_oneenemyleft_2.m4a",
+"vo_ct_oneenemyleft_3.m4a",
+"vo_ct_oneenemyleft_4.m4a",
+"vo_ct_oneenemyleft_5.m4a",
+"vo_ct_oneenemyleft_6.m4a",
+"vo_ct_oneenemyleft_7.m4a",
+"vo_ct_oneenemyleft_8.m4a"
+],
+"vo_ct_onmyway": [
+"vo_ct_onmyway_1.m4a",
+"vo_ct_onmyway_2.m4a",
+"vo_ct_onmyway_3.m4a",
+"vo_ct_onmyway_4.m4a"
+],
+"vo_ct_peptalk": [
+"vo_ct_peptalk_1.m4a",
+"vo_ct_peptalk_2.m4a",
+"vo_ct_peptalk_3.m4a"
+],
+"vo_ct_pinneddown": [
+"vo_ct_pinneddown_1.m4a",
+"vo_ct_pinneddown_2.m4a",
+"vo_ct_pinneddown_3.m4a",
+"vo_ct_pinneddown_4.m4a",
+"vo_ct_pinneddown_5.m4a",
+"vo_ct_pinneddown_6.m4a"
+],
+"vo_ct_radio.enemyspotted": [
+"vo_ct_radio.enemyspotted_1.m4a",
+"vo_ct_radio.enemyspotted_2.m4a",
+"vo_ct_radio.enemyspotted_3.m4a",
+"vo_ct_radio.enemyspotted_4.m4a",
+"vo_ct_radio.enemyspotted_5.m4a",
+"vo_ct_radio.enemyspotted_6.m4a",
+"vo_ct_radio.enemyspotted_7.m4a",
+"vo_ct_radio.enemyspotted_8.m4a"
+],
+"vo_ct_radio.followme": [
+"vo_ct_radio.followme_1.m4a",
+"vo_ct_radio.followme_2.m4a",
+"vo_ct_radio.followme_3.m4a",
+"vo_ct_radio.followme_4.m4a"
+],
+"vo_ct_radio.letsgo": [
+"vo_ct_radio.letsgo_1.m4a",
+"vo_ct_radio.letsgo_2.m4a",
+"vo_ct_radio.letsgo_3.m4a",
+"vo_ct_radio.letsgo_4.m4a",
+"vo_ct_radio.letsgo_5.m4a",
+"vo_ct_radio.letsgo_6.m4a"
+],
+"vo_ct_radio.locknload": [
+"vo_ct_radio.locknload_1.m4a",
+"vo_ct_radio.locknload_2.m4a",
+"vo_ct_radio.locknload_3.m4a",
+"vo_ct_radio.locknload_4.m4a",
+"vo_ct_radio.locknload_5.m4a",
+"vo_ct_radio.locknload_6.m4a",
+"vo_ct_radio.locknload_7.m4a",
+"vo_ct_radio.locknload_8.m4a",
+"vo_ct_radio.locknload_9.m4a",
+"vo_ct_radio.locknload_10.m4a",
+"vo_ct_radio.locknload_11.m4a",
+"vo_ct_radio.locknload_12.m4a",
+"vo_ct_radio.locknload_13.m4a",
+"vo_ct_radio.locknload_14.m4a",
+"vo_ct_radio.locknload_15.m4a",
+"vo_ct_radio.locknload_16.m4a",
+"vo_ct_radio.locknload_17.m4a",
+"vo_ct_radio.locknload_18.m4a",
+"vo_ct_radio.locknload_19.m4a",
+"vo_ct_radio.locknload_20.m4a",
+"vo_ct_radio.locknload_21.m4a"
+],
+"vo_ct_radio.needbackup": [
+"vo_ct_radio.needbackup_1.m4a",
+"vo_ct_radio.needbackup_2.m4a",
+"vo_ct_radio.needbackup_3.m4a"
+],
+"vo_ct_radio.takingfire": [
+"vo_ct_radio.takingfire_1.m4a",
+"vo_ct_radio.takingfire_2.m4a",
+"vo_ct_radio.takingfire_3.m4a",
+"vo_ct_radio.takingfire_4.m4a",
+"vo_ct_radio.takingfire_5.m4a",
+"vo_ct_radio.takingfire_6.m4a"
+],
+"vo_ct_radiobotendclean": [
+"vo_ct_radiobotendclean_1.m4a",
+"vo_ct_radiobotendclean_2.m4a",
+"vo_ct_radiobotendclean_3.m4a",
+"vo_ct_radiobotendclean_4.m4a",
+"vo_ct_radiobotendclean_5.m4a",
+"vo_ct_radiobotendclean_6.m4a"
+],
+"vo_ct_radiobotendclose": [
+"vo_ct_radiobotendclose_1.m4a",
+"vo_ct_radiobotendclose_2.m4a",
+"vo_ct_radiobotendclose_3.m4a",
+"vo_ct_radiobotendclose_4.m4a",
+"vo_ct_radiobotendclose_5.m4a",
+"vo_ct_radiobotendclose_6.m4a"
+],
+"vo_ct_radiobotendsolid": [
+"vo_ct_radiobotendsolid_1.m4a",
+"vo_ct_radiobotendsolid_2.m4a",
+"vo_ct_radiobotendsolid_3.m4a",
+"vo_ct_radiobotendsolid_4.m4a",
+"vo_ct_radiobotendsolid_5.m4a",
+"vo_ct_radiobotendsolid_6.m4a",
+"vo_ct_radiobotendsolid_7.m4a"
+],
+"vo_ct_radiobotfallback": [
+"vo_ct_radiobotfallback_1.m4a",
+"vo_ct_radiobotfallback_2.m4a",
+"vo_ct_radiobotfallback_3.m4a"
+],
+"vo_ct_radiobothold": [
+"vo_ct_radiobothold_1.m4a",
+"vo_ct_radiobothold_2.m4a"
+],
+"vo_ct_radiobotquery": [
+"vo_ct_radiobotquery.m4a"
+],
+"vo_ct_radiobotregroup": [
+"vo_ct_radiobotregroup_1.m4a",
+"vo_ct_radiobotregroup_2.m4a",
+"vo_ct_radiobotregroup_3.m4a"
+],
+"vo_ct_radiobottime": [
+"vo_ct_radiobottime_1.m4a",
+"vo_ct_radiobottime_2.m4a",
+"vo_ct_radiobottime_3.m4a"
+],
+"vo_ct_radiobotwait": [
+"vo_ct_radiobotwait.m4a"
+],
+"vo_ct_reportingin": [
+"vo_ct_reportingin_1.m4a",
+"vo_ct_reportingin_2.m4a",
+"vo_ct_reportingin_3.m4a"
+],
+"vo_ct_requestreport": [
+"vo_ct_requestreport_1.m4a",
+"vo_ct_requestreport_2.m4a",
+"vo_ct_requestreport_3.m4a"
+],
+"vo_ct_scaredemote": [
+"vo_ct_scaredemote_1.m4a",
+"vo_ct_scaredemote_2.m4a",
+"vo_ct_scaredemote_3.m4a",
+"vo_ct_scaredemote_4.m4a",
+"vo_ct_scaredemote_5.m4a",
+"vo_ct_scaredemote_6.m4a",
+"vo_ct_scaredemote_7.m4a",
+"vo_ct_scaredemote_8.m4a"
+],
+"vo_ct_sniperkilled": [
+"vo_ct_sniperkilled_1.m4a",
+"vo_ct_sniperkilled_2.m4a",
+"vo_ct_sniperkilled_3.m4a"
+],
+"vo_ct_sniperwarning": [
+"vo_ct_sniperwarning_1.m4a",
+"vo_ct_sniperwarning_2.m4a",
+"vo_ct_sniperwarning_3.m4a",
+"vo_ct_sniperwarning_4.m4a"
+],
+"vo_ct_spottedbomber": [
+"vo_ct_spottedbomber_1.m4a",
+"vo_ct_spottedbomber_2.m4a",
+"vo_ct_spottedbomber_3.m4a",
+"vo_ct_spottedbomber_4.m4a",
+"vo_ct_spottedbomber_5.m4a"
+],
+"vo_ct_spottedloosebomb": [
+"vo_ct_spottedloosebomb_1.m4a",
+"vo_ct_spottedloosebomb_2.m4a",
+"vo_ct_spottedloosebomb_3.m4a",
+"vo_ct_spottedloosebomb_4.m4a",
+"vo_ct_spottedloosebomb_5.m4a",
+"vo_ct_spottedloosebomb_6.m4a"
+],
+"vo_ct_thanks": [
+"vo_ct_thanks_1.m4a",
+"vo_ct_thanks_2.m4a",
+"vo_ct_thanks_3.m4a"
+],
+"vo_ct_theypickedupthebomb": [
+"vo_ct_theypickedupthebomb_1.m4a",
+"vo_ct_theypickedupthebomb_2.m4a",
+"vo_ct_theypickedupthebomb_3.m4a"
+],
+"vo_ct_threeenemiesleft": [
+"vo_ct_threeenemiesleft_1.m4a",
+"vo_ct_threeenemiesleft_2.m4a",
+"vo_ct_threeenemiesleft_3.m4a",
+"vo_ct_threeenemiesleft_4.m4a",
+"vo_ct_threeenemiesleft_5.m4a"
+],
+"vo_ct_twoenemiesleft": [
+"vo_ct_twoenemiesleft_1.m4a",
+"vo_ct_twoenemiesleft_2.m4a",
+"vo_ct_twoenemiesleft_3.m4a",
+"vo_ct_twoenemiesleft_4.m4a",
+"vo_ct_twoenemiesleft_5.m4a"
+],
+"vo_ct_waitingforhumantodefusebomb": [
+"vo_ct_waitingforhumantodefusebomb_1.m4a",
+"vo_ct_waitingforhumantodefusebomb_2.m4a",
+"vo_ct_waitingforhumantodefusebomb_3.m4a",
+"vo_ct_waitingforhumantodefusebomb_4.m4a",
+"vo_ct_waitingforhumantodefusebomb_5.m4a"
+],
+"vo_ct_waitinghere": [
+"vo_ct_waitinghere_1.m4a",
+"vo_ct_waitinghere_2.m4a",
+"vo_ct_waitinghere_3.m4a",
+"vo_ct_waitinghere_4.m4a"
+],
+"vo_ct_whereisthebomb": [
+"vo_ct_whereisthebomb_1.m4a",
+"vo_ct_whereisthebomb_2.m4a",
+"vo_ct_whereisthebomb_3.m4a",
+"vo_ct_whereisthebomb_4.m4a"
+],
+"vo_t_affirmative": [
+"vo_t_affirmative_1.m4a",
+"vo_t_affirmative_2.m4a",
+"vo_t_affirmative_3.m4a"
+],
+"vo_t_agree": [
+"vo_t_agree_1.m4a",
+"vo_t_agree_2.m4a",
+"vo_t_agree_3.m4a",
+"vo_t_agree_4.m4a",
+"vo_t_agree_5.m4a",
+"vo_t_agree_6.m4a"
+],
+"vo_t_blinded": [
+"vo_t_blinded_1.m4a",
+"vo_t_blinded_2.m4a",
+"vo_t_blinded_3.m4a"
+],
+"vo_t_bombtickingdown": [
+"vo_t_bombtickingdown_1.m4a",
+"vo_t_bombtickingdown_2.m4a",
+"vo_t_bombtickingdown_3.m4a",
+"vo_t_bombtickingdown_4.m4a",
+"vo_t_bombtickingdown_5.m4a"
+],
+"vo_t_clear": [
+"vo_t_clear_1.m4a",
+"vo_t_clear_2.m4a",
+"vo_t_clear_3.m4a"
+],
+"vo_t_clearedarea": [
+"vo_t_clearedarea_1.m4a",
+"vo_t_clearedarea_2.m4a",
+"vo_t_clearedarea_3.m4a"
+],
+"vo_t_coveringfriend": [
+"vo_t_coveringfriend_1.m4a",
+"vo_t_coveringfriend_2.m4a",
+"vo_t_coveringfriend_3.m4a"
+],
+"vo_t_coverme": [
+"vo_t_coverme_1.m4a",
+"vo_t_coverme_2.m4a",
+"vo_t_coverme_3.m4a"
+],
+"vo_t_defendingbombsitea": [
+"vo_t_defendingbombsitea_1.m4a",
+"vo_t_defendingbombsitea_2.m4a",
+"vo_t_defendingbombsitea_3.m4a",
+"vo_t_defendingbombsitea_4.m4a"
+],
+"vo_t_defendingbombsiteb": [
+"vo_t_defendingbombsiteb_1.m4a",
+"vo_t_defendingbombsiteb_2.m4a",
+"vo_t_defendingbombsiteb_3.m4a",
+"vo_t_defendingbombsiteb_4.m4a",
+"vo_t_defendingbombsiteb_5.m4a"
+],
+"vo_t_disagree": [
+"vo_t_disagree_1.m4a",
+"vo_t_disagree_2.m4a",
+"vo_t_disagree_3.m4a",
+"vo_t_disagree_4.m4a",
+"vo_t_disagree_5.m4a"
+],
+"vo_t_enemydown": [
+"vo_t_enemydown_1.m4a",
+"vo_t_enemydown_2.m4a",
+"vo_t_enemydown_3.m4a",
+"vo_t_enemydown_4.m4a",
+"vo_t_enemydown_5.m4a",
+"vo_t_enemydown_6.m4a",
+"vo_t_enemydown_7.m4a",
+"vo_t_enemydown_8.m4a",
+"vo_t_enemydown_9.m4a"
+],
+"vo_t_followingfriend": [
+"vo_t_followingfriend_1.m4a",
+"vo_t_followingfriend_2.m4a",
+"vo_t_followingfriend_3.m4a",
+"vo_t_followingfriend_4.m4a",
+"vo_t_followingfriend_5.m4a"
+],
+"vo_t_friendlyfire": [
+"vo_t_friendlyfire_1.m4a",
+"vo_t_friendlyfire_2.m4a",
+"vo_t_friendlyfire_3.m4a",
+"vo_t_friendlyfire_4.m4a",
+"vo_t_friendlyfire_5.m4a",
+"vo_t_friendlyfire_6.m4a",
+"vo_t_friendlyfire_7.m4a"
+],
+"vo_t_goingtodefendbombsite": [
+"vo_t_goingtodefendbombsite_1.m4a",
+"vo_t_goingtodefendbombsite_2.m4a",
+"vo_t_goingtodefendbombsite_3.m4a",
+"vo_t_goingtodefendbombsite_4.m4a"
+],
+"vo_t_goingtoguardhostageescapezone": [
+"vo_t_goingtoguardhostageescapezone_1.m4a",
+"vo_t_goingtoguardhostageescapezone_2.m4a",
+"vo_t_goingtoguardhostageescapezone_3.m4a"
+],
+"vo_t_goingtoplantbomb": [
+"vo_t_goingtoplantbomb_1.m4a",
+"vo_t_goingtoplantbomb_2.m4a",
+"vo_t_goingtoplantbomb_3.m4a"
+],
+"vo_t_goingtoplantbomba": [
+"vo_t_goingtoplantbomba_1.m4a",
+"vo_t_goingtoplantbomba_2.m4a",
+"vo_t_goingtoplantbomba_3.m4a"
+],
+"vo_t_goingtoplantbombb": [
+"vo_t_goingtoplantbombb_1.m4a",
+"vo_t_goingtoplantbombb_2.m4a"
+],
+"vo_t_heardnoise": [
+"vo_t_heardnoise_1.m4a",
+"vo_t_heardnoise_2.m4a",
+"vo_t_heardnoise_3.m4a",
+"vo_t_heardnoise_4.m4a"
+],
+"vo_t_help": [
+"vo_t_help_1.m4a",
+"vo_t_help_2.m4a",
+"vo_t_help_3.m4a",
+"vo_t_help_4.m4a",
+"vo_t_help_5.m4a"
+],
+"vo_t_incombat": [
+"vo_t_incombat_1.m4a",
+"vo_t_incombat_2.m4a",
+"vo_t_incombat_3.m4a",
+"vo_t_incombat_4.m4a",
+"vo_t_incombat_5.m4a",
+"vo_t_incombat_6.m4a",
+"vo_t_incombat_7.m4a",
+"vo_t_incombat_8.m4a",
+"vo_t_incombat_9.m4a",
+"vo_t_incombat_10.m4a"
+],
+"vo_t_inposition": [
+"vo_t_inposition_1.m4a",
+"vo_t_inposition_2.m4a",
+"vo_t_inposition_3.m4a"
+],
+"vo_t_killedfriend": [
+"vo_t_killedfriend_1.m4a",
+"vo_t_killedfriend_2.m4a",
+"vo_t_killedfriend_3.m4a",
+"vo_t_killedfriend_4.m4a",
+"vo_t_killedfriend_5.m4a"
+],
+"vo_t_lastmanstanding": [
+"vo_t_lastmanstanding_1.m4a",
+"vo_t_lastmanstanding_2.m4a",
+"vo_t_lastmanstanding_3.m4a",
+"vo_t_lastmanstanding_4.m4a",
+"vo_t_lastmanstanding_5.m4a",
+"vo_t_lastmanstanding_6.m4a",
+"vo_t_lastmanstanding_7.m4a"
+],
+"vo_t_lostenemy": [
+"vo_t_lostenemy_1.m4a",
+"vo_t_lostenemy_2.m4a",
+"vo_t_lostenemy_3.m4a",
+"vo_t_lostenemy_4.m4a"
+],
+"vo_t_negative": [
+"vo_t_negative_1.m4a",
+"vo_t_negative_2.m4a",
+"vo_t_negative_3.m4a",
+"vo_t_negative_4.m4a"
+],
+"vo_t_negativeno": [
+"vo_t_negativeno.m4a"
+],
+"vo_t_niceshot": [
+"vo_t_niceshot_1.m4a",
+"vo_t_niceshot_2.m4a",
+"vo_t_niceshot_3.m4a",
+"vo_t_niceshot_4.m4a",
+"vo_t_niceshot_5.m4a",
+"vo_t_niceshot_6.m4a",
+"vo_t_niceshot_7.m4a",
+"vo_t_niceshot_8.m4a",
+"vo_t_niceshot_9.m4a",
+"vo_t_niceshot_10.m4a",
+"vo_t_niceshot_11.m4a",
+"vo_t_niceshot_12.m4a",
+"vo_t_niceshot_13.m4a"
+],
+"vo_t_onarollbrag": [
+"vo_t_onarollbrag_1.m4a",
+"vo_t_onarollbrag_2.m4a",
+"vo_t_onarollbrag_3.m4a",
+"vo_t_onarollbrag_4.m4a",
+"vo_t_onarollbrag_5.m4a",
+"vo_t_onarollbrag_6.m4a",
+"vo_t_onarollbrag_7.m4a",
+"vo_t_onarollbrag_8.m4a",
+"vo_t_onarollbrag_9.m4a",
+"vo_t_onarollbrag_10.m4a",
+"vo_t_onarollbrag_11.m4a",
+"vo_t_onarollbrag_12.m4a",
+"vo_t_onarollbrag_13.m4a",
+"vo_t_onarollbrag_14.m4a",
+"vo_t_onarollbrag_15.m4a"
+],
+"vo_t_oneenemyleft": [
+"vo_t_oneenemyleft_1.m4a",
+"vo_t_oneenemyleft_2.m4a",
+"vo_t_oneenemyleft_3.m4a",
+"vo_t_oneenemyleft_4.m4a",
+"vo_t_oneenemyleft_5.m4a",
+"vo_t_oneenemyleft_6.m4a",
+"vo_t_oneenemyleft_7.m4a"
+],
+"vo_t_onmyway": [
+"vo_t_onmyway_1.m4a",
+"vo_t_onmyway_2.m4a",
+"vo_t_onmyway_3.m4a",
+"vo_t_onmyway_4.m4a"
+],
+"vo_t_peptalk": [
+"vo_t_peptalk_1.m4a",
+"vo_t_peptalk_2.m4a",
+"vo_t_peptalk_3.m4a",
+"vo_t_peptalk_4.m4a"
+],
+"vo_t_pinneddown": [
+"vo_t_pinneddown_1.m4a",
+"vo_t_pinneddown_2.m4a",
+"vo_t_pinneddown_3.m4a"
+],
+"vo_t_plantingbomb": [
+"vo_t_plantingbomb_1.m4a",
+"vo_t_plantingbomb_2.m4a",
+"vo_t_plantingbomb_3.m4a",
+"vo_t_plantingbomb_4.m4a"
+],
+"vo_t_radio_enemyspotted": [
+"vo_t_radio_enemyspotted_1.m4a",
+"vo_t_radio_enemyspotted_2.m4a",
+"vo_t_radio_enemyspotted_3.m4a",
+"vo_t_radio_enemyspotted_4.m4a"
+],
+"vo_t_radio_followme": [
+"vo_t_radio_followme_1.m4a",
+"vo_t_radio_followme_2.m4a",
+"vo_t_radio_followme_3.m4a",
+"vo_t_radio_followme_4.m4a",
+"vo_t_radio_followme_5.m4a",
+"vo_t_radio_followme_6.m4a"
+],
+"vo_t_radio_letsgo": [
+"vo_t_radio_letsgo_1.m4a",
+"vo_t_radio_letsgo_2.m4a",
+"vo_t_radio_letsgo_3.m4a",
+"vo_t_radio_letsgo_4.m4a",
+"vo_t_radio_letsgo_5.m4a",
+"vo_t_radio_letsgo_6.m4a",
+"vo_t_radio_letsgo_7.m4a",
+"vo_t_radio_letsgo_8.m4a",
+"vo_t_radio_letsgo_9.m4a"
+],
+"vo_t_radio_locknload": [
+"vo_t_radio_locknload_1.m4a",
+"vo_t_radio_locknload_2.m4a",
+"vo_t_radio_locknload_3.m4a",
+"vo_t_radio_locknload_4.m4a",
+"vo_t_radio_locknload_5.m4a",
+"vo_t_radio_locknload_6.m4a",
+"vo_t_radio_locknload_7.m4a",
+"vo_t_radio_locknload_8.m4a",
+"vo_t_radio_locknload_9.m4a",
+"vo_t_radio_locknload_10.m4a",
+"vo_t_radio_locknload_11.m4a",
+"vo_t_radio_locknload_12.m4a"
+],
+"vo_t_radio_needbackup": [
+"vo_t_radio_needbackup_1.m4a",
+"vo_t_radio_needbackup_2.m4a",
+"vo_t_radio_needbackup_3.m4a",
+"vo_t_radio_needbackup_4.m4a",
+"vo_t_radio_needbackup_5.m4a"
+],
+"vo_t_radio_takingfire": [
+"vo_t_radio_takingfire_1.m4a",
+"vo_t_radio_takingfire_2.m4a",
+"vo_t_radio_takingfire_3.m4a",
+"vo_t_radio_takingfire_4.m4a",
+"vo_t_radio_takingfire_5.m4a",
+"vo_t_radio_takingfire_6.m4a"
+],
+"vo_t_radiobotendclean": [
+"vo_t_radiobotendclean_1.m4a",
+"vo_t_radiobotendclean_2.m4a",
+"vo_t_radiobotendclean_3.m4a",
+"vo_t_radiobotendclean_4.m4a",
+"vo_t_radiobotendclean_5.m4a",
+"vo_t_radiobotendclean_6.m4a",
+"vo_t_radiobotendclean_7.m4a",
+"vo_t_radiobotendclean_8.m4a"
+],
+"vo_t_radiobotendsolid": [
+"vo_t_radiobotendsolid_1.m4a",
+"vo_t_radiobotendsolid_2.m4a",
+"vo_t_radiobotendsolid_3.m4a",
+"vo_t_radiobotendsolid_4.m4a",
+"vo_t_radiobotendsolid_5.m4a",
+"vo_t_radiobotendsolid_6.m4a"
+],
+"vo_t_radiobotfallback": [
+"vo_t_radiobotfallback_1.m4a",
+"vo_t_radiobotfallback_2.m4a",
+"vo_t_radiobotfallback_3.m4a"
+],
+"vo_t_radiobothold": [
+"vo_t_radiobothold_1.m4a",
+"vo_t_radiobothold_2.m4a",
+"vo_t_radiobothold_3.m4a"
+],
+"vo_t_radiobotregroup": [
+"vo_t_radiobotregroup_1.m4a",
+"vo_t_radiobotregroup_2.m4a",
+"vo_t_radiobotregroup_3.m4a"
+],
+"vo_t_reportingin": [
+"vo_t_reportingin_1.m4a",
+"vo_t_reportingin_2.m4a",
+"vo_t_reportingin_3.m4a",
+"vo_t_reportingin_4.m4a"
+],
+"vo_t_requestreport": [
+"vo_t_requestreport_1.m4a",
+"vo_t_requestreport_2.m4a",
+"vo_t_requestreport_3.m4a"
+],
+"vo_t_scaredemote": [
+"vo_t_scaredemote_1.m4a",
+"vo_t_scaredemote_2.m4a",
+"vo_t_scaredemote_3.m4a",
+"vo_t_scaredemote_4.m4a",
+"vo_t_scaredemote_5.m4a",
+"vo_t_scaredemote_6.m4a",
+"vo_t_scaredemote_7.m4a",
+"vo_t_scaredemote_8.m4a"
+],
+"vo_t_sniperkilled": [
+"vo_t_sniperkilled_1.m4a",
+"vo_t_sniperkilled_2.m4a",
+"vo_t_sniperkilled_3.m4a",
+"vo_t_sniperkilled_4.m4a"
+],
+"vo_t_sniperwarning": [
+"vo_t_sniperwarning_1.m4a",
+"vo_t_sniperwarning_2.m4a",
+"vo_t_sniperwarning_3.m4a"
+],
+"vo_t_spottedloosebomb": [
+"vo_t_spottedloosebomb_1.m4a",
+"vo_t_spottedloosebomb_2.m4a",
+"vo_t_spottedloosebomb_3.m4a",
+"vo_t_spottedloosebomb_4.m4a",
+"vo_t_spottedloosebomb_5.m4a",
+"vo_t_spottedloosebomb_6.m4a"
+],
+"vo_t_t_death": [
+"vo_t_t_death_1.m4a",
+"vo_t_t_death_2.m4a",
+"vo_t_t_death_3.m4a",
+"vo_t_t_death_4.m4a",
+"vo_t_t_death_5.m4a"
+],
+"vo_t_t_decoy": [
+"vo_t_t_decoy_1.m4a",
+"vo_t_t_decoy_2.m4a",
+"vo_t_t_decoy_3.m4a"
+],
+"vo_t_t_flashbang": [
+"vo_t_t_flashbang_1.m4a",
+"vo_t_t_flashbang_2.m4a",
+"vo_t_t_flashbang_3.m4a"
+],
+"vo_t_t_grenade": [
+"vo_t_t_grenade_1.m4a",
+"vo_t_t_grenade_2.m4a",
+"vo_t_t_grenade_3.m4a"
+],
+"vo_t_t_molotov": [
+"vo_t_t_molotov_1.m4a",
+"vo_t_t_molotov_2.m4a",
+"vo_t_t_molotov_3.m4a",
+"vo_t_t_molotov_4.m4a",
+"vo_t_t_molotov_5.m4a",
+"vo_t_t_molotov_6.m4a"
+],
+"vo_t_t_smoke": [
+"vo_t_t_smoke_1.m4a",
+"vo_t_t_smoke_2.m4a",
+"vo_t_t_smoke_3.m4a"
+],
+"vo_t_thanks": [
+"vo_t_thanks_1.m4a",
+"vo_t_thanks_2.m4a",
+"vo_t_thanks_3.m4a"
+],
+"vo_t_threeenemiesleft": [
+"vo_t_threeenemiesleft_1.m4a",
+"vo_t_threeenemiesleft_2.m4a",
+"vo_t_threeenemiesleft_3.m4a",
+"vo_t_threeenemiesleft_4.m4a"
+],
+"vo_t_twoenemiesleft": [
+"vo_t_twoenemiesleft_1.m4a",
+"vo_t_twoenemiesleft_2.m4a",
+"vo_t_twoenemiesleft_3.m4a",
+"vo_t_twoenemiesleft_4.m4a",
+"vo_t_twoenemiesleft_5.m4a"
+],
+"vo_t_waitinghere": [
+"vo_t_waitinghere_1.m4a",
+"vo_t_waitinghere_2.m4a",
+"vo_t_waitinghere_3.m4a"
+],
+"water_enter": [
+"water_enter_1.m4a",
+"water_enter_2.m4a",
+"water_enter_3.m4a"
+],
+"water_step": [
+"water_step_1.m4a",
+"water_step_2.m4a",
+"water_step_3.m4a",
+"water_step_4.m4a",
+"water_step_5.m4a",
+"water_step_6.m4a",
+"water_step_7.m4a",
+"water_step_8.m4a",
+"water_step_9.m4a"
+],
+"water_swim": [
+"water_swim_1.m4a",
+"water_swim_2.m4a",
+"water_swim_3.m4a",
+"water_swim_4.m4a",
+"water_swim_5.m4a",
+"water_swim_6.m4a"
+],
+"water_wade": [
+"water_wade_1.m4a",
+"water_wade_2.m4a",
+"water_wade_3.m4a",
+"water_wade_4.m4a",
+"water_wade_5.m4a",
+"water_wade_6.m4a"
+],
+"whiz": [
+"whiz_1.m4a",
+"whiz_2.m4a",
+"whiz_3.m4a",
+"whiz_4.m4a",
+"whiz_5.m4a",
+"whiz_6.m4a",
+"whiz_7.m4a"
+],
+"win_round": [
+"win_round.m4a"
+],
+"wind_loop": [
+"wind_loop.mp3"
+],
+"wind_loop_oasis": [
+"wind_loop_oasis.mp3"
+],
+"zoom_in_aug": [
+"zoom_in_aug.m4a"
+],
+"zoom_in_awp": [
+"zoom_in_awp.m4a"
+],
+"zoom_in_g3sg1": [
+"zoom_in_g3sg1.m4a"
+],
+"zoom_in_scar20": [
+"zoom_in_scar20.m4a"
+],
+"zoom_in_sg553": [
+"zoom_in_sg553.m4a"
+],
+"zoom_in_ssg08": [
+"zoom_in_ssg08.m4a"
+],
+"zoom_out_aug": [
+"zoom_out_aug.m4a"
+],
+"zoom_out_awp": [
+"zoom_out_awp.m4a"
+],
+"zoom_out_g3sg1": [
+"zoom_out_g3sg1.m4a"
+],
+"zoom_out_scar20": [
+"zoom_out_scar20.m4a"
+],
+"zoom_out_sg553": [
+"zoom_out_sg553.m4a"
+],
+"zoom_out_ssg08": [
+"zoom_out_ssg08.m4a"
+]
+}
