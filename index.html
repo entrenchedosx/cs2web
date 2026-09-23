@@ -2524,6 +2524,43 @@ window.__cs2UiScale = function () {
     #menu:not(.pausemode) #discordcard, #menu:not(.pausemode) #menufoot,
     #menu:not(.pausemode) .tabpage.sel > * { animation-duration: 0.01s !important; animation-delay: 0s !important; }
   }
+  /* ============ PERFORMANCE OVERLAY (diagnostics + adaptive director) ====
+     Fixed HUD chrome, Stratum2/condensed micro-type, transform/opacity-only.
+     #perfchip: collapsed 1-line readout. #perfmon: expanded panel (F8).
+     pointer-events limited to the widgets themselves. */
+  #perfchip, #perfmon { position: fixed; z-index: 46; font-family: 'Stratum2 Condensed', 'Stratum2', sans-serif;
+    color: #cfd8de; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  #perfchip { right: 12px; top: 76px; background: rgba(18,21,26,0.82);
+    border: 1px solid rgba(255,255,255,0.11); border-radius: 3px; padding: 5px 10px;
+    font-size: 12.5px; letter-spacing: 1.2px; cursor: pointer; user-select: none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); pointer-events: auto; white-space: nowrap; }
+  #perfchip b { color: #fff; font-weight: 400; }
+  #perfchip .pBad { color: #e05a4e; } #perfchip .pWarn { color: #eabe54; } #perfchip .pOk { color: #8bc53f; }
+  #perfchip:hover { border-color: rgba(139,197,63,0.5); }
+  #perfmon { right: 12px; top: 112px; width: 264px; background: rgba(15,18,22,0.9);
+    border: 1px solid rgba(255,255,255,0.11); border-radius: 4px; padding: 10px 12px 11px;
+    font-size: 12px; letter-spacing: 0.8px; display: none; pointer-events: auto;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 34px rgba(0,0,0,0.55); }
+  #perfmon.open { display: block; }
+  #perfmon h4 { font-size: 11px; letter-spacing: 2.4px; color: #8b969e; margin: 0 0 8px;
+    display: flex; justify-content: space-between; align-items: center; }
+  #perfmon h4 button { background: none; border: 0; color: #8b969e; cursor: pointer; font-size: 13px; padding: 0 2px; }
+  #perfmon h4 button:hover { color: #fff; }
+  .pmrow { display: flex; justify-content: space-between; padding: 1.5px 0; }
+  .pmrow span:first-child { color: #8b969e; }
+  .pmrow span:last-child { color: #e8eef2; font-variant-numeric: tabular-nums; }
+  .pmrow span:last-child.warn { color: #eabe54; } .pmrow span:last-child.bad { color: #e05a4e; }
+  .pmrow span:last-child.good { color: #8bc53f; }
+  .pmsec { margin-top: 7px; padding-top: 7px; border-top: 1px solid rgba(255,255,255,0.09); }
+  #pmevents { margin: 6px 0 0; padding: 0; list-style: none; font-size: 11px; color: #9aa7b4; }
+  #pmevents li { padding: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #pmevents li b { color: #e8eef2; font-weight: 400; }
+  #pmadapt { width: 100%; margin-top: 8px; cursor: pointer; border-radius: 3px; padding: 7px;
+    font-family: inherit; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+    background: rgba(139,197,63,0.14); border: 1px solid rgba(139,197,63,0.5); color: #fff; }
+  #pmadapt.off { background: #262b31; border-color: rgba(255,255,255,0.14); color: #9aa7b4; }
+  #pmadapt:hover { filter: brightness(1.15); }
+  @media (max-width: 900px) { #perfmon { width: 220px; right: 8px; top: 104px; } }
 </style>
 </head>
 <body>
@@ -2548,6 +2585,299 @@ window.__cs2UiScale = function () {
         });
       };
     } catch (e) {}
+  })();
+  </script>
+  <script>
+  /* PERFMON: diagnostics overlay + adaptive quality director.
+     - Sampler: rAF deltas into a fixed ring (zero per-frame allocation).
+     - Overlay: 4Hz text updates. F8 or chip click toggles the panel.
+     - Director: every 5s while playing, steps aniso -> renderScale ->
+       quality (quality only in engine AUTO mode, never overriding a manual
+       pick) with hold/cooldown hysteresis. Drives the game's OWN setters,
+       the same functions its settings UI calls. No bundle edits. */
+  (function () {
+    'use strict';
+    var N = 240;
+    var ring = new Float32Array(N);
+    var head = 0, count = 0, lastT = 0;
+    var worst = 0, worstT = 0;
+    var sorted = new Float32Array(N);
+    function loop(t) {
+      requestAnimationFrame(loop);
+      if (!lastT) { lastT = t; return; }
+      var d = t - lastT; lastT = t;
+      if (d <= 0 || d > 2000) return;
+      ring[head] = d; head = (head + 1) % N;
+      if (count < N) count++;
+      if (d > worst || t - worstT > 10000) { worst = d; worstT = t; }
+    }
+    requestAnimationFrame(loop);
+    function percentile(p) {
+      if (!count) return 0;
+      var n = count < N ? count : N;
+      for (var i = 0; i < n; i++) sorted[i] = ring[(head - n + i + N * 2) % N];
+      var sub = Array.prototype.slice.call(sorted.subarray(0, n));
+      sub.sort(function (a, b) { return a - b; });
+      return sub[Math.min(n - 1, Math.floor(p * n))];
+    }
+    function avg() {
+      if (!count) return 0;
+      var n = count < N ? count : N, s = 0;
+      for (var i = 0; i < n; i++) s += ring[(head - n + i + N * 2) % N];
+      return s / n;
+    }
+    /* --- DOM --- */
+    var chip = document.createElement('div');
+    chip.id = 'perfchip'; chip.title = 'Performance (F8 for details)';
+    chip.innerHTML = '<b>--</b> FPS · -- ms';
+    document.body.appendChild(chip);
+    var mon = document.createElement('div');
+    mon.id = 'perfmon';
+    mon.innerHTML = '<h4>PERFORMANCE <button id="pmclose" title="Close">×</button></h4>' +
+      '<div class="pmrow"><span>FPS / FRAME</span><span id="pmfps">--</span></div>' +
+      '<div class="pmrow"><span>AVG · P95 · MAX</span><span id="pmms">--</span></div>' +
+      '<div class="pmrow"><span>QUALITY</span><span id="pmq">--</span></div>' +
+      '<div class="pmrow"><span>RENDER SCALE</span><span id="pmrs">--</span></div>' +
+      '<div class="pmrow"><span>ANISO</span><span id="pman">--</span></div>' +
+      '<div class="pmrow"><span>PIXEL RATIO</span><span id="pmpr">--</span></div>' +
+      '<div class="pmrow"><span>BLOOM</span><span id="pmbl">--</span></div>' +
+      '<div class="pmsec"></div>' +
+      '<div class="pmrow"><span>DRAW / TRIS</span><span id="pmdc">--</span></div>' +
+      '<div class="pmrow"><span>GEO / TEX / PROG</span><span id="pmmm">--</span></div>' +
+      '<div class="pmrow"><span>HEAP</span><span id="pmheap">--</span></div>' +
+      '<div class="pmrow"><span>SLOW / FAST FRM</span><span id="pmsf">--</span></div>' +
+      '<div class="pmsec"></div>' +
+      '<div class="pmrow"><span>ADAPTIVE</span><span id="pmad">--</span></div>' +
+      '<ul id="pmevents"></ul>' +
+      '<button id="pmadapt">ADAPTIVE: ON</button>';
+    document.body.appendChild(mon);
+    var el = {};
+    ['pmfps','pmms','pmq','pmrs','pman','pmpr','pmbl','pmdc','pmmm','pmheap','pmsf','pmad'].forEach(function (id) {
+      el[id] = mon.querySelector('#' + id);
+    });
+    var evUl = mon.querySelector('#pmevents');
+    var adaptBtn = mon.querySelector('#pmadapt');
+    function toggle(open) {
+      mon.classList.toggle('open', open === undefined ? !mon.classList.contains('open') : !!open);
+    }
+    chip.addEventListener('click', function () { toggle(); });
+    mon.querySelector('#pmclose').addEventListener('click', function () { toggle(false); });
+    document.addEventListener('keydown', function (e) {
+      if (e.code === 'F8' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        var tag = (e.target && e.target.tagName) || '';
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA') { e.preventDefault(); toggle(); }
+      }
+    });
+    function logEvent(msg) {
+      try {
+        var li = document.createElement('li');
+        var t = new Date();
+        var hh = String(t.getHours()), mm = String(t.getMinutes()), ss = String(t.getSeconds());
+        if (hh.length < 2) hh = '0' + hh; if (mm.length < 2) mm = '0' + mm; if (ss.length < 2) ss = '0' + ss;
+        li.innerHTML = '<b>' + hh + ':' + mm + ':' + ss + '</b> ' + msg;
+        while (evUl.children.length >= 4) evUl.removeChild(evUl.firstChild);
+        evUl.appendChild(li);
+      } catch (e) {}
+    }
+    function fmtTris(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+      return String(n);
+    }
+    function clsForMs(ms) { return ms > 26 ? 'bad' : (ms > 17.5 ? 'warn' : 'good'); }
+    /* --- adaptive director state --- */
+    var ADAPT_KEY = 'clutcher_adaptive';
+    var adaptive = true;
+    try { adaptive = localStorage.getItem(ADAPT_KEY) !== '0'; } catch (e) {}
+    var manual = { aniso: false, rscale: false, quality: false };
+    var badStreak = 0, goodStreak = 0, cooldownUntil = 0, actedAt = 0;
+    var actionStack = [];
+    var lastSnap = null, lastSlow = 0;
+    var ANISO_ORDER = [1, 4, 8, 16];
+    var RS_ORDER = ['performance', 'balanced', 'quality'];
+    var Q_ORDER = ['low', 'medium', 'high'];
+    function paintAdaptBtn() {
+      adaptBtn.textContent = 'ADAPTIVE: ' + (adaptive ? 'ON' : 'OFF');
+      adaptBtn.classList.toggle('off', !adaptive);
+    }
+    paintAdaptBtn();
+    adaptBtn.addEventListener('click', function () {
+      adaptive = !adaptive;
+      try { localStorage.setItem(ADAPT_KEY, adaptive ? '1' : '0'); } catch (e) {}
+      paintAdaptBtn();
+      logEvent(adaptive ? 'adaptive director <b>on</b>' : 'adaptive director <b>off</b>');
+      try { window.__menuSfx && window.__menuSfx('uiclick'); } catch (e) {}
+    });
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      if (t.closest('#opt-aniso')) manual.aniso = true;
+      else if (t.closest('#opt-rscale')) manual.rscale = true;
+      else if (t.closest('#opt-quality')) manual.quality = true;
+      else if (t.closest('#settings-reset')) { manual.aniso = manual.rscale = manual.quality = false; logEvent('manual flags cleared'); }
+    }, true);
+    function syncRows() {
+      try { var g = window.game; if (g && g.hud && g.hud._syncSettingsRows) g.hud._syncSettingsRows(); } catch (e) {}
+    }
+    function announce(msg) {
+      try { var g = window.game; if (g && g.hud && g.hud.announce) g.hud.announce(msg, 2200); } catch (e) {}
+    }
+    function snapshot() {
+      var g = window.game;
+      if (!g || !g.renderer) return null;
+      var info = null;
+      try { info = g.renderer.info; } catch (e) {}
+      var pr = 0, prLen = 0, prIdx = -1;
+      try {
+        if (g._prSteps && g._prSteps.length) { prLen = g._prSteps.length; prIdx = g._prIdx; pr = g._prSteps[g._prIdx]; }
+        else pr = g.renderer.getPixelRatio();
+      } catch (e) {}
+      var bloom = null;
+      try { bloom = g.postfx ? !!g.postfx.bloomOn : null; } catch (e) {}
+      var heap = 0;
+      try { heap = performance.memory ? performance.memory.usedJSHeapSize / 1048576 : 0; } catch (e) {}
+      return { quality: g.quality, renderScale: g.renderScale, aniso: g.anisoPref,
+        auto: !!g._gfxAuto, pr: pr, prLen: prLen, prIdx: prIdx, bloom: bloom,
+        slow: g._slowFrames || 0, fast: g._fastFrames || 0,
+        state: g.state, joining: !!g._joining,
+        draw: info && info.render ? info.render.calls : 0,
+        tris: info && info.render ? info.render.triangles : 0,
+        geo: info && info.memory ? info.memory.geometries : 0,
+        tex: info && info.memory ? info.memory.textures : 0,
+        prog: info && info.programs ? info.programs.length : 0,
+        heap: heap };
+    }
+    function stepDown(s, reasons) {
+      var g = window.game;
+      if (!g) return false;
+      var ai = ANISO_ORDER.indexOf(g.anisoPref);
+      if (!manual.aniso && ai > 0) {
+        var nv = ANISO_ORDER[ai - 1];
+        try { g.setAniso(nv); syncRows(); } catch (e) { return false; }
+        actionStack.push('aniso'); logEvent('aniso → <b>' + nv + 'x</b> (' + reasons + ')');
+        announce('AUTO-TUNE: TEXTURE FILTER ' + nv + 'X'); return true;
+      }
+      var ri = RS_ORDER.indexOf(g.renderScale);
+      if (!manual.rscale && ri > 0) {
+        var rv = RS_ORDER[ri - 1];
+        try { g.setRenderScale(rv); syncRows(); } catch (e) { return false; }
+        actionStack.push('rscale'); logEvent('render scale → <b>' + rv + '</b> (' + reasons + ')');
+        announce('AUTO-TUNE: RENDER SCALE ' + rv.toUpperCase()); return true;
+      }
+      var qi = Q_ORDER.indexOf(g.quality);
+      if (!manual.quality && g._gfxAuto && qi > 0) {
+        var qv = Q_ORDER[qi - 1];
+        try { g.setQuality(qv); syncRows(); } catch (e) { return false; }
+        actionStack.push('quality'); logEvent('quality → <b>' + qv + '</b> (' + reasons + ')');
+        announce('AUTO-TUNE: QUALITY ' + qv.toUpperCase()); return true;
+      }
+      return false;
+    }
+    function stepUp() {
+      var g = window.game;
+      if (!g || !actionStack.length) return false;
+      var what = actionStack.pop();
+      try {
+        if (what === 'aniso' && !manual.aniso) {
+          var ai = ANISO_ORDER.indexOf(g.anisoPref);
+          if (ai >= 0 && ai < ANISO_ORDER.length - 1) {
+            g.setAniso(ANISO_ORDER[ai + 1]); syncRows();
+            logEvent('aniso → <b>' + ANISO_ORDER[ai + 1] + 'x</b> (recovered)'); return true;
+          }
+        } else if (what === 'rscale' && !manual.rscale) {
+          var ri = RS_ORDER.indexOf(g.renderScale);
+          if (ri >= 0 && ri < RS_ORDER.length - 1) {
+            g.setRenderScale(RS_ORDER[ri + 1]); syncRows();
+            logEvent('render scale → <b>' + RS_ORDER[ri + 1] + '</b> (recovered)'); return true;
+          }
+        } else if (what === 'quality' && !manual.quality && g._gfxAuto) {
+          var qi = Q_ORDER.indexOf(g.quality);
+          if (qi >= 0 && qi < Q_ORDER.length - 1) {
+            g.setQuality(Q_ORDER[qi + 1]); syncRows();
+            logEvent('quality → <b>' + Q_ORDER[qi + 1] + '</b> (recovered)'); return true;
+          }
+        }
+      } catch (e) { return false; }
+      return false;
+    }
+    function directorTick() {
+      try {
+        var g = window.game;
+        if (!g || !adaptive) return;
+        var playing = g.state === 'playing' && !g._joining && !document.hidden;
+        var s = snapshot();
+        if (s && lastSnap) {
+          // external change (user or engine tier governor): respect it, reset streaks
+          if (s.quality !== lastSnap.quality && !g._gfxAuto) manual.quality = true;
+          if (s.renderScale !== lastSnap.renderScale) manual.rscale = true;
+          if (s.aniso !== lastSnap.aniso) manual.aniso = true;
+          if (s.quality !== lastSnap.quality || s.renderScale !== lastSnap.renderScale || s.aniso !== lastSnap.aniso) {
+            badStreak = 0; goodStreak = 0;
+            // my own step lands here on the next tick; only log truly external ones
+            if (performance.now() - actedAt > 7000) logEvent('external change respected');
+          }
+        }
+        lastSnap = s;
+        if (!playing || !s) { badStreak = 0; return; }
+        var p95 = percentile(0.95);
+        var slowAdv = s.slow > lastSlow; lastSlow = s.slow;
+        var now = performance.now();
+        if (p95 > 26 && slowAdv) {
+          badStreak++; goodStreak = 0;
+          if (badStreak >= 2 && now >= cooldownUntil) {
+            if (stepDown(s, 'p95 ' + p95.toFixed(1) + 'ms')) {
+              badStreak = 0; goodStreak = 0; cooldownUntil = now + 25000; actedAt = now;
+            } else { badStreak = 0; cooldownUntil = now + 60000; logEvent('floor reached, holding'); }
+          }
+        } else if (p95 < 13) {
+          goodStreak++; badStreak = 0;
+          if (goodStreak >= 18 && now >= cooldownUntil) {
+            if (stepUp()) { goodStreak = 0; cooldownUntil = now + 25000; actedAt = now; }
+            else goodStreak = 0;
+          }
+        } else { badStreak = 0; goodStreak = 0; }
+      } catch (e) {}
+    }
+    setInterval(directorTick, 5000);
+    /* --- 4Hz overlay refresh (cached nodes, tabular numbers) --- */
+    setInterval(function () {
+      try {
+        var n = count < N ? count : N;
+        var a = avg(), p95 = percentile(0.95);
+        var fps = a > 0 ? 1000 / a : 0;
+        var s = snapshot();
+        var chipCls = a > 26 ? 'pBad' : (a > 17.5 ? 'pWarn' : 'pOk');
+        chip.innerHTML = '<b class="' + chipCls + '">' + (fps ? fps.toFixed(0) : '--') + '</b> FPS · ' + (a ? a.toFixed(1) : '--') + ' ms';
+        if (!mon.classList.contains('open')) return;
+        el.pmfps.textContent = (fps ? fps.toFixed(0) : '--') + ' fps';
+        el.pmfps.className = chipCls;
+        el.pmms.textContent = a.toFixed(1) + ' · ' + p95.toFixed(1) + ' · ' + worst.toFixed(1);
+        el.pmms.className = clsForMs(p95);
+        if (s) {
+          el.pmq.textContent = (s.quality || '?') + (s.auto ? ' auto' : ' manual');
+          el.pmrs.textContent = s.renderScale || '?';
+          el.pman.textContent = (s.aniso || '?') + 'x';
+          el.pmpr.textContent = (s.pr ? s.pr.toFixed(2) : '?') + (s.prLen ? ' [' + (s.prIdx + 1) + '/' + s.prLen + ']' : '');
+          el.pmbl.textContent = s.bloom === null ? 'n/a' : (s.bloom ? 'on' : 'off');
+          el.pmdc.textContent = s.draw + ' / ' + fmtTris(s.tris);
+          el.pmmm.textContent = s.geo + ' / ' + s.tex + ' / ' + s.prog;
+          el.pmheap.textContent = s.heap ? s.heap.toFixed(0) + ' MB' : 'n/a';
+          el.pmsf.textContent = s.slow + ' / ' + s.fast;
+          el.pmad.textContent = adaptive ? 'on' : 'off';
+          el.pmad.className = adaptive ? 'good' : '';
+        }
+      } catch (e) {}
+    }, 250);
+    window.__perfmon = {
+      toggle: toggle,
+      setAdaptive: function (on) {
+        adaptive = !!on;
+        try { localStorage.setItem(ADAPT_KEY, adaptive ? '1' : '0'); } catch (e) {}
+        paintAdaptBtn();
+      },
+      snapshot: snapshot,
+      stats: function () { return { avg: avg(), p95: percentile(0.95), max: worst, n: count }; }
+    };
   })();
   </script>
   <script>
@@ -2596,7 +2926,11 @@ window.__cs2UiScale = function () {
         function frame(t) {
           raf = 0;
           var menuVisible = menu.style.display !== 'none' && getComputedStyle(menu).display !== 'none';
-          if (!document.hidden && menuVisible) {
+          if (document.hidden || !menuVisible) {
+            // fully parked: no rAF wakeups, re-check twice a second
+            setTimeout(function () { raf = requestAnimationFrame(frame); }, 500);
+            return;
+          }
             var dt = Math.min(0.05, (t - last) / 1000 || 0.016);
             last = t;
             if (c.width !== Math.floor(menu.clientWidth / 2)) size();
@@ -2612,7 +2946,6 @@ window.__cs2UiScale = function () {
               ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
             }
             ctx.globalAlpha = 1;
-          }
           raf = requestAnimationFrame(frame);
         }
         raf = requestAnimationFrame(frame);
