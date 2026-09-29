@@ -440,8 +440,7 @@
       './models/cs2/vm/knife_t.glb',
       './models/cs2/vm/glock.glb',
       './models/cs2/vm/usps.glb',
-      './models/cs2/vm/hkp2000.glb',
-      './models/cs2/vm/p2000.glb',
+      './models/cs2/vm/p2000.glb', // first-person H&K P2000; there is no vm/hkp2000.glb
       './models/cs2/weapon_knife_ct.glb',
       './models/cs2/weapon_knife_t.glb',
       './models/cs2/weapon_pist_glock18.glb',
