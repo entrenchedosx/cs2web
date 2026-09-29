@@ -15,6 +15,18 @@ const STATUS_TEXT = Object.freeze({
 
 function text(value) { return String(value == null ? '' : value); }
 function finite(value, fallback = 0) { return Number.isFinite(Number(value)) ? Number(value) : fallback; }
+function makeRoomCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let value = '';
+  try {
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    for (const byte of bytes) value += alphabet[byte % alphabet.length];
+  } catch (error) {
+    for (let index = 0; index < 6; index++) value += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return value;
+}
 
 class VeraMultiplayerSession {
   constructor() {
@@ -24,6 +36,7 @@ class VeraMultiplayerSession {
     this.role = '';
     this.slot = 0;
     this.view = 'home';
+    this.roomCode = '';
     this.hostOffer = '';
     this.guestAnswer = '';
     this.statusValue = 'offline';
@@ -103,12 +116,17 @@ class VeraMultiplayerSession {
       .vera-mp-room { display: none; }
       .vera-mp-room.show { display: block; }
       .vera-mp-room-title { margin-bottom: 5px; color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 1.5px; }
+      .vera-mp-room-id { display: flex; align-items: baseline; gap: 9px; margin: 0 0 10px; color: #8f9ba5; font: 800 10px/1.2 ui-monospace, monospace; letter-spacing: 1.2px; }
+      .vera-mp-room-id strong { color: #e9d5ff; font-size: 15px; letter-spacing: 3px; }
+      .vera-mp-room-id em { color: #67737d; font-size: 9px; font-style: normal; letter-spacing: .4px; }
       .vera-mp-help { max-width: 620px; color: #8f9ba5; font-size: 12px; line-height: 1.55; margin: 0 0 14px; }
       .vera-mp-label { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 6px; color: #aeb9c2; font-size: 10px; font-weight: 800; letter-spacing: 1.7px; }
       .vera-mp-label em { color: #67737d; font-size: 9px; font-style: normal; letter-spacing: .8px; }
       .vera-mp-signal { width: 100%; min-height: 92px; resize: vertical; box-sizing: border-box; border: 1px solid rgba(255,255,255,.16); border-radius: 2px; padding: 10px; outline: none; background: #090c0f; color: #dfe7eb; font: 11px/1.35 ui-monospace, monospace; overflow-wrap: anywhere; }
       .vera-mp-signal:focus { border-color: rgba(192,132,252,.72); box-shadow: 0 0 0 2px rgba(168,85,247,.1); }
       .vera-mp-signal::selection { background: rgba(192,132,252,.55); }
+      .vera-mp-code { width: 100%; box-sizing: border-box; min-height: 40px; border: 1px solid rgba(255,255,255,.16); border-radius: 2px; padding: 0 10px; outline: none; background: #090c0f; color: #e9d5ff; font: 800 13px/40px ui-monospace, monospace; letter-spacing: 2px; text-transform: uppercase; }
+      .vera-mp-code:focus { border-color: rgba(192,132,252,.72); box-shadow: 0 0 0 2px rgba(168,85,247,.1); }
       .vera-mp-actions button, .vera-mp-room button { min-height: 40px; border: 1px solid rgba(255,255,255,.16); border-radius: 2px; background: rgba(255,255,255,.065); color: #e8eef2; font-weight: 800; letter-spacing: 1.2px; cursor: pointer; transition: background .16s, border-color .16s, color .16s; }
       .vera-mp-actions button:hover, .vera-mp-room button:hover { border-color: rgba(192,132,252,.7); background: rgba(168,85,247,.16); color: #fff; }
       .vera-mp-room [data-mp-accept-answer], .vera-mp-room [data-mp-create-answer] { width: 100%; margin-top: 10px; border-color: rgba(168,85,247,.65); background: rgba(168,85,247,.18); }
@@ -146,7 +164,8 @@ class VeraMultiplayerSession {
           </div>
           <div class="vera-mp-room" data-mp-host-room>
             <div class="vera-mp-room-title">Host a private match</div>
-            <div class="vera-mp-help">Send the invite below to your friend. When they return an answer, apply it to open the match.</div>
+            <div class="vera-mp-room-id">ROOM CODE <strong data-mp-room-code>------</strong><em>SESSION LABEL</em></div>
+            <div class="vera-mp-help">Tell your friend this room code so they can identify the session. GitHub Pages cannot publish the code between devices, so the direct connection invite below still completes the LAN handshake.</div>
             <label class="vera-mp-label" for="vera-mp-host-offer">YOUR INVITE <em>GENERATED FOR THIS SESSION</em></label>
             <textarea id="vera-mp-host-offer" class="vera-mp-signal" data-mp-host-offer readonly aria-label="Host connection invite"></textarea>
             <div class="vera-mp-row"><button type="button" data-mp-copy-offer>COPY INVITE</button><button type="button" data-mp-leave>END SESSION</button></div>
@@ -156,7 +175,9 @@ class VeraMultiplayerSession {
           </div>
           <div class="vera-mp-room" data-mp-guest-room>
             <div class="vera-mp-room-title">Join a private match</div>
-            <div class="vera-mp-help">Paste the host's invite below. Vera will create a reply that you send back to the host.</div>
+            <div class="vera-mp-help">Enter the host's room code to confirm you are joining the right session, then use the direct LAN invite. The code is a session label, not a server lookup.</div>
+            <label class="vera-mp-label" for="vera-mp-guest-code">ROOM CODE <em>FROM THE HOST</em></label>
+            <input id="vera-mp-guest-code" class="vera-mp-code" data-mp-guest-code maxlength="6" spellcheck="false" autocomplete="off" placeholder="------" aria-label="Room code">
             <label class="vera-mp-label" for="vera-mp-guest-offer">HOST INVITE</label>
             <textarea id="vera-mp-guest-offer" class="vera-mp-signal" data-mp-guest-offer placeholder="Paste the invite here" aria-label="Host invite"></textarea>
             <button type="button" data-mp-create-answer>CREATE REPLY</button>
@@ -181,6 +202,8 @@ class VeraMultiplayerSession {
       hostAnswer: panel.querySelector('[data-mp-host-answer]'),
       guestOffer: panel.querySelector('[data-mp-guest-offer]'),
       guestAnswer: panel.querySelector('[data-mp-guest-answer]'),
+      roomCode: panel.querySelector('[data-mp-room-code]'),
+      guestCode: panel.querySelector('[data-mp-guest-code]'),
       steps: panel.querySelectorAll('[data-mp-step]'),
       pill
     };
@@ -204,6 +227,7 @@ class VeraMultiplayerSession {
     this.ui.guestRoom.classList.toggle('show', this.view === 'guest');
     if (this.hostOffer && this.ui.hostOffer.value !== this.hostOffer) this.ui.hostOffer.value = this.hostOffer;
     if (this.guestAnswer && this.ui.guestAnswer.value !== this.guestAnswer) this.ui.guestAnswer.value = this.guestAnswer;
+    if (this.ui.roomCode) this.ui.roomCode.textContent = this.roomCode || '------';
     const activeStep = this.view === 'home' ? 1 : (this.statusValue === 'connected' || this.statusValue === 'match-ready' ? 3 : 2);
     this.ui.steps.forEach(step => step.classList.toggle('active', Number(step.dataset.mpStep) <= activeStep));
     if (this.ui.pill) {
@@ -266,6 +290,7 @@ class VeraMultiplayerSession {
   async hostLan() {
     this.openPanel();
     this.view = 'host';
+    this.roomCode = makeRoomCode();
     this.setStatus('creating-offer');
     try {
       this.newTransport('host');
@@ -280,6 +305,7 @@ class VeraMultiplayerSession {
   joinLan() {
     this.openPanel();
     this.view = 'guest';
+    this.roomCode = '';
     this.newTransport('guest');
     this.setStatus('waiting', 'Paste the host offer to create your answer.');
   }
@@ -287,6 +313,9 @@ class VeraMultiplayerSession {
   async createAnswer() {
     const offer = this.ui.guestOffer && this.ui.guestOffer.value;
     if (!offer) { this.setStatus('error', 'Paste the host offer first.'); return; }
+    const code = text(this.ui.guestCode && this.ui.guestCode.value).replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    if (code.length !== 6) { this.setStatus('error', 'Enter the six-character room code shown by the host.'); return; }
+    this.roomCode = code;
     try {
       this.setStatus('gathering');
       this.guestAnswer = await this.transport.acceptGuestOffer(offer);
@@ -407,6 +436,7 @@ class VeraMultiplayerSession {
     this.view = 'home';
     this.hostOffer = '';
     this.guestAnswer = '';
+    this.roomCode = '';
     this.transportConnected = false;
     this.matchStarted = false;
     this.matchAnnounced = false;

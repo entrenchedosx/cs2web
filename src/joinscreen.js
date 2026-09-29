@@ -6,6 +6,12 @@
   'use strict';
 
   const ROOT_ID = 'joinscreen';
+  // The game's own loader is already incremental and browser-cache aware.
+  // The old eager cache warmer downloaded large GLB/texture sets while the
+  // menu was idle and could compete with rendering hard enough to freeze a
+  // tab or exhaust system memory. Keep the safer streaming path as the
+  // default; `?preload=1` remains available for targeted diagnostics.
+  const PRELOAD_ENABLED = false;
   const MAP_TIMEOUT_MS = 75000;
   const MOBILE_TIMEOUT_MS = 120000;
 
@@ -145,6 +151,11 @@ const SEEN_KEY = 'vera_join_assets_v1';
     }
   }
 
+  function preloadEnabled() {
+    if (PRELOAD_ENABLED) return true;
+    try { return new URLSearchParams(window.location.search).get('preload') === '1'; } catch (e) { return false; }
+  }
+
   function connection() {
     try {
       return navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
@@ -183,10 +194,10 @@ const SEEN_KEY = 'vera_join_assets_v1';
     } catch (e) {
       mode = '';
     }
-    if (saveDataMode()) return 2;
-    if (mode.indexOf('2g') >= 0) return 2;
-    if (mode.indexOf('3g') >= 0) return 3;
-    return mobileMode() ? 3 : 6;
+    if (saveDataMode()) return 1;
+    if (mode.indexOf('2g') >= 0) return 1;
+    if (mode.indexOf('3g') >= 0) return 2;
+    return mobileMode() ? 2 : 3;
   }
 
   function applyHardwareMode() {
@@ -639,7 +650,7 @@ const SEEN_KEY = 'vera_join_assets_v1';
   }
 
   async function idleWarm() {
-    if (idleScheduled || saveDataMode() || autoStart()) return;
+    if (!preloadEnabled() || idleScheduled || saveDataMode() || autoStart()) return;
     idleScheduled = true;
     const kick = () => {
       try {
@@ -697,6 +708,12 @@ const SEEN_KEY = 'vera_join_assets_v1';
   }
 
   async function handlePlay(btn, selection) {
+    if (!preloadEnabled()) {
+      state.note = 'streaming match assets';
+      render(true);
+      try { btn.click(); } catch (e) {}
+      return;
+    }
     if (saveDataMode()) {
       // Data Saver means the browser should stream the match normally rather
       // than downloading the same assets twice for cache warming.
@@ -815,7 +832,7 @@ const SEEN_KEY = 'vera_join_assets_v1';
   }
 
   loadSeen();
-  observeFetch();
+  if (preloadEnabled()) observeFetch();
   applyHardwareMode();
   document.addEventListener('click', onPlayCapture, true);
   window.setInterval(tick, 120);

@@ -20,7 +20,7 @@ This repository is a rebrand and presentation layer update of the existing game 
 | --- | --- |
 | `index.html` | Game shell, HUD/menu styles, metadata, and menu enhancement scripts. |
 | `src/main.js` | Main bundled game client: rendering, input, simulation, HUD wiring, weapons, bots, and progression. |
-| `src/joinscreen.js` | Asset warm-up and match loading progress screen. |
+| `src/joinscreen.js` | Match loading progress screen; normal launches use the game's streaming loader to avoid background asset spikes. |
 | `src/vera-brand.js` | Runtime Vera brand layer for the dynamically created menu and HUD. It changes labels and links only. |
 | `src/vera-performance.js` | Runtime performance guard that keeps bot simulation from running redundantly at display refresh rate. |
 | `src/vera-network-config.js` | Static LAN WebRTC configuration with optional ICE/TURN entries. |
@@ -75,7 +75,9 @@ Vera keeps the adaptive graphics director enabled by default. It measures recent
 
 The director reacts after a short sustained warning and waits before recovering a setting, preventing rapid quality oscillation. The F8 panel shows the current FPS, average/P95/max frame time, render scale, quality, anisotropy, pixel ratio, draw calls, triangles, texture counts, heap usage, and recent automatic actions. Use it to distinguish a GPU-heavy scene from a CPU-heavy simulation problem.
 
-Bot simulation is stepped at 30 Hz rather than once for every display refresh. On the lowest quality tier it uses a 20 Hz cadence. Rendering, input, collision rules, weapons, damage, objectives, round timing, and the number of bots remain the same; only redundant high-refresh AI updates are removed.
+Bot simulation is stepped at 30 Hz rather than once for every display refresh. On the lowest quality tier it uses a 20 Hz cadence. The guard also drops stale AI backlog after a long frame and can reduce post-processing/quality after sustained slow frames, preventing a catch-up spiral from freezing the tab. Rendering, input, collision rules, weapons, damage, objectives, round timing, and the number of bots remain the same; only redundant high-refresh AI updates are removed.
+
+The custom asset cache warmer is disabled on normal launches. Vera now streams the match through the engine's existing loader instead of downloading large map/model sets in the background while the menu is idle. The old preloader remains available only for diagnostics with `?preload=1`.
 
 If a device still struggles, open the F8 panel and use `LOW-SPEC` to allow the final fallback to five bots, or use `LITE MAPS` for a lower-cost map variant when one is available. These are persisted locally under Vera's settings keys and can be reversed by the player.
 
@@ -85,10 +87,10 @@ Multiplayer is an optional layer around the existing game. A normal offline laun
 
 The browser frontend is entirely static and GitHub Pages-compatible. Two players connect directly over WebRTC:
 
-1. The host creates an ICE-complete WebRTC offer in the browser.
-2. The host copies the offer text to the joining device.
-3. The joining device creates an answer and copies it back to the host.
-4. The host pastes the answer and both browsers connect directly over the LAN.
+1. The host creates a six-character room code as a human-readable session label.
+2. The host creates an ICE-complete WebRTC offer in the browser.
+3. The two players exchange the temporary invite/answer text through their chosen LAN channel.
+4. Both browsers connect directly over the LAN; the room code is not a server lookup key.
 5. Unordered, unreliable `vera-state` DataChannel packets carry a compact 52-byte player snapshot at roughly 22 Hz.
 6. Reliable ordered `vera-control` packets carry match start, round state, and unique firing events.
 7. Remote snapshots are sequence-checked, buffered, interpolated, and briefly extrapolated so rendering does not wait for the network.
@@ -105,19 +107,20 @@ For GitHub Pages, open the deployed Vera URL on both devices. Choose `LAN MULTIP
 On device A:
 
 1. Choose `HOST LAN GAME`.
-2. Choose `COPY OFFER`.
-3. Send the offer text to device B using any method convenient for your LAN session.
-4. Paste device B's answer into `JOINER ANSWER`.
-5. Choose `CONNECT LAN PLAYERS`.
+2. Note the displayed six-character `ROOM CODE` and tell device B which session it identifies.
+3. Choose `COPY OFFER` and send the offer text to device B using any method convenient for your LAN session.
+4. Paste device B's answer into `FRIEND'S ANSWER`.
+5. Choose `START LAN MATCH`.
 
 On device B:
 
 1. Choose `JOIN LAN GAME`.
-2. Paste device A's offer into `HOST OFFER`.
-3. Choose `CREATE ANSWER`.
-4. Choose `COPY ANSWER` and send it back to device A.
+2. Enter the six-character room code shown by device A.
+3. Paste device A's offer into `HOST INVITE`.
+4. Choose `CREATE REPLY`.
+5. Choose `COPY REPLY` and send it back to device A.
 
-After the direct link is established, the host starts the selected map and mode for both clients. The connection text is temporary session data; it is not a password or a persistent room identifier.
+After the direct link is established, the host starts the selected map and mode for both clients. The room code is only a friendly label: GitHub Pages has no shared registry, so a static page cannot make a code discoverable across devices by itself.
 
 ## Production and GitHub Pages deployment
 
