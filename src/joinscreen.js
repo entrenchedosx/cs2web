@@ -35,7 +35,7 @@
   let speedBytes = 0;
   let speedAt = 0;
   let transferToken = 0;
-  const SEEN_KEY = 'clutcher_join_assets_v1';
+const SEEN_KEY = 'vera_join_assets_v1';
   const seen = { map: {}, dirty: false, saveTimer: 0 };
 
   function loadSeen() {

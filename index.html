@@ -7,7 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Clutcher">
+<meta name="application-name" content="Vera">
+<meta name="apple-mobile-web-app-title" content="Vera">
+<meta name="theme-color" content="#110a2b">
+<meta name="description" content="Project Vera — a tactical browser FPS with defusal and team deathmatch modes.">
 <link rel="manifest" href="manifest.json">
 <!-- CS2's own team-counter stylesheet, converted from Panorama by
      tools/cs2_panorama_css.py. Generated -- do not hand-edit. -->
@@ -66,7 +69,7 @@ window.__cs2UiScale = function () {
 <link rel="preload" as="image" href="ui/avatar_t.png">
 <link rel="preload" as="image" href="ui/score-time-mask.svg">
 <link rel="preload" as="image" href="ui/c4.svg">
-<title>Clutcher.io — tactical FPS</title>
+<title>Vera — tactical FPS</title>
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
@@ -75,9 +78,9 @@ window.__cs2UiScale = function () {
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <style>
   :root {
-    --accent: #8bc53f;          /* CS2 play-button green */
-    --accent-dim: rgba(139,197,63,0.16);
-    --money: #a7c46a;
+    --accent: #a855f7;          /* Vera violet */
+    --accent-dim: rgba(168,85,247,0.16);
+    --money: #c4b5fd;
     --ct: #7db8f0;
     --t: #eabe54;
     --panel: rgba(13,16,20,0.72);
@@ -2658,6 +2661,75 @@ window.__cs2UiScale = function () {
   @media (prefers-reduced-motion: reduce) {
     #joinscreen .js-fill { transition: none; }
   }
+
+  /* ============ PROJECT VERA BRAND SYSTEM ============
+     Vera keeps the tactical layout and HUD readability, but replaces the old
+     green portal treatment with a cooler violet command-console identity. */
+  :root {
+    --vera-violet: #a855f7;
+    --vera-violet-bright: #c084fc;
+    --vera-indigo: #4f46e5;
+    --vera-ink: #0c0718;
+  }
+  #menu {
+    background:
+      radial-gradient(80% 80% at 74% 22%, rgba(88, 28, 135, 0.22), transparent 62%),
+      radial-gradient(55% 70% at 18% 74%, rgba(67, 56, 202, 0.12), transparent 68%),
+      linear-gradient(90deg, rgba(5, 3, 12, 0.94), rgba(12, 7, 24, 0.55) 42%, rgba(12, 7, 24, 0.78));
+  }
+  #topnav {
+    background: linear-gradient(180deg, rgba(29, 18, 50, 0.96), rgba(18, 12, 33, 0.96));
+    border-bottom-color: rgba(192, 132, 252, 0.2);
+  }
+  #navcenter #logo, #logo {
+    display: inline-flex; align-items: center; gap: 9px; color: #f7f3ff;
+    letter-spacing: 2.8px; text-shadow: 0 0 24px rgba(168, 85, 247, 0.22);
+  }
+  #logo .vera-logo-mark {
+    display: inline-flex; width: 25px; height: 25px; border-radius: 7px; overflow: hidden;
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.45); flex: 0 0 auto;
+  }
+  #logo .vera-logo-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  #logo .vera-word { color: #f7f3ff; }
+  #logo .vera-word span { color: var(--vera-violet-bright); font-size: 0.52em; letter-spacing: 1.6px; }
+  #sitebadge .vera-hud-label { color: #f7f3ff; font-weight: 900; letter-spacing: 0.08em; }
+  #tabs button.sel, #navcenter #tabs button.sel {
+    border-bottom-color: var(--vera-violet-bright); background: rgba(168, 85, 247, 0.12);
+  }
+  #navname, #coins, #newsbtn, #fsbtn, .qrow button, .ghostbtn {
+    background: rgba(35, 24, 55, 0.86); border-color: rgba(192, 132, 252, 0.18);
+  }
+  #navname:hover, #coins:hover, #newsbtn:hover, #fsbtn:hover, .qrow button:hover, .ghostbtn:hover {
+    background: rgba(62, 40, 90, 0.9); border-color: rgba(216, 180, 254, 0.38);
+  }
+  #playbottom, #challenges, #discordcard {
+    background: linear-gradient(145deg, rgba(25, 15, 43, 0.92), rgba(11, 8, 21, 0.88));
+    border-color: rgba(192, 132, 252, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 52px rgba(0,0,0,0.58), 0 0 34px rgba(109, 40, 217, 0.1);
+  }
+  #charname { text-shadow: 0 2px 0 rgba(0,0,0,0.6), 0 0 26px rgba(168, 85, 247, 0.32); }
+  #charname::before, #online, #modeintel, .js-kicker { color: var(--vera-violet-bright) !important; }
+  .qrow button.sel {
+    background: linear-gradient(180deg, rgba(168, 85, 247, 0.34), rgba(79, 70, 229, 0.18));
+    border-color: var(--vera-violet-bright); box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 0 16px rgba(168, 85, 247, 0.26);
+  }
+  #btn-play {
+    background: linear-gradient(135deg, #c084fc 0%, #9333ea 52%, #5b21b6 100%);
+    border-color: #d8b4fe; border-bottom-color: #4c1d95; color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.42), 0 7px 30px rgba(126, 34, 206, 0.42);
+  }
+  #btn-play:hover { background: linear-gradient(135deg, #d8b4fe 0%, #a855f7 52%, #6d28d9 100%); }
+  #playbottom:has(#btn-play:hover) { border-color: rgba(192, 132, 252, 0.48); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 60px rgba(0,0,0,0.6), 0 0 34px rgba(168,85,247,0.22); }
+  .chal-tabs span.sel { background: rgba(168, 85, 247, 0.18); }
+  .chal-bar i { background: linear-gradient(90deg, #7c3aed, #c084fc); box-shadow: 0 0 10px rgba(168, 85, 247, 0.52); }
+  #mappreview::before, #mappreview::after { border-color: var(--vera-violet-bright); }
+  #modeintel { border-left-color: var(--vera-violet-bright); }
+  #menufoot a:hover { color: var(--vera-violet-bright); }
+  #perfchip:hover { border-color: rgba(192, 132, 252, 0.55); }
+  #joinscreen .js-fill { background: linear-gradient(90deg, #7c3aed, #c084fc); }
+  #logo .vera-logo-mark, #sitebadge .vera-hud-mark { background: var(--vera-ink); }
+  #sitebadge .vera-hud-mark { display: inline-flex; width: 19px; height: 19px; border-radius: 5px; overflow: hidden; vertical-align: -5px; box-shadow: 0 0 12px rgba(168,85,247,0.42); }
+  #sitebadge .vera-hud-mark img { width: 100%; height: 100%; object-fit: cover; }
 </style>
 </head>
 <body>
@@ -2787,14 +2859,14 @@ window.__cs2UiScale = function () {
     }
     function clsForMs(ms) { return ms > 26 ? 'bad' : (ms > 17.5 ? 'warn' : 'good'); }
     /* --- adaptive director state --- */
-    var ADAPT_KEY = 'clutcher_adaptive';
+    var ADAPT_KEY = 'vera_adaptive';
     var adaptive = true;
     try { adaptive = localStorage.getItem(ADAPT_KEY) !== '0'; } catch (e) {}
     var manual = { aniso: false, rscale: false, quality: false, bots: false };
     var suppressBotFlag = false;
     var badStreak = 0, goodStreak = 0, cooldownUntil = 0, actedAt = 0;
     var playingSince = 0, lastState = '';
-    var LOW_KEY = 'clutcher_lowspec';
+    var LOW_KEY = 'vera_lowspec';
     var lowSpec = false;
     try { lowSpec = localStorage.getItem(LOW_KEY) === '1'; } catch (e) {}
     function paintLowBtn() {
@@ -2884,13 +2956,9 @@ window.__cs2UiScale = function () {
     function stepDown(s, reasons) {
       var g = window.game;
       if (!g) return false;
-      var ai = ANISO_ORDER.indexOf(g.anisoPref);
-      if (!manual.aniso && ai > 0) {
-        var nv = ANISO_ORDER[ai - 1];
-        try { g.setAniso(nv); syncRows(); } catch (e) { return false; }
-        actionStack.push('aniso'); logEvent('aniso → <b>' + nv + 'x</b> (' + reasons + ')');
-        announce('AUTO-TUNE: TEXTURE FILTER ' + nv + 'X'); return true;
-      }
+      // Reduce the settings that affect every rendered pixel first. Anisotropic
+      // filtering is comparatively cheap, so changing it before resolution
+      // used to leave slow machines struggling for several governor cycles.
       var ri = RS_ORDER.indexOf(g.renderScale);
       if (!manual.rscale && ri > 0) {
         var rv = RS_ORDER[ri - 1];
@@ -2904,6 +2972,13 @@ window.__cs2UiScale = function () {
         try { g.setQuality(qv); syncRows(); } catch (e) { return false; }
         actionStack.push('quality'); logEvent('quality → <b>' + qv + '</b> (' + reasons + ')');
         announce('AUTO-TUNE: QUALITY ' + qv.toUpperCase()); return true;
+      }
+      var ai = ANISO_ORDER.indexOf(g.anisoPref);
+      if (!manual.aniso && ai > 0) {
+        var nv = ANISO_ORDER[ai - 1];
+        try { g.setAniso(nv); syncRows(); } catch (e) { return false; }
+        actionStack.push('aniso'); logEvent('aniso → <b>' + nv + 'x</b> (' + reasons + ')');
+        announce('AUTO-TUNE: TEXTURE FILTER ' + nv + 'X'); return true;
       }
       // last resort, LOW-SPEC opt-in only: fewer bots via the game's own
       // settings button (same pipeline as a manual click). One-way: never
@@ -2975,20 +3050,22 @@ window.__cs2UiScale = function () {
         lastState = 'playing';
         var p95 = percentile(0.95);
         var slowAdv = s.slow > lastSlow; lastSlow = s.slow;
-        // fast-start: first 75s of play, a single sustained-bad eval acts
-        // immediately so old hardware reaches its floor in seconds, not minutes
-        var need = (now - playingSince < 75000) ? 1 : 2;
-        if (p95 > 26 && slowAdv) {
+        // Fast-start: react to a sustained frame-time warning within seconds.
+        // Resolution/quality changes happen before texture filtering, so this
+        // protects input responsiveness instead of waiting through many small
+        // low-impact adjustments.
+        var need = (now - playingSince < 45000) ? 1 : 2;
+        if (p95 > 20 && slowAdv) {
           badStreak++; goodStreak = 0;
           if (badStreak >= need && now >= cooldownUntil) {
             if (stepDown(s, 'p95 ' + p95.toFixed(1) + 'ms')) {
-              badStreak = 0; goodStreak = 0; cooldownUntil = now + 25000; actedAt = now;
+              badStreak = 0; goodStreak = 0; cooldownUntil = now + 8000; actedAt = now;
             } else { badStreak = 0; cooldownUntil = now + 60000; logEvent('floor reached, holding'); }
           }
-        } else if (p95 < 13) {
+        } else if (p95 < 12.5) {
           goodStreak++; badStreak = 0;
-          if (goodStreak >= 36 && now >= cooldownUntil) {
-            if (stepUp()) { goodStreak = 0; cooldownUntil = now + 25000; actedAt = now; }
+          if (goodStreak >= 48 && now >= cooldownUntil) {
+            if (stepUp()) { goodStreak = 0; cooldownUntil = now + 12000; actedAt = now; }
             else goodStreak = 0;
           }
         } else { badStreak = 0; goodStreak = 0; }
@@ -3252,7 +3329,9 @@ window.__cs2UiScale = function () {
     }, 200);
   })();
   </script>
+  <script src="./src/vera-brand.js"></script>
   <script src="./src/joinscreen.js" defer></script>
   <script type="module" fetchpriority="high" src="./src/main.js"></script>
+  <script src="./src/vera-performance.js"></script>
 </body>
 </html>

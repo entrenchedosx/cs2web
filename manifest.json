@@ -1,12 +1,12 @@
 {
-  "name": "Clutcher.io",
-  "short_name": "Clutcher",
-  "description": "Tactical browser FPS",
+  "name": "Project Vera",
+  "short_name": "Vera",
+  "description": "Project Vera — a tactical browser FPS with defusal and team deathmatch modes.",
   "start_url": "./",
   "display": "fullscreen",
   "orientation": "landscape",
-  "background_color": "#0d1116",
-  "theme_color": "#0d1116",
+  "background_color": "#110a2b",
+  "theme_color": "#7c3aed",
   "icons": [
     {
       "src": "favicon.svg",
