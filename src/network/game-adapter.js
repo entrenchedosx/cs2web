@@ -24,6 +24,7 @@ export class VeraGameAdapter {
     this.slot = 0;
     this.remote = null;
     this.remoteTeam = '';
+    this.remoteTeamOverride = '';
     this.remoteBuffer = [];
     this.remoteLastSequence = -1;
     this.remoteLastState = null;
@@ -45,6 +46,7 @@ export class VeraGameAdapter {
     this.active = true;
     this.role = role === 'guest' ? 'guest' : 'host';
     this.slot = slot === 1 ? 1 : 0;
+    this.remoteTeamOverride = '';
     this.remoteBuffer.length = 0;
     this.remoteLastSequence = -1;
     this.ensureHooks();
@@ -131,7 +133,7 @@ export class VeraGameAdapter {
     };
     this.originalRemote = original;
     this.remote = candidate;
-    this.remoteTeam = candidate.team === 'CT' ? 'CT' : 'T';
+    this.remoteTeam = this.remoteTeamOverride || (candidate.team === 'CT' ? 'CT' : 'T');
     candidate.__veraRemote = true;
     // Keep the engine's bot/entity damage path for this slot. Marking it as
     // `isPlayer` would make the existing kill handler drop the local player's

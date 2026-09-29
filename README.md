@@ -23,7 +23,7 @@ This repository is a rebrand and presentation layer update of the existing game 
 | `src/joinscreen.js` | Match loading progress screen; normal launches use the game's streaming loader to avoid background asset spikes. |
 | `src/vera-brand.js` | Runtime Vera brand layer for the dynamically created menu and HUD. It changes labels and links only. |
 | `src/vera-performance.js` | Runtime performance guard that keeps bot simulation from running redundantly at display refresh rate. |
-| `src/vera-network-config.js` | Static LAN WebRTC configuration with optional ICE/TURN entries. |
+| `src/vera-network-config.js` | Static browser WebRTC configuration with default STUN discovery and optional ICE/TURN entries. |
 | `src/network/protocol.js` | Compact binary player-state packets. |
 | `src/network/webrtc.js` | Direct WebRTC peer connection with manual offer/answer exchange. |
 | `src/network/game-adapter.js` | Multiplayer bridge that reuses the existing player, bot-slot, collision, weapon, and rendering systems. |
@@ -85,20 +85,20 @@ If a device still struggles, open the F8 panel and use `LOW-SPEC` to allow the f
 
 Multiplayer is an optional layer around the existing game. A normal offline launch still uses the original local player, bots, weapons, maps, collision, HUD, audio, and match loop. Multiplayer replaces one existing bot slot with a `RemotePlayer` adapter only after a room is connected; it does not create bots that pretend to be people.
 
-The browser frontend is entirely static and GitHub Pages-compatible. Two players connect directly over WebRTC:
+The browser frontend is entirely static and GitHub Pages-compatible. The host player's browser acts as the small match authority; there is no dedicated game server. Two players connect directly over WebRTC:
 
 1. The host creates a six-character room code as a human-readable session label.
 2. The host creates an ICE-complete WebRTC offer in the browser.
-3. The two players exchange the temporary invite/answer text through their chosen LAN channel.
-4. Both browsers connect directly over the LAN; the room code is not a server lookup key.
+3. The two players exchange the temporary invite/answer text through any private channel they already use. The room code identifies the intended session but does not perform discovery.
+4. Both browsers connect directly. This can work across different Wi-Fi networks when NAT traversal succeeds; the host's browser remains open for the duration of the match.
 5. Unordered, unreliable `vera-state` DataChannel packets carry a compact 52-byte player snapshot at roughly 22 Hz.
 6. Reliable ordered `vera-control` packets carry match start, round state, and unique firing events.
 7. Remote snapshots are sequence-checked, buffered, interpolated, and briefly extrapolated so rendering does not wait for the network.
-8. The host owns the first prototype's remote health/alive state. Guests receive host corrections for their own health and position. Packet fields are range-checked before entering the game.
+8. The host owns the first prototype's remote health/alive state and match start. Both players explicitly choose T or CT; the host sends the shared map/team configuration, and the match runs as continuous team deathmatch with respawns. Packet fields are range-checked before entering the game.
 
 Combat still uses the existing raycast and damage functions. A shot is transmitted as a compact event with a unique ID, direction, origin, and weapon identifier; each peer de-duplicates event IDs before applying it.
 
-The initial LAN mode supports two players. A TURN service is not required for devices on the same local network, but optional ICE/TURN entries can be configured for more restrictive networks.
+The initial mode supports two players. Default public STUN entries help browsers discover routes across different networks, but STUN is not a relay: symmetric NAT, enterprise firewalls, or carrier-grade NAT may still require a TURN service or router port-forwarding. A TURN service can be supplied through `iceServers` without changing the game client.
 
 ## Local multiplayer development
 
@@ -120,23 +120,26 @@ On device B:
 4. Choose `CREATE REPLY`.
 5. Choose `COPY REPLY` and send it back to device A.
 
-After the direct link is established, the host starts the selected map and mode for both clients. The room code is only a friendly label: GitHub Pages has no shared registry, so a static page cannot make a code discoverable across devices by itself.
+After the direct link is established, both players choose `CT` or `T`. The host starts the selected map for both clients in continuous team deathmatch, and each player respawns after death. The room code is only a friendly label: GitHub Pages has no shared registry, so a static page cannot make a code discoverable across devices by itself. The invite/answer exchange is the signaling step that a static-only deployment cannot automate.
 
 ## Production and GitHub Pages deployment
 
 GitHub Pages hosts the complete multiplayer frontend. No Node.js process, signaling server, database, API key, or backend deployment is required. GitHub Pages supplies HTTPS, which is required for WebRTC on deployed devices.
 
-Optional ICE servers can be configured before `src/vera-network-config.js` runs:
+The default build uses two public STUN endpoints as lightweight route-discovery helpers. They do not receive game state. Optional ICE/TURN servers can be configured before `src/vera-network-config.js` runs:
 
 ```html
 <script>
   window.VERA_NETWORK_CONFIG = {
-    iceServers: []
+    iceServers: [
+      { urls: 'stun:stun.example.com:3478' },
+      { urls: 'turn:turn.example.com:3478', username: '...', credential: '...' }
+    ]
   };
 </script>
 ```
 
-The default configuration uses no external service. Devices on the same LAN should normally establish a direct host candidate. If a browser or network blocks that path, the session can require configured STUN/TURN infrastructure; that is optional and outside the GitHub Pages application itself.
+Replace the example TURN values with credentials from a service you control; never commit long-lived secrets to a public repository. Devices on the same LAN often establish a direct host candidate without a relay. Players on different networks may require TURN when the browser cannot establish a direct path. GitHub Pages remains only the static frontend host.
 
 ## Multiplayer test procedure
 
@@ -157,8 +160,10 @@ Protocol and WebRTC behavior are intentionally browser-side because the project 
 
 - The first implementation is intentionally limited to two players.
 - The host is the authority for remote health/alive state, but this is a LAN prototype rather than a fully authoritative dedicated game server.
+- The host browser must stay open; closing it ends the match for the other player.
 - Automatic reconnect is not implemented; leaving and rejoining a room is the recovery path.
-- Direct WebRTC connectivity may need optional STUN/TURN configuration on restrictive networks.
+- Direct WebRTC connectivity may still need TURN or router configuration on restrictive networks, even though default STUN discovery is enabled.
+- A six-character room code cannot be looked up by itself on GitHub Pages because static hosting has no room registry. Players still exchange the generated invite and reply once per session.
 - The adapter reuses the current entity and match systems. Core movement, weapons, shooting, damage, death, respawn, HUD, and round timing are synchronized, while complex objective interactions should be verified manually for the selected map/mode.
 - GitHub Pages remains playable offline/single-player even when LAN multiplayer is not used.
 

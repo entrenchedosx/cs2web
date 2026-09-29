@@ -15,6 +15,10 @@ const STATUS_TEXT = Object.freeze({
 
 function text(value) { return String(value == null ? '' : value); }
 function finite(value, fallback = 0) { return Number.isFinite(Number(value)) ? Number(value) : fallback; }
+function team(value) {
+  const normalized = text(value).toUpperCase();
+  return normalized === 'T' || normalized === 'CT' ? normalized : '';
+}
 function makeRoomCode() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let value = '';
@@ -39,6 +43,8 @@ class VeraMultiplayerSession {
     this.roomCode = '';
     this.hostOffer = '';
     this.guestAnswer = '';
+    this.localTeam = '';
+    this.remoteTeam = '';
     this.statusValue = 'offline';
     this.statusDetail = '';
     this.transportConnected = false;
@@ -120,6 +126,15 @@ class VeraMultiplayerSession {
       .vera-mp-room-id strong { color: #e9d5ff; font-size: 15px; letter-spacing: 3px; }
       .vera-mp-room-id em { color: #67737d; font-size: 9px; font-style: normal; letter-spacing: .4px; }
       .vera-mp-help { max-width: 620px; color: #8f9ba5; font-size: 12px; line-height: 1.55; margin: 0 0 14px; }
+      .vera-mp-team { display: none; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.1); }
+      .vera-mp-team.show { display: block; }
+      .vera-mp-team-title { color: #fff; font-size: 14px; font-weight: 800; letter-spacing: 1.5px; }
+      .vera-mp-team-help { margin: 6px 0 12px; color: #8f9ba5; font-size: 12px; line-height: 1.5; }
+      .vera-mp-team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+      .vera-mp-team button { min-height: 44px; border: 1px solid rgba(255,255,255,.16); border-radius: 2px; background: rgba(255,255,255,.055); color: #e8eef2; font-size: 11px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: border-color .16s, background .16s, color .16s, transform .16s; }
+      .vera-mp-team button:hover { border-color: rgba(192,132,252,.72); background: rgba(168,85,247,.14); transform: translateY(-1px); }
+      .vera-mp-team button.is-selected[data-mp-team="CT"] { border-color: #60a5fa; background: rgba(37,99,235,.2); color: #bfdbfe; }
+      .vera-mp-team button.is-selected[data-mp-team="T"] { border-color: #f5b942; background: rgba(245,158,11,.17); color: #fde68a; }
       .vera-mp-label { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 6px; color: #aeb9c2; font-size: 10px; font-weight: 800; letter-spacing: 1.7px; }
       .vera-mp-label em { color: #67737d; font-size: 9px; font-style: normal; letter-spacing: .8px; }
       .vera-mp-signal { width: 100%; min-height: 92px; resize: vertical; box-sizing: border-box; border: 1px solid rgba(255,255,255,.16); border-radius: 2px; padding: 10px; outline: none; background: #090c0f; color: #dfe7eb; font: 11px/1.35 ui-monospace, monospace; overflow-wrap: anywhere; }
@@ -152,12 +167,12 @@ class VeraMultiplayerSession {
         <div class="vera-mp-body">
           <div class="vera-mp-error" data-mp-error></div>
           <div class="vera-mp-actions" data-mp-actions>
-            <p class="vera-mp-intro">Play a private match with someone on the same network. Vera connects the two browsers directly; there is no account, lobby, or server.</p>
+            <p class="vera-mp-intro">Play a private match with a friend anywhere WebRTC can establish a direct browser link. Your host browser owns the match; there is no account, lobby, or game server.</p>
             <div class="vera-mp-choice-grid">
               <button class="vera-mp-choice" type="button" data-mp-host><span class="vera-mp-choice-icon" aria-hidden="true">A</span><h3>HOST A MATCH</h3><p>Create the session and send your connection invite to a friend.</p></button>
               <button class="vera-mp-choice" type="button" data-mp-join><span class="vera-mp-choice-icon" aria-hidden="true">B</span><h3>JOIN A MATCH</h3><p>Paste a friend's invite and return your connection answer.</p></button>
             </div>
-            <div class="vera-mp-footnote">Same Wi-Fi or LAN · Two players · Direct browser connection</div>
+            <div class="vera-mp-footnote">Same Wi-Fi or different networks · Two players · Direct browser connection</div>
           </div>
           <div class="vera-mp-flow" data-mp-flow aria-label="Connection progress">
             <span class="vera-mp-step active" data-mp-step="1"><b>1</b> ROLE</span><i class="vera-mp-step-line"></i><span class="vera-mp-step" data-mp-step="2"><b>2</b> EXCHANGE</span><i class="vera-mp-step-line"></i><span class="vera-mp-step" data-mp-step="3"><b>3</b> READY</span>
@@ -185,6 +200,14 @@ class VeraMultiplayerSession {
             <textarea id="vera-mp-guest-answer" class="vera-mp-signal" data-mp-guest-answer readonly aria-label="Your connection reply"></textarea>
             <div class="vera-mp-row"><button type="button" data-mp-copy-answer>COPY REPLY</button><button type="button" data-mp-leave>END SESSION</button></div>
           </div>
+          <div class="vera-mp-team" data-mp-team-panel>
+            <div class="vera-mp-team-title">CHOOSE YOUR TEAM</div>
+            <p class="vera-mp-team-help">Pick a side after the direct link is connected. Vera does not auto-balance teams.</p>
+            <div class="vera-mp-team-grid">
+              <button type="button" data-mp-team="CT">CT&nbsp;&nbsp; COUNTER-TERRORISTS</button>
+              <button type="button" data-mp-team="T">T&nbsp;&nbsp; TERRORISTS</button>
+            </div>
+          </div>
         </div>
       </div>`;
     document.body.appendChild(panel);
@@ -204,6 +227,8 @@ class VeraMultiplayerSession {
       guestAnswer: panel.querySelector('[data-mp-guest-answer]'),
       roomCode: panel.querySelector('[data-mp-room-code]'),
       guestCode: panel.querySelector('[data-mp-guest-code]'),
+      teamPanel: panel.querySelector('[data-mp-team-panel]'),
+      teamButtons: panel.querySelectorAll('[data-mp-team]'),
       steps: panel.querySelectorAll('[data-mp-step]'),
       pill
     };
@@ -214,6 +239,7 @@ class VeraMultiplayerSession {
     panel.querySelector('[data-mp-accept-answer]').addEventListener('click', () => this.acceptAnswer());
     panel.querySelector('[data-mp-create-answer]').addEventListener('click', () => this.createAnswer());
     panel.querySelector('[data-mp-copy-answer]').addEventListener('click', () => this.copyText(this.ui.guestAnswer.value, 'Answer copied.'));
+    this.ui.teamButtons.forEach(button => button.addEventListener('click', () => this.selectTeam(button.dataset.mpTeam)));
     panel.querySelectorAll('[data-mp-leave]').forEach(button => button.addEventListener('click', () => this.leave(false)));
   }
 
@@ -225,10 +251,15 @@ class VeraMultiplayerSession {
     this.ui.actions.style.display = this.view === 'home' ? '' : 'none';
     this.ui.hostRoom.classList.toggle('show', this.view === 'host');
     this.ui.guestRoom.classList.toggle('show', this.view === 'guest');
+    if (this.ui.teamPanel) {
+      const canChoose = !!this.role && this.transportConnected && !this.matchStarted;
+      this.ui.teamPanel.classList.toggle('show', canChoose);
+      this.ui.teamButtons.forEach(button => button.classList.toggle('is-selected', team(button.dataset.mpTeam) === this.localTeam));
+    }
     if (this.hostOffer && this.ui.hostOffer.value !== this.hostOffer) this.ui.hostOffer.value = this.hostOffer;
     if (this.guestAnswer && this.ui.guestAnswer.value !== this.guestAnswer) this.ui.guestAnswer.value = this.guestAnswer;
     if (this.ui.roomCode) this.ui.roomCode.textContent = this.roomCode || '------';
-    const activeStep = this.view === 'home' ? 1 : (this.statusValue === 'connected' || this.statusValue === 'match-ready' ? 3 : 2);
+    const activeStep = this.view === 'home' ? 1 : (this.matchStarted || (this.statusValue === 'connected' && this.localTeam && this.remoteTeam) ? 3 : 2);
     this.ui.steps.forEach(step => step.classList.toggle('active', Number(step.dataset.mpStep) <= activeStep));
     if (this.ui.pill) {
       const visible = this.statusValue !== 'offline' && this.statusValue !== 'error';
@@ -259,8 +290,11 @@ class VeraMultiplayerSession {
     this.transportConnected = false;
     this.matchAnnounced = false;
     this.matchStarted = false;
+    this.localTeam = '';
+    this.remoteTeam = '';
     this.seenEvents.clear();
     this.adapter.activate(role, this.slot);
+    this.adapter.remoteTeam = '';
     const transport = this.transport = new VeraPeerTransport(this.config);
     transport.onStatus = (status, detail) => {
       if (status === 'connected') this.transportConnected = true;
@@ -270,7 +304,7 @@ class VeraMultiplayerSession {
     transport.onPeer = peer => {
       if (peer.connected) {
         this.transportConnected = true;
-        this.setStatus('connected');
+        this.setStatus('connected', 'Direct link ready. Choose T or CT to enter the match.');
       } else if (peer.connected === false) {
         this.transportConnected = false;
         this.matchStarted = false;
@@ -287,6 +321,17 @@ class VeraMultiplayerSession {
     };
   }
 
+  selectTeam(value) {
+    const chosen = team(value);
+    if (!chosen || !this.transportConnected || !this.transport || this.matchStarted) return;
+    this.localTeam = chosen;
+    this.transport.sendControl({ type: 'team-select', team: chosen });
+    this.setStatus('waiting', this.role === 'host' && this.remoteTeam
+      ? 'Both teams selected. Starting the match.'
+      : 'Waiting for the other player to choose a team.');
+    if (this.role === 'host') this.beginHostMatch();
+  }
+
   async hostLan() {
     this.openPanel();
     this.view = 'host';
@@ -295,7 +340,7 @@ class VeraMultiplayerSession {
     try {
       this.newTransport('host');
       this.hostOffer = await this.transport.createHostOffer();
-      this.setStatus('waiting', 'Copy the offer to the joining device.');
+      this.setStatus('waiting', 'Send the invite and room code to the joining device.');
       this.updateUI();
     } catch (error) {
       this.setStatus('error', error.message);
@@ -307,7 +352,7 @@ class VeraMultiplayerSession {
     this.view = 'guest';
     this.roomCode = '';
     this.newTransport('guest');
-    this.setStatus('waiting', 'Paste the host offer to create your answer.');
+    this.setStatus('waiting', 'Enter the room code, then paste the host invite.');
   }
 
   async createAnswer() {
@@ -319,7 +364,7 @@ class VeraMultiplayerSession {
     try {
       this.setStatus('gathering');
       this.guestAnswer = await this.transport.acceptGuestOffer(offer);
-      this.setStatus('waiting', 'Copy your answer back to the host device.');
+      this.setStatus('waiting', 'Send your reply back to the host device.');
       this.updateUI();
     } catch (error) {
       this.setStatus('error', error.message);
@@ -331,19 +376,27 @@ class VeraMultiplayerSession {
     if (!answer) { this.setStatus('error', 'Paste the joiner answer first.'); return; }
     try {
       await this.transport.acceptHostAnswer(answer);
-      this.setStatus('connecting', 'Waiting for the direct LAN link.');
+      this.setStatus('connecting', 'Waiting for the direct browser link.');
     } catch (error) {
       this.setStatus('error', error.message);
     }
   }
 
   async beginHostMatch() {
-    if (!this.transportConnected || this.matchAnnounced) return;
-    this.matchConfig = this.adapter.selectedMatch();
-    const message = { type: 'match-start', map: this.matchConfig.map, mode: this.matchConfig.mode, hostTeam: 'CT', guestTeam: 'T' };
+    if (!this.transportConnected || this.matchAnnounced || !this.localTeam || !this.remoteTeam) return;
+    const selected = this.adapter.selectedMatch();
+    this.matchConfig = { map: selected.map, mode: 'dm' };
+    this.adapter.remoteTeamOverride = this.remoteTeam;
+    const message = {
+      type: 'match-start',
+      map: this.matchConfig.map,
+      mode: this.matchConfig.mode,
+      hostTeam: this.localTeam,
+      guestTeam: this.remoteTeam
+    };
     if (!this.transport.sendControl(message)) return;
     this.matchAnnounced = true;
-    await this.beginMatch(this.matchConfig, 'CT');
+    await this.beginMatch(this.matchConfig, this.localTeam);
   }
 
   async beginMatch(config, team) {
@@ -351,7 +404,7 @@ class VeraMultiplayerSession {
     this.matchStarted = true;
     this.setStatus('connecting');
     try {
-      await this.adapter.startMatch({ map: config.map, mode: config.mode, team });
+      await this.adapter.startMatch({ map: config.map, mode: 'dm', team });
       this.transport.sendControl({ type: 'match-ready', from: this.role });
       this.setStatus('match-ready');
       this.closePanel();
@@ -363,9 +416,22 @@ class VeraMultiplayerSession {
 
   handleControl(message) {
     if (!message || typeof message.type !== 'string') return;
+    if (message.type === 'team-select') {
+      const chosen = team(message.team);
+      if (!chosen || this.role !== 'host' || this.matchStarted) return;
+      this.remoteTeam = chosen;
+      this.adapter.remoteTeam = chosen;
+      this.adapter.remoteTeamOverride = chosen;
+      this.updateUI();
+      this.beginHostMatch();
+      return;
+    }
     if (message.type === 'match-start' && this.role === 'guest') {
-      this.matchConfig = { map: text(message.map) || 'oasis', mode: text(message.mode) || 'defusal' };
-      this.beginMatch(this.matchConfig, message.guestTeam === 'CT' ? 'CT' : 'T');
+      this.localTeam = team(message.guestTeam) || 'T';
+      this.remoteTeam = team(message.hostTeam) || (this.localTeam === 'CT' ? 'T' : 'CT');
+      this.adapter.remoteTeamOverride = this.remoteTeam;
+      this.matchConfig = { map: text(message.map) || 'oasis', mode: 'dm' };
+      this.beginMatch(this.matchConfig, this.localTeam);
       return;
     }
     if (message.type === 'match-ready') {
@@ -437,6 +503,9 @@ class VeraMultiplayerSession {
     this.hostOffer = '';
     this.guestAnswer = '';
     this.roomCode = '';
+    this.localTeam = '';
+    this.remoteTeam = '';
+    this.adapter.remoteTeamOverride = '';
     this.transportConnected = false;
     this.matchStarted = false;
     this.matchAnnounced = false;

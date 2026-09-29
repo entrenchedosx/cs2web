@@ -42,6 +42,7 @@ export class VeraPeerTransport {
     this.onState = noop;
     this.onControl = noop;
     this.onError = noop;
+    this.failureReported = false;
   }
 
   status(value, detail = '') {
@@ -56,10 +57,20 @@ export class VeraPeerTransport {
     this.peer.onconnectionstatechange = () => {
       const state = this.peer && this.peer.connectionState;
       if (state === 'connected') {
+        this.failureReported = false;
         this.status('connected');
         this.onPeer({ connected: true });
-      } else if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-        this.status('disconnected');
+      } else if (state === 'disconnected') {
+        this.status('disconnected', 'The direct link is interrupted; waiting for the browser to restore it.');
+      } else if (state === 'failed' || state === 'closed') {
+        if (state === 'failed' && !this.failureReported) {
+          this.failureReported = true;
+          const error = new Error('The two networks blocked a direct browser link. Try another network or configure a TURN relay.');
+          this.status('error', error.message);
+          this.onError(error);
+        } else {
+          this.status('disconnected');
+        }
         this.onPeer({ connected: false });
       }
     };
@@ -175,6 +186,7 @@ export class VeraPeerTransport {
     this.stateChannel = null;
     this.controlChannel = null;
     this.peer = null;
+    this.failureReported = false;
     this.status('offline');
   }
 }
