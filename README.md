@@ -23,6 +23,11 @@ This repository is a rebrand and presentation layer update of the existing game 
 | `src/joinscreen.js` | Asset warm-up and match loading progress screen. |
 | `src/vera-brand.js` | Runtime Vera brand layer for the dynamically created menu and HUD. It changes labels and links only. |
 | `src/vera-performance.js` | Runtime performance guard that keeps bot simulation from running redundantly at display refresh rate. |
+| `src/vera-network-config.js` | Static LAN WebRTC configuration with optional ICE/TURN entries. |
+| `src/network/protocol.js` | Compact binary player-state packets. |
+| `src/network/webrtc.js` | Direct WebRTC peer connection with manual offer/answer exchange. |
+| `src/network/game-adapter.js` | Multiplayer bridge that reuses the existing player, bot-slot, collision, weapon, and rendering systems. |
+| `src/network/multiplayer.js` | Vera LAN multiplayer menu, manual handshake flow, state pump, combat events, and match synchronization. |
 | `manifest.json` | Progressive-web-app name, colors, launch mode, and install icons. |
 | `vera-icon.png` | Source Vera V monogram generated for this rebrand. |
 | `favicon.svg`, `favicon.ico`, `favicon-*.png`, `icon-*.png`, `apple-touch-icon.png` | Browser and device icon variants. |
@@ -73,6 +78,86 @@ The director reacts after a short sustained warning and waits before recovering 
 Bot simulation is stepped at 30 Hz rather than once for every display refresh. On the lowest quality tier it uses a 20 Hz cadence. Rendering, input, collision rules, weapons, damage, objectives, round timing, and the number of bots remain the same; only redundant high-refresh AI updates are removed.
 
 If a device still struggles, open the F8 panel and use `LOW-SPEC` to allow the final fallback to five bots, or use `LITE MAPS` for a lower-cost map variant when one is available. These are persisted locally under Vera's settings keys and can be reversed by the player.
+
+## Multiplayer architecture
+
+Multiplayer is an optional layer around the existing game. A normal offline launch still uses the original local player, bots, weapons, maps, collision, HUD, audio, and match loop. Multiplayer replaces one existing bot slot with a `RemotePlayer` adapter only after a room is connected; it does not create bots that pretend to be people.
+
+The browser frontend is entirely static and GitHub Pages-compatible. Two players connect directly over WebRTC:
+
+1. The host creates an ICE-complete WebRTC offer in the browser.
+2. The host copies the offer text to the joining device.
+3. The joining device creates an answer and copies it back to the host.
+4. The host pastes the answer and both browsers connect directly over the LAN.
+5. Unordered, unreliable `vera-state` DataChannel packets carry a compact 52-byte player snapshot at roughly 22 Hz.
+6. Reliable ordered `vera-control` packets carry match start, round state, and unique firing events.
+7. Remote snapshots are sequence-checked, buffered, interpolated, and briefly extrapolated so rendering does not wait for the network.
+8. The host owns the first prototype's remote health/alive state. Guests receive host corrections for their own health and position. Packet fields are range-checked before entering the game.
+
+Combat still uses the existing raycast and damage functions. A shot is transmitted as a compact event with a unique ID, direction, origin, and weapon identifier; each peer de-duplicates event IDs before applying it.
+
+The initial LAN mode supports two players. A TURN service is not required for devices on the same local network, but optional ICE/TURN entries can be configured for more restrictive networks.
+
+## Local multiplayer development
+
+For GitHub Pages, open the deployed Vera URL on both devices. Choose `LAN MULTIPLAYER`.
+
+On device A:
+
+1. Choose `HOST LAN GAME`.
+2. Choose `COPY OFFER`.
+3. Send the offer text to device B using any method convenient for your LAN session.
+4. Paste device B's answer into `JOINER ANSWER`.
+5. Choose `CONNECT LAN PLAYERS`.
+
+On device B:
+
+1. Choose `JOIN LAN GAME`.
+2. Paste device A's offer into `HOST OFFER`.
+3. Choose `CREATE ANSWER`.
+4. Choose `COPY ANSWER` and send it back to device A.
+
+After the direct link is established, the host starts the selected map and mode for both clients. The connection text is temporary session data; it is not a password or a persistent room identifier.
+
+## Production and GitHub Pages deployment
+
+GitHub Pages hosts the complete multiplayer frontend. No Node.js process, signaling server, database, API key, or backend deployment is required. GitHub Pages supplies HTTPS, which is required for WebRTC on deployed devices.
+
+Optional ICE servers can be configured before `src/vera-network-config.js` runs:
+
+```html
+<script>
+  window.VERA_NETWORK_CONFIG = {
+    iceServers: []
+  };
+</script>
+```
+
+The default configuration uses no external service. Devices on the same LAN should normally establish a direct host candidate. If a browser or network blocks that path, the session can require configured STUN/TURN infrastructure; that is optional and outside the GitHub Pages application itself.
+
+## Multiplayer test procedure
+
+The browser smoke test is:
+
+1. Open the deployed GitHub Pages URL in two fresh browser clients on the same LAN.
+2. Create a host offer in client A and confirm the offer text is generated.
+3. Create an answer in client B and apply it in client A.
+4. Confirm both clients show `CONNECTED` / `MATCH READY`.
+5. Move and look in either client; the other client should show the interpolated remote model and aim direction.
+6. Fire at the other player and confirm the existing hit, health, death, and respawn path changes on both clients.
+7. Close one tab and confirm the remaining client shows `PLAYER DISCONNECTED` and removes the remote entity.
+8. Repeat with two physical devices on the same LAN and with browser throttling or simulated latency when available.
+
+Protocol and WebRTC behavior are intentionally browser-side because the project has no Node.js runtime or server component. Rendering, NAT behavior, hit placement, animation appearance, and device-to-device behavior remain manual tests.
+
+## Known multiplayer limitations
+
+- The first implementation is intentionally limited to two players.
+- The host is the authority for remote health/alive state, but this is a LAN prototype rather than a fully authoritative dedicated game server.
+- Automatic reconnect is not implemented; leaving and rejoining a room is the recovery path.
+- Direct WebRTC connectivity may need optional STUN/TURN configuration on restrictive networks.
+- The adapter reuses the current entity and match systems. Core movement, weapons, shooting, damage, death, respawn, HUD, and round timing are synchronized, while complex objective interactions should be verified manually for the selected map/mode.
+- GitHub Pages remains playable offline/single-player even when LAN multiplayer is not used.
 
 ## Gameplay notes
 
