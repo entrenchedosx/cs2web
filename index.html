@@ -18,6 +18,7 @@
 <!-- the radar map picture is the one big piece of HUD art; start it with the
      page so the dial is populated the moment the first round goes live -->
 <link rel="preload" as="image" href="ui/radar_de_dust2.png">
+<link rel="preload" as="script" href="./src/joinscreen.js">
 <!-- the bottom bar is the first thing on screen in a round; start its art
      with the page so it does not fill in icon by icon -->
 <link rel="preload" as="image" href="ui/bt_armor.svg">
@@ -2613,6 +2614,50 @@ window.__cs2UiScale = function () {
   #pmlite.on { background: rgba(125,184,240,0.14); border-color: rgba(125,184,240,0.55); color: #fff; }
   #pmlow:hover, #pmlite:hover { filter: brightness(1.2); }
   @media (max-width: 900px) { #perfmon { width: 220px; right: 8px; top: 104px; } }
+  /* ============ JOINSCREEN (match cache warmer + join progress) ============
+     Fullscreen only while match assets are being fetched and parsed. During
+     team select it collapses to a non-blocking top strip so the CT/T cards
+     stay clickable. The bar moves with transform only; no layout work. */
+  #joinscreen { position: fixed; inset: 0; z-index: 65; display: none;
+    align-items: center; justify-content: center; padding: 24px;
+    background: radial-gradient(circle at 50% 38%, rgba(24,34,44,0.97), rgba(12,15,19,0.98));
+    color: #e8eef2; font-family: var(--hud-font); }
+  #joinscreen.show { display: flex; }
+  #joinscreen.compact { background: transparent; align-items: flex-start; pointer-events: none; }
+  #joinscreen .js-panel { width: min(440px, calc(100vw - 32px)); pointer-events: auto;
+    background: rgba(13,17,22,0.94); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 18px 20px 16px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.6); }
+  #joinscreen.compact .js-panel { width: min(360px, calc(100vw - 32px)); padding: 10px 14px 9px; }
+  #joinscreen .js-kicker { font-size: 10px; letter-spacing: 3px; color: var(--accent); margin-bottom: 6px; }
+  #joinscreen .js-title { font-size: 20px; font-weight: 800; letter-spacing: 1px; margin-bottom: 4px; }
+  #joinscreen.compact .js-title { display: none; }
+  #joinscreen .js-stage { font-size: 11px; letter-spacing: 2px; opacity: 0.75; margin-bottom: 10px; }
+  #joinscreen .js-bar { position: relative; height: 8px; overflow: hidden; border-radius: 4px;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); }
+  #joinscreen .js-fill { position: absolute; inset: 0; transform: scaleX(0); transform-origin: left center;
+    background: linear-gradient(90deg, #8bc53f, #c4e58a); }
+  #joinscreen .js-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+  #joinscreen .js-pct { font-family: var(--num-font); font-size: 18px; font-weight: 700; }
+  #joinscreen .js-cancel { display: none; background: rgba(255,255,255,0.08); color: #e8eef2;
+    border: 1px solid rgba(255,255,255,0.16); border-radius: 4px; padding: 6px 12px;
+    font-size: 11px; letter-spacing: 1px; cursor: pointer; }
+  #joinscreen.preloading .js-cancel { display: inline-block; }
+  #joinscreen.compact .js-cancel { display: none !important; }
+  #joinscreen .js-sub { margin-top: 8px; font-size: 11px; line-height: 1.5; opacity: 0.68;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  #joinscreen.compact .js-sub { -webkit-line-clamp: 2; }
+  /* Constrained devices: HUD backdrop blur is re-painted every compositor
+     frame. Keep the layout, drop only the recurring blur cost. */
+  html.js-lowfx #radar, html.js-lowfx #menu, html.js-lowfx #perfmon,
+  html.js-lowfx #caseopen.spin {
+    -webkit-backdrop-filter: none; backdrop-filter: none; background-color: rgba(10,13,16,0.88); }
+  /* Locker grids can hold thousands of painted tiles. Skip offscreen paint
+     while keeping each tile's fixed box, so scrolling stays cheap. */
+  .lk-grid .skintile { content-visibility: auto; contain-intrinsic-size: 126px 132px; }
+  @media (prefers-reduced-motion: reduce) {
+    #joinscreen .js-fill { transition: none; }
+  }
 </style>
 </head>
 <body>
@@ -3207,6 +3252,7 @@ window.__cs2UiScale = function () {
     }, 200);
   })();
   </script>
-  <script type="module" src="./src/main.js"></script>
+  <script src="./src/joinscreen.js" defer></script>
+  <script type="module" fetchpriority="high" src="./src/main.js"></script>
 </body>
 </html>
