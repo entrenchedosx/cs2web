@@ -24,13 +24,13 @@ GitHub Pages cannot run this Python process. To make a room reachable outside th
 
 The current production config uses a Cloudflare Quick Tunnel for the room server. The tunnel URL is temporary and is checked into `src/vera-network-config.js` only while that tunnel process remains alive. The live endpoint was verified with `/healthz` and a real WSS room create/join relay before publishing.
 
-To create a replacement tunnel on the host PC:
+To create a replacement tunnel on the host PC with the checked-in launcher:
 
 ```powershell
-cloudflared tunnel --url http://127.0.0.1:8765 --no-autoupdate
+powershell -ExecutionPolicy Bypass -File server/start-cloudflare.ps1
 ```
 
-Copy the new `https://*.trycloudflare.com` base URL into `src/vera-network-config.js`, or use it as the `signal` query parameter. The client automatically converts it to `wss://.../signal`.
+The launcher downloads the Cloudflare client if needed, starts both services in hidden background windows, prints the new URL, and checks `/healthz`. Copy the new `https://*.trycloudflare.com` base URL into `src/vera-network-config.js`, or use the printed `signal` link. The client automatically converts it to `wss://.../signal`.
 
 For an ngrok tunnel, run this from the repository root. It starts the Python room server and ngrok with hidden windows, prints the public URL, and checks `/healthz`:
 
