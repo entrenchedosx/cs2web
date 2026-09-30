@@ -22,6 +22,24 @@ For another computer on the same Wi-Fi, replace `127.0.0.1` with the host PC's p
 
 GitHub Pages cannot run this Python process. To make a room reachable outside the host network, expose the process through a public DNS name and a TLS endpoint, or put it behind a trusted TLS reverse proxy/tunnel. The HTTPS frontend must connect with `wss://`; browsers block `ws://` from an HTTPS GitHub Pages page.
 
+The current production config uses a Cloudflare Quick Tunnel for the room server. The tunnel URL is temporary and is checked into `src/vera-network-config.js` only while that tunnel process remains alive. The live endpoint was verified with `/healthz` and a real WSS room create/join relay before publishing.
+
+To create a replacement tunnel on the host PC:
+
+```powershell
+cloudflared tunnel --url http://127.0.0.1:8765 --no-autoupdate
+```
+
+Copy the new `https://*.trycloudflare.com` base URL into `src/vera-network-config.js`, or use it as the `signal` query parameter. The client automatically converts it to `wss://.../signal`.
+
+For an ngrok tunnel, run this from the repository root. It starts the Python room server and ngrok with hidden windows, prints the public URL, and checks `/healthz`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File server/start-public.ps1
+```
+
+The printed GitHub Pages override uses the current tunnel URL. Free ngrok URLs are temporary, so use the newly printed URL after a restart. If ngrok reports `ERR_NGROK_725`, the account has exhausted its monthly network bandwidth; the local server can still run, but public players cannot connect until the quota resets or the ngrok account is upgraded.
+
 Direct TLS termination is supported when a certificate and private key are available:
 
 ```powershell
