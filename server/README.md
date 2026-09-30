@@ -32,6 +32,14 @@ powershell -ExecutionPolicy Bypass -File server/start-cloudflare.ps1
 
 The launcher downloads the Cloudflare client if needed, starts both services in hidden background windows, prints the new URL, and checks `/healthz`. Copy the new `https://*.trycloudflare.com` base URL into `src/vera-network-config.js`, or use the printed `signal` link. The client automatically converts it to `wss://.../signal`.
 
+To make the room server start automatically with Windows, install the per-user startup hook once:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File server/install-autostart.ps1
+```
+
+The installer uses a scheduled task when Windows permits it, otherwise it creates a per-user Startup shortcut. Either way it runs with no visible console window and is safe to run again; the launcher detects already-running services instead of duplicating them. The PC must remain powered on and connected to the internet for friends to join.
+
 For an ngrok tunnel, run this from the repository root. It starts the Python room server and ngrok with hidden windows, prints the public URL, and checks `/healthz`:
 
 ```powershell
