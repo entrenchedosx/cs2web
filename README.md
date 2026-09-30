@@ -23,11 +23,13 @@ This repository is a rebrand and presentation layer update of the existing game 
 | `src/joinscreen.js` | Match loading progress screen; normal launches use the game's streaming loader to avoid background asset spikes. |
 | `src/vera-brand.js` | Runtime Vera brand layer for the dynamically created menu and HUD. It changes labels and links only. |
 | `src/vera-performance.js` | Runtime performance guard that keeps bot simulation from running redundantly at display refresh rate. |
-| `src/vera-network-config.js` | Static browser WebRTC configuration with default STUN discovery and optional ICE/TURN entries. |
+| `src/vera-network-config.js` | Static multiplayer configuration with server URL override and a 20-player room limit. |
 | `src/network/protocol.js` | Compact binary player-state packets. |
 | `src/network/webrtc.js` | Direct WebRTC peer connection with manual offer/answer exchange. |
+| `src/network/signaling.js` | Automatic room-code WebSocket client and compact packet relay transport. |
 | `src/network/game-adapter.js` | Multiplayer bridge that reuses the existing player, bot-slot, collision, weapon, and rendering systems. |
-| `src/network/multiplayer.js` | Vera LAN multiplayer menu, manual handshake flow, state pump, combat events, and match synchronization. |
+| `src/network/multiplayer.js` | Vera room-code multiplayer menu, team flow, state pump, combat events, and match synchronization. |
+| `server/signaling_server.py` | Dependency-free Python room server for room codes, membership, packet relay, and disconnects. |
 | `manifest.json` | Progressive-web-app name, colors, launch mode, and install icons. |
 | `vera-icon.png` | Source Vera V monogram generated for this rebrand. |
 | `favicon.svg`, `favicon.ico`, `favicon-*.png`, `icon-*.png`, `apple-touch-icon.png` | Browser and device icon variants. |
@@ -83,88 +85,101 @@ If a device still struggles, open the F8 panel and use `LOW-SPEC` to allow the f
 
 ## Multiplayer architecture
 
-Multiplayer is an optional layer around the existing game. A normal offline launch still uses the original local player, bots, weapons, maps, collision, HUD, audio, and match loop. Multiplayer replaces one existing bot slot with a `RemotePlayer` adapter only after a room is connected; it does not create bots that pretend to be people.
+Multiplayer is optional. Offline Vera still uses the original player, bots, weapons, maps, collision, HUD, audio, and match loop. When a room is active, the adapter reuses existing bot/entity slots for real remote players; those slots are driven by validated network snapshots rather than fake bots.
 
-The browser frontend is entirely static and GitHub Pages-compatible. The host player's browser acts as the small match authority; there is no dedicated game server. Two players connect directly over WebRTC:
+The deployed frontend stays static on GitHub Pages. A small Python process running on the host PC is the room server:
 
-1. The host creates a six-character room code as a human-readable session label.
-2. The host creates an ICE-complete WebRTC offer in the browser.
-3. The two players exchange the temporary invite/answer text through any private channel they already use. The room code identifies the intended session but does not perform discovery.
-4. Both browsers connect directly. This can work across different Wi-Fi networks when NAT traversal succeeds; the host's browser remains open for the duration of the match.
-5. Unordered, unreliable `vera-state` DataChannel packets carry a compact 52-byte player snapshot at roughly 22 Hz.
-6. Reliable ordered `vera-control` packets carry match start, round state, and unique firing events.
-7. Remote snapshots are sequence-checked, buffered, interpolated, and briefly extrapolated so rendering does not wait for the network.
-8. The host owns the first prototype's remote health/alive state and match start. Both players explicitly choose T or CT; the host sends the shared map/team configuration, and the match runs as continuous team deathmatch with respawns. Packet fields are range-checked before entering the game.
+```text
+GitHub Pages (HTTPS frontend)
+        |
+        | secure WebSocket room connection
+        v
+Host PC: server/signaling_server.py
+        |
+        | compact validated state/control packets
+        +--> Player 1 browser
+        +--> Player 2 browser
+        +--> ... up to Player 20
+```
 
-Combat still uses the existing raycast and damage functions. A shot is transmitted as a compact event with a unique ID, direction, origin, and weapon identifier; each peer de-duplicates event IDs before applying it.
+The server creates six-character room codes, keeps membership, assigns slots, broadcasts room events, relays 52-byte binary player snapshots as base64 WebSocket payloads, and relays small reliable control events. It does not store accounts or persistent player data. The client keeps rendering/input separate from the network tick: snapshots are sent about 22 times per second, sequence-checked, buffered, interpolated, and briefly extrapolated.
 
-The initial mode supports two players. Default public STUN entries help browsers discover routes across different networks, but STUN is not a relay: symmetric NAT, enterprise firewalls, or carrier-grade NAT may still require a TURN service or router port-forwarding. A TURN service can be supplied through `iceServers` without changing the game client.
+The host starts the endless T-vs-CT match after at least one other player selects a team. Each player can choose either side; team sizes are not balanced or capped by team. Later players can join the room, choose a team, and receive the current match configuration. The host remains the match authority for remote health/alive state, so this is a practical room-server prototype rather than an anti-cheat authoritative service.
 
 ## Local multiplayer development
 
-For GitHub Pages, open the deployed Vera URL on both devices. Choose `LAN MULTIPLAYER`.
+Open two browser clients against the same frontend and run the Python room server:
 
-On device A:
-
-1. Choose `HOST LAN GAME`.
-2. Note the displayed six-character `ROOM CODE` and tell device B which session it identifies.
-3. Choose `COPY OFFER` and send the offer text to device B using any method convenient for your LAN session.
-4. Paste device B's answer into `FRIEND'S ANSWER`.
-5. Choose `START LAN MATCH`.
-
-On device B:
-
-1. Choose `JOIN LAN GAME`.
-2. Enter the six-character room code shown by device A.
-3. Paste device A's offer into `HOST INVITE`.
-4. Choose `CREATE REPLY`.
-5. Choose `COPY REPLY` and send it back to device A.
-
-After the direct link is established, both players choose `CT` or `T`. The host starts the selected map for both clients in continuous team deathmatch, and each player respawns after death. The room code is only a friendly label: GitHub Pages has no shared registry, so a static page cannot make a code discoverable across devices by itself. The invite/answer exchange is the signaling step that a static-only deployment cannot automate.
-
-## Production and GitHub Pages deployment
-
-GitHub Pages hosts the complete multiplayer frontend. No Node.js process, signaling server, database, API key, or backend deployment is required. GitHub Pages supplies HTTPS, which is required for WebRTC on deployed devices.
-
-The default build uses two public STUN endpoints as lightweight route-discovery helpers. They do not receive game state. Optional ICE/TURN servers can be configured before `src/vera-network-config.js` runs:
-
-```html
-<script>
-  window.VERA_NETWORK_CONFIG = {
-    iceServers: [
-      { urls: 'stun:stun.example.com:3478' },
-      { urls: 'turn:turn.example.com:3478', username: '...', credential: '...' }
-    ]
-  };
-</script>
+```powershell
+python server/signaling_server.py --host 0.0.0.0 --port 8765
+python -m http.server 4173
 ```
 
-Replace the example TURN values with credentials from a service you control; never commit long-lived secrets to a public repository. Devices on the same LAN often establish a direct host candidate without a relay. Players on different networks may require TURN when the browser cannot establish a direct path. GitHub Pages remains only the static frontend host.
+For local testing, open this URL in both clients:
+
+```text
+http://127.0.0.1:4173/?signal=ws%3A%2F%2F127.0.0.1%3A8765
+```
+
+On the host browser:
+
+1. Choose `LAN MULTIPLAYER` → `CREATE ROOM`.
+2. Share the six-character room code.
+3. Choose `T` or `CT` when ready.
+
+On each joining browser:
+
+1. Open the same frontend URL.
+2. Choose `LAN MULTIPLAYER` → `JOIN ROOM`.
+3. Enter the room code and choose `T` or `CT`.
+
+There is no offer/answer, ICE, or WebRTC text to copy. The server accepts up to 20 total players per room, rejects the 21st player cleanly, and broadcasts joins/leaves to the room. `--host 0.0.0.0` allows other devices on the same Wi-Fi to reach the server using the host PC's private LAN address, for example `ws://192.168.1.25:8765`.
+
+## Public access from GitHub Pages
+
+GitHub Pages cannot run Python, and a private PC is not globally reachable merely because it is hosting a process. To let friends outside the host's Wi-Fi join, the Python server needs a public DNS name, a reachable TCP port, and secure WebSockets (`wss://`) when the frontend is opened over HTTPS.
+
+The supported deployment shape is:
+
+1. Run `server/signaling_server.py` on the host PC bound to `0.0.0.0`.
+2. Forward the chosen TCP port on the router to that PC, or place the process behind a TLS reverse proxy/tunnel.
+3. Use a valid certificate for the public host. The Python server can terminate TLS directly:
+
+```powershell
+python server/signaling_server.py --host 0.0.0.0 --port 443 --certfile C:\path\fullchain.pem --keyfile C:\path\privkey.pem
+```
+
+4. Open the GitHub Pages build with the public endpoint in its URL:
+
+```text
+https://entrenchedosx.github.io/cs2web/?signal=wss%3A%2F%2Fvera.example.com%2Fsignal
+```
+
+The `?signal=` value is intentionally configurable so the public server address is not hardcoded into the repository. `ws://` is suitable for local HTTP testing only; browsers block insecure `ws://` connections from an HTTPS GitHub Pages page. Do not commit private TLS keys or router credentials.
 
 ## Multiplayer test procedure
 
-The browser smoke test is:
+1. Start the Python server and static frontend using the commands above.
+2. Open two fresh clients with the `?signal=` URL.
+3. Create a room in client A; confirm a six-character code appears.
+4. Join that code from client B; confirm both clients show a connected room without copy/paste signaling.
+5. Choose different teams and confirm both enter the same endless match.
+6. Move, look, fire, damage, die, and respawn; verify remote interpolation and combat events.
+7. Open additional clients and join the same code; verify uneven teams and a third/fourth player.
+8. Close a guest; verify its remote slot disappears. Close the host; verify the room closes for guests.
+9. Test a 21st join and confirm the server returns `That room is full.`
+10. Start the normal offline game without `?signal=` and verify single-player still works.
 
-1. Open the deployed GitHub Pages URL in two fresh browser clients on the same LAN.
-2. Create a host offer in client A and confirm the offer text is generated.
-3. Create an answer in client B and apply it in client A.
-4. Confirm both clients show `CONNECTED` / `MATCH READY`.
-5. Move and look in either client; the other client should show the interpolated remote model and aim direction.
-6. Fire at the other player and confirm the existing hit, health, death, and respawn path changes on both clients.
-7. Close one tab and confirm the remaining client shows `PLAYER DISCONNECTED` and removes the remote entity.
-8. Repeat with two physical devices on the same LAN and with browser throttling or simulated latency when available.
-
-Protocol and WebRTC behavior are intentionally browser-side because the project has no Node.js runtime or server component. Rendering, NAT behavior, hit placement, animation appearance, and device-to-device behavior remain manual tests.
+The browser/game portions are exercised manually because the repository is a static browser build. The Python server has a standard-library syntax check and a health endpoint; a real two-client browser test is the authoritative multiplayer check.
 
 ## Known multiplayer limitations
 
-- The first implementation is intentionally limited to two players.
-- The host is the authority for remote health/alive state, but this is a LAN prototype rather than a fully authoritative dedicated game server.
-- The host browser must stay open; closing it ends the match for the other player.
-- Automatic reconnect is not implemented; leaving and rejoining a room is the recovery path.
-- Direct WebRTC connectivity may still need TURN or router configuration on restrictive networks, even though default STUN discovery is enabled.
-- A six-character room code cannot be looked up by itself on GitHub Pages because static hosting has no room registry. Players still exchange the generated invite and reply once per session.
-- The adapter reuses the current entity and match systems. Core movement, weapons, shooting, damage, death, respawn, HUD, and round timing are synchronized, while complex objective interactions should be verified manually for the selected map/mode.
+- The room server supports up to 20 total players; the current browser/entity adapter should be stress-tested on the target hardware before filling every slot.
+- The host is the gameplay authority for remote health/alive state, but this is not a full anti-cheat server.
+- The Python process must remain running and reachable. Closing the host process closes its rooms.
+- Automatic reconnect is not implemented; leaving and rejoining with the room code is the recovery path.
+- Global access requires router forwarding, a public host, or a TLS tunnel/reverse proxy. GitHub Pages alone cannot expose a private PC.
+- The adapter reuses current entity and match systems. Core movement, weapons, shooting, damage, death, respawn, HUD, and team-deathmatch state are synchronized; complex objective interactions remain outside the endless multiplayer mode.
 - GitHub Pages remains playable offline/single-player even when LAN multiplayer is not used.
 
 ## Gameplay notes

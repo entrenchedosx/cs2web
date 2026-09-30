@@ -23,11 +23,16 @@ export class VeraGameAdapter {
     this.role = '';
     this.slot = 0;
     this.remote = null;
+    this.remotes = new Map();
+    this.remotePlayers = new Map();
     this.remoteTeam = '';
     this.remoteTeamOverride = '';
     this.remoteBuffer = [];
+    this.remoteBuffers = new Map();
     this.remoteLastSequence = -1;
+    this.remoteLastSequences = new Map();
     this.remoteLastState = null;
+    this.remoteLastStates = new Map();
     this.localSequence = 0;
     this.stateSequence = 0;
     this.tick = 0;
@@ -35,6 +40,7 @@ export class VeraGameAdapter {
     this.originalSetup = null;
     this.originalFireBullet = null;
     this.originalRemote = null;
+    this.remoteOriginals = new Map();
     this.onLocalShot = () => {};
     this.onStatus = () => {};
     this.frameHandle = 0;
@@ -45,8 +51,13 @@ export class VeraGameAdapter {
     this.game = window.game || null;
     this.active = true;
     this.role = role === 'guest' ? 'guest' : 'host';
-    this.slot = slot === 1 ? 1 : 0;
+    this.slot = Number.isInteger(Number(slot)) ? Math.max(0, Math.min(31, Number(slot))) : 0;
     this.remoteTeamOverride = '';
+    this.remotes.clear();
+    this.remotePlayers.clear();
+    this.remoteBuffers.clear();
+    this.remoteLastSequences.clear();
+    this.remoteLastStates.clear();
     this.remoteBuffer.length = 0;
     this.remoteLastSequence = -1;
     this.ensureHooks();
@@ -63,7 +74,7 @@ export class VeraGameAdapter {
       const adapter = this;
       manager.setup = function veraNetworkSetup() {
         const result = adapter.originalSetup.apply(this, arguments);
-        if (adapter.active) adapter.claimRemoteSlot();
+        if (adapter.active) adapter.claimRemoteSlots();
         return result;
       };
       manager.__veraNetworkSetup = true;
@@ -101,8 +112,7 @@ export class VeraGameAdapter {
     await game.startGame(map, 1, 1, mode || 'defusal');
     this.ensureHooks();
     await game.finishTeamSelect(team || (this.slot === 0 ? 'CT' : 'T'));
-    this.claimRemoteSlot();
-    if (!this.remote) throw new Error('Could not create the remote player slot.');
+    this.claimRemoteSlots();
     this.onStatus('match-ready');
   }
 
@@ -118,28 +128,46 @@ export class VeraGameAdapter {
     };
   }
 
-  claimRemoteSlot() {
+  setRemotePlayers(players = []) {
+    this.remotePlayers.clear();
+    for (const player of players) {
+      const slot = Number(player && player.slot);
+      if (!Number.isInteger(slot) || slot < 0 || slot > 31 || slot === this.slot) continue;
+      this.remotePlayers.set(slot, player.team === 'CT' ? 'CT' : 'T');
+    }
+    this.claimRemoteSlots();
+  }
+
+  claimRemoteSlots() {
+    for (const [slot, remoteTeam] of this.remotePlayers) this.claimRemoteSlot(slot, remoteTeam);
+    return this.remote || null;
+  }
+
+  claimRemoteSlot(slot = 1, remoteTeam = '') {
     const manager = this.game && this.game.botMgr;
     if (!manager) return null;
+    const normalizedSlot = Number(slot);
+    if (this.remotes.has(normalizedSlot)) return this.remotes.get(normalizedSlot);
     const candidate = manager.bots && manager.bots.find(bot => !bot.__veraRemote);
-    if (!candidate) return this.remote;
-    if (this.remote === candidate) return candidate;
-    if (this.remote) this.removeRemote();
+    if (!candidate) return null;
     const original = {
       update: candidate.update,
       spawn: candidate.spawn,
       die: candidate.die,
       body: candidate._updateCS2Body
     };
-    this.originalRemote = original;
-    this.remote = candidate;
-    this.remoteTeam = this.remoteTeamOverride || (candidate.team === 'CT' ? 'CT' : 'T');
+    this.remoteOriginals.set(normalizedSlot, original);
+    this.remotes.set(normalizedSlot, candidate);
+    this.remote = this.remotes.get(1) || candidate;
+    this.remoteTeam = remoteTeam || this.remoteTeamOverride || (candidate.team === 'CT' ? 'CT' : 'T');
+    candidate.__veraRemoteSlot = normalizedSlot;
+    candidate.__veraTeam = remoteTeam || this.remoteTeam;
     candidate.__veraRemote = true;
     // Keep the engine's bot/entity damage path for this slot. Marking it as
     // `isPlayer` would make the existing kill handler drop the local player's
     // inventory when a remote client dies.
     candidate.__veraRemotePlayer = true;
-    candidate.name = 'Opponent';
+    candidate.name = `Player ${normalizedSlot}`;
     const adapter = this;
     candidate.update = function veraRemoteUpdate(delta) { adapter.updateRemoteEntity(this, delta); };
     candidate.spawn = function veraRemoteSpawn() { return adapter.spawnRemoteEntity(this); };
@@ -148,19 +176,22 @@ export class VeraGameAdapter {
   }
 
   spawnRemoteEntity(remote) {
-    const originalSpawn = this.originalRemote && this.originalRemote.spawn;
+    const slot = Number(remote && remote.__veraRemoteSlot);
+    const originalSpawn = this.remoteOriginals.get(slot) && this.remoteOriginals.get(slot).spawn;
     if (originalSpawn) {
       try { originalSpawn.call(remote); } catch (error) {}
     }
     remote.__veraLastAlive = true;
-    if (this.remoteLastState) this.applyRemoteState(this.remoteLastState, true);
+    const lastState = this.remoteLastStates.get(slot) || this.remoteLastState;
+    if (lastState) this.applyRemoteState(lastState, true);
     else this.placeRemoteAtFallback(remote);
     return remote;
   }
 
   placeRemoteAtFallback(remote) {
     const game = this.game;
-    const spawns = game && game.map && (this.remoteTeam === 'CT' ? game.map.spawnsCT : game.map.spawnsT);
+    const teamValue = remote && remote.__veraTeam === 'CT' ? 'CT' : 'T';
+    const spawns = game && game.map && (teamValue === 'CT' ? game.map.spawnsCT : game.map.spawnsT);
     const spawn = spawns && spawns[0];
     if (!spawn) return;
     remote.x = finite(spawn.x); remote.y = finite(spawn.y) + 0.05; remote.z = finite(spawn.z);
@@ -173,7 +204,8 @@ export class VeraGameAdapter {
     const game = this.game;
     const dt = Math.max(0, Math.min(0.1, finite(delta, 0.033)));
     if (!game || !remote) return;
-    const sampled = this.sampleRemote(performance.now());
+    const slot = Number(remote.__veraRemoteSlot);
+    const sampled = this.sampleRemote(performance.now(), slot);
     if (sampled) this.applyRemoteState(sampled, false);
 
     if (!remote.alive) {
@@ -186,8 +218,9 @@ export class VeraGameAdapter {
       return;
     }
 
-    if (remote.cs2Agent && this.originalRemote && this.originalRemote.body) {
-      try { this.originalRemote.body.call(remote, dt, game); } catch (error) {}
+    const original = this.remoteOriginals.get(slot);
+    if (remote.cs2Agent && original && original.body) {
+      try { original.body.call(remote, dt, game); } catch (error) {}
     }
     if (remote.cs2Agent && remote.cs2Agent.root) remote.cs2Agent.root.visible = true;
     if (remote.__veraFiringT > 0) {
@@ -202,11 +235,12 @@ export class VeraGameAdapter {
     if (this.frameHandle) return;
     const frame = now => {
       this.frameHandle = requestAnimationFrame(frame);
-      if (!this.active || !this.remote) return;
+      if (!this.active || !this.remotes.size) return;
       this.ensureHooks();
-      const state = this.sampleRemote(now);
-      if (!state) return;
-      this.applyRemoteState(state, false);
+      for (const slot of this.remotes.keys()) {
+        const state = this.sampleRemote(now, slot);
+        if (state) this.applyRemoteState(state, false);
+      }
       this.lastFrameAt = now;
     };
     this.frameHandle = requestAnimationFrame(frame);
@@ -253,7 +287,32 @@ export class VeraGameAdapter {
     const remote = this.remote;
     if (!remote) return null;
     return encodeState({
-      slot: this.slot === 0 ? 1 : 0,
+      slot: Number(remote.__veraRemoteSlot) || (this.slot === 0 ? 1 : 0),
+      sequence: this.stateSequence || 0,
+      tick: this.tick,
+      x: remote.x, y: remote.y, z: remote.z,
+      vx: remote.vx, vy: remote.vy, vz: remote.vz,
+      yaw: remote.yaw, pitch: remote._lookPitch || 0,
+      weapon: remote.weapon, ammo: remote.ammo,
+      health: remote.health, armor: remote.armor, alive: remote.alive,
+      crouching: !!remote.crouchT, onGround: remote.onGround,
+      walking: remote.walking, firing: remote.__veraFiringT > 0
+    });
+  }
+
+  encodeRemoteStates() {
+    const states = [];
+    for (const remote of this.remotes.values()) {
+      const state = this.encodeRemoteStateFor(remote);
+      if (state) states.push(state);
+    }
+    return states;
+  }
+
+  encodeRemoteStateFor(remote) {
+    if (!remote) return null;
+    return encodeState({
+      slot: Number(remote.__veraRemoteSlot) || 0,
       sequence: this.stateSequence || 0,
       tick: this.tick,
       x: remote.x, y: remote.y, z: remote.z,
@@ -272,23 +331,30 @@ export class VeraGameAdapter {
       if (state && state.slot === this.slot && this.role === 'guest') this.applyAuthoritativeLocal(state);
       return;
     }
-    if (state.sequence <= this.remoteLastSequence && this.remoteLastSequence - state.sequence < 0x7fffffff) return;
-    this.remoteLastSequence = state.sequence;
+    if (!this.remotePlayers.has(state.slot)) this.remotePlayers.set(state.slot, 'T');
+    this.claimRemoteSlots();
+    const lastSequence = this.remoteLastSequences.get(state.slot);
+    if (Number.isFinite(lastSequence) && state.sequence <= lastSequence && lastSequence - state.sequence < 0x7fffffff) return;
+    this.remoteLastSequences.set(state.slot, state.sequence);
     const now = performance.now();
-    this.remoteBuffer.push({ at: now, state });
-    while (this.remoteBuffer.length > 12) this.remoteBuffer.shift();
+    const buffer = this.remoteBuffers.get(state.slot) || [];
+    buffer.push({ at: now, state });
+    while (buffer.length > 12) buffer.shift();
+    this.remoteBuffers.set(state.slot, buffer);
+    this.remoteLastStates.set(state.slot, state);
     this.remoteLastState = state;
   }
 
-  sampleRemote(now) {
-    if (!this.remoteBuffer.length) return null;
+  sampleRemote(now, slot = 1) {
+    const buffer = this.remoteBuffers.get(Number(slot)) || this.remoteBuffer;
+    if (!buffer.length) return null;
     const target = now - REMOTE_RENDER_DELAY;
-    const first = this.remoteBuffer[0];
-    const last = this.remoteBuffer[this.remoteBuffer.length - 1];
+    const first = buffer[0];
+    const last = buffer[buffer.length - 1];
     if (target <= first.at) return first.state;
-    for (let i = 1; i < this.remoteBuffer.length; i++) {
-      const next = this.remoteBuffer[i];
-      const prev = this.remoteBuffer[i - 1];
+    for (let i = 1; i < buffer.length; i++) {
+      const next = buffer[i];
+      const prev = buffer[i - 1];
       if (target <= next.at) {
         const amount = Math.min(1, Math.max(0, (target - prev.at) / Math.max(1, next.at - prev.at)));
         return this.interpolateState(prev.state, next.state, amount);
@@ -309,7 +375,7 @@ export class VeraGameAdapter {
   }
 
   applyRemoteState(state, immediate = false) {
-    const remote = this.remote;
+    const remote = this.remotes.get(Number(state && state.slot)) || this.remote;
     if (!remote || !state) return;
     const previous = { x: remote.x, y: remote.y, z: remote.z };
     const distance = distance3(previous, state);
@@ -374,7 +440,7 @@ export class VeraGameAdapter {
 
   simulateRemoteShot(event) {
     const game = this.game;
-    const remote = this.remote;
+    const remote = this.remotes.get(Number(event && (event.slot ?? event.fromSlot))) || this.remote;
     const weapon = this.weaponDefinition(event.weapon);
     if (!game || !remote || !weapon) return;
     const ox = finite(event.ox), oy = finite(event.oy), oz = finite(event.oz);
@@ -388,19 +454,37 @@ export class VeraGameAdapter {
     try { game.audio && game.audio.play && game.audio.play(weapon.sound, { pos: remote }); } catch (error) {}
   }
 
-  removeRemote() {
-    const remote = this.remote;
+  removeRemote(slot = null) {
     const manager = this.game && this.game.botMgr;
-    if (!remote) return;
-    try { remote.cs2Agent && remote.cs2Agent.root && this.game.scene.remove(remote.cs2Agent.root); } catch (error) {}
-    try { remote.shadow && this.game.scene.remove(remote.shadow); } catch (error) {}
-    if (manager && Array.isArray(manager.bots)) {
-      const index = manager.bots.indexOf(remote);
-      if (index >= 0) manager.bots.splice(index, 1);
+    const targets = slot == null ? [...this.remotes.entries()] : [[Number(slot), this.remotes.get(Number(slot))]];
+    for (const [remoteSlot, remote] of targets) {
+      if (!remote) continue;
+      try { remote.cs2Agent && remote.cs2Agent.root && this.game.scene.remove(remote.cs2Agent.root); } catch (error) {}
+      try { remote.shadow && this.game.scene.remove(remote.shadow); } catch (error) {}
+      if (manager && Array.isArray(manager.bots)) {
+        const index = manager.bots.indexOf(remote);
+        if (index >= 0) manager.bots.splice(index, 1);
+      }
+      this.remotes.delete(Number(remoteSlot));
+      this.remoteOriginals.delete(Number(remoteSlot));
     }
-    this.remote = null;
-    this.remoteBuffer.length = 0;
-    this.remoteLastState = null;
+    if (slot == null) {
+      this.remote = null;
+      this.remotes.clear();
+      this.remotePlayers.clear();
+      this.remoteBuffer.length = 0;
+      this.remoteBuffers.clear();
+      this.remoteLastSequences.clear();
+      this.remoteLastStates.clear();
+      this.remoteLastState = null;
+    } else {
+      const remoteSlot = Number(slot);
+      this.remotePlayers.delete(remoteSlot);
+      this.remoteBuffers.delete(remoteSlot);
+      this.remoteLastSequences.delete(remoteSlot);
+      this.remoteLastStates.delete(remoteSlot);
+      if (this.remote === targets[0][1]) this.remote = this.remotes.get(1) || this.remotes.values().next().value || null;
+    }
   }
 
   deactivate() {
@@ -419,5 +503,6 @@ export class VeraGameAdapter {
     this.game = null;
     this.originalSetup = null;
     this.originalFireBullet = null;
+    this.remoteOriginals.clear();
   }
 }

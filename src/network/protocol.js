@@ -72,7 +72,7 @@ export function encodeState(state = {}) {
   const view = new DataView(buffer);
   view.setUint8(0, PROTOCOL_VERSION);
   view.setUint8(1, PACKET_KIND.STATE);
-  view.setUint8(2, clamp(state.slot, 0, 1));
+  view.setUint8(2, clamp(state.slot, 0, 31));
   view.setUint8(3, 0);
   view.setUint32(4, finite(state.sequence) >>> 0, true);
   view.setUint32(8, finite(state.tick) >>> 0, true);
@@ -119,7 +119,7 @@ export function decodeState(data) {
     alive: view.getUint8(50) !== 0
   };
   if (![state.x, state.y, state.z, state.vx, state.vy, state.vz, state.yaw, state.pitch].every(Number.isFinite)) return null;
-  if (state.slot > 1 || state.health > 100 || state.armor > 100) return null;
+  if (state.slot > 31 || state.health > 100 || state.armor > 100) return null;
   state.crouching = !!(state.flags & STATE_FLAGS.CROUCHING);
   state.onGround = !!(state.flags & STATE_FLAGS.ON_GROUND);
   state.walking = !!(state.flags & STATE_FLAGS.WALKING);
