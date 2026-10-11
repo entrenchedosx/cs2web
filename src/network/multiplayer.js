@@ -72,16 +72,10 @@ class VeraMultiplayerSession {
   ensureUI() {
     const menu = document.querySelector('#menu');
     if (!menu) return;
-    if (!document.querySelector('#vera-mp-trigger')) {
-      const parent = document.querySelector('#playbottom') || document.querySelector('#tab-play') || menu;
-      const trigger = document.createElement('button');
-      trigger.id = 'vera-mp-trigger';
-      trigger.type = 'button';
-      trigger.className = 'ghostbtn vera-mp-trigger';
-      trigger.textContent = 'LAN MULTIPLAYER';
-      trigger.addEventListener('click', () => this.openPanel());
-      parent.appendChild(trigger);
-    }
+    // Frontend LAN trigger removed by request. Backend session stays intact
+    // and remains callable via window.__veraMultiplayer.openPanel()/hostLan()/joinLan().
+    const staleTrigger = document.querySelector('#vera-mp-trigger');
+    if (staleTrigger) staleTrigger.remove();
     if (!document.querySelector('#vera-mp-panel')) this.createPanel();
     if (!document.querySelector('#vera-mp-style')) this.createStyle();
     this.updateUI();
@@ -93,6 +87,9 @@ class VeraMultiplayerSession {
     style.textContent = `
       #vera-mp-trigger { margin-top: 10px; width: 100%; min-height: 38px; color: #e8eef2; border: 1px solid rgba(168,85,247,.44); background: rgba(10,13,16,.78); cursor: pointer; letter-spacing: 1.8px; font-weight: 800; transition: border-color .16s, background .16s, color .16s; }
       #vera-mp-trigger:hover { border-color: var(--accent, #a855f7); background: rgba(168,85,247,.14); color: #fff; }
+      /* LAN / Join frontend removed: never show a stale trigger or join button (e.g. cached DOM). */
+      #vera-mp-trigger, [data-mp-join] { display: none !important; }
+      .vera-mp-choice-grid-single { grid-template-columns: 1fr; }
       #vera-mp-panel { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(3,5,8,.82); backdrop-filter: blur(3px); font-family: inherit; }
       #vera-mp-panel.open { display: flex; }
       .vera-mp-card { width: min(760px, 94vw); max-height: 92vh; overflow: auto; color: #e8eef2; border: 1px solid rgba(255,255,255,.16); border-radius: 4px; background: #101419; box-shadow: 0 22px 70px rgba(0,0,0,.72), 0 0 0 1px rgba(168,85,247,.08); }
@@ -177,9 +174,9 @@ class VeraMultiplayerSession {
           <div class="vera-mp-error" data-mp-error></div>
           <div class="vera-mp-actions" data-mp-actions>
             <p class="vera-mp-intro">Create a room on the Vera server, share its code, and let friends join from anywhere your server is reachable. Choose a team and fight in the same endless match.</p>
-            <div class="vera-mp-choice-grid">
+            <div class="vera-mp-choice-grid vera-mp-choice-grid-single">
               <button class="vera-mp-choice" type="button" data-mp-host><span class="vera-mp-choice-icon" aria-hidden="true">A</span><h3>CREATE ROOM</h3><p>Start a room and share its six-character code with your friends.</p></button>
-              <button class="vera-mp-choice" type="button" data-mp-join><span class="vera-mp-choice-icon" aria-hidden="true">B</span><h3>JOIN ROOM</h3><p>Enter a room code and choose your side when the connection is ready.</p></button>
+              <!-- JOIN ROOM frontend removed by request; backend joinLan()/joinSignalingRoom() kept intact. -->
             </div>
             <div class="vera-mp-footnote">Up to 20 players per room · uneven teams allowed · endless T vs CT</div>
           </div>
@@ -259,7 +256,9 @@ class VeraMultiplayerSession {
     };
     panel.querySelector('.vera-mp-close').addEventListener('click', () => this.closePanel());
     panel.querySelector('[data-mp-host]').addEventListener('click', () => this.hostLan());
-    panel.querySelector('[data-mp-join]').addEventListener('click', () => this.joinLan());
+    // Join frontend removed; backend joinLan()/joinSignalingRoom() intentionally kept.
+    const joinChoice = panel.querySelector('[data-mp-join]');
+    if (joinChoice) joinChoice.remove();
     panel.querySelector('[data-mp-copy-offer]').addEventListener('click', () => this.copyText(this.ui.hostOffer.value, 'Offer copied.'));
     panel.querySelector('[data-mp-copy-room]').addEventListener('click', () => this.copyText(this.roomCode, 'Room code copied.'));
     panel.querySelector('[data-mp-accept-answer]').addEventListener('click', () => this.acceptAnswer());
